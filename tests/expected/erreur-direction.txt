@@ -1,4 +1,4 @@
-ilevia : aucune direction de la ligne 10 ne correspond à « zzz »
+chti : aucune direction de la ligne 10 ne correspond à « zzz »
 directions possibles :
   • Lille Chu - Centre O. Lambret
   • Lille Gare Lille Flandres

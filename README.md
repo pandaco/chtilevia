@@ -1,18 +1,23 @@
-# ilevia-live
+# chtilevia
 
-Prochains passages du réseau Ilévia (bus, tram, métro — Métropole de Lille) et disponibilité des
-stations V'Lille, directement dans le terminal.
+> T'as ton bus, biloute ?
+
+Prochains passages du réseau Ilévia (bus, tram, métro — Métropole Européenne de Lille) et
+disponibilité des stations V'Lille, directement dans le terminal, avec une seule commande : `chti`.
+
+> **Projet indépendant, non affilié à Ilévia ni à la MEL.** Les données proviennent de l'open data
+> publié par Ilévia et transport.data.gouv.fr ; aucune garantie d'exactitude.
 
 ## Présentation
 
-`ilevia` est un script shell unique, sans interface graphique, qui interroge les données ouvertes du réseau :
+`chti` est un script shell unique, sans interface graphique, qui interroge les données ouvertes du réseau :
 
 - **bus / tram** : prochains passages en temps réel à un arrêt, regroupés par direction ;
 - **métro** : prochains passages théoriques (aucun temps réel métro n'est publié en open data) ;
 - **V'Lille** : nombre de vélos disponibles et de places libres d'une station.
 
 ```
-$ ilevia bus 10 marais -d flandres
+$ chti bus 10 marais -d flandres
 
 10 — Marais  (LOMME MARAIS 59160 LOMME)
   → Lille Gare Lille Flandres
@@ -20,7 +25,7 @@ $ ilevia bus 10 marais -d flandres
      13:15  dans 29 min     ⏱  temps réel
      13:22  dans 36 min     🕒 théorique
 
-$ ilevia velo rihour
+$ chti velo rihour
 Rihour  (32 bornes)
   🚲 23 vélo(s) dispo   🅿️  9 place(s) libre(s)
   maj il y a 1 min
@@ -31,24 +36,24 @@ Rihour  (32 bornes)
 Dépendances : `curl`, `jq`, `unzip`, `python3` (bibliothèque standard uniquement).
 
 ```sh
-chmod +x ilevia
-ln -s "$PWD/ilevia" ~/.local/bin/ilevia   # optionnel, pour l'avoir dans le PATH
+chmod +x chti
+ln -s "$PWD/chti" ~/.local/bin/chti   # optionnel, pour l'avoir dans le PATH
 ```
 
 ## Appels possibles
 
 | Commande | Effet |
 |---|---|
-| `ilevia bus <ligne>` | Liste les arrêts de la ligne, dans chaque sens |
-| `ilevia bus <ligne> <arrêt>` | Prochains passages à l'arrêt, toutes directions |
-| `ilevia bus <ligne> <arrêt> -d <direction>` | Prochains passages à l'arrêt, vers cette direction uniquement |
-| `ilevia bus <ligne> <arrêt> -n <nombre>` | Affiche `<nombre>` passages par direction au lieu de 3 |
-| `ilevia bus <ligne> -d <direction>` | Liste des arrêts, pour cette direction uniquement |
-| `ilevia tram [arrêt] [-d <direction>] [-n <nombre>]` | Idem pour le tramway (Lille ↔ Roubaix / Tourcoing) |
-| `ilevia metro <1\|2> [arrêt] [-d <direction>] [-n <nombre>]` | Idem pour le métro M1 ou M2 (horaires théoriques) |
-| `ilevia velo <station>` | Vélos disponibles et places libres des stations V'Lille correspondantes |
-| `ilevia update` | Force le re-téléchargement du référentiel GTFS |
-| `ilevia help` | Affiche l'aide |
+| `chti bus <ligne>` | Liste les arrêts de la ligne, dans chaque sens |
+| `chti bus <ligne> <arrêt>` | Prochains passages à l'arrêt, toutes directions |
+| `chti bus <ligne> <arrêt> -d <direction>` | Prochains passages à l'arrêt, vers cette direction uniquement |
+| `chti bus <ligne> <arrêt> -n <nombre>` | Affiche `<nombre>` passages par direction au lieu de 3 |
+| `chti bus <ligne> -d <direction>` | Liste des arrêts, pour cette direction uniquement |
+| `chti tram [arrêt] [-d <direction>] [-n <nombre>]` | Idem pour le tramway (Lille ↔ Roubaix / Tourcoing) |
+| `chti metro <1\|2> [arrêt] [-d <direction>] [-n <nombre>]` | Idem pour le métro M1 ou M2 (horaires théoriques) |
+| `chti velo <station>` | Vélos disponibles et places libres des stations V'Lille correspondantes |
+| `chti update` | Force le re-téléchargement du référentiel GTFS |
+| `chti help` | Affiche l'aide |
 
 ### Paramètres
 
@@ -67,15 +72,15 @@ ln -s "$PWD/ilevia" ~/.local/bin/ilevia   # optionnel, pour l'avoir dans le PATH
 ### Exemples
 
 ```sh
-ilevia bus 10                          # arrêts de la ligne 10
-ilevia bus 10 gambetta                 # passages à « Gambetta », dans tous les sens
-ilevia bus l1 republique -d wambrechies  # passages de la Liane 1 vers Wambrechies
-ilevia tram croise laroche --vers roubaix
-ilevia tram -d tourcoing               # arrêts du tram vers Tourcoing
-ilevia metro 1 republique -d chu
-ilevia metro 2 gare lille flandres -n 10   # les 10 prochaines rames dans chaque sens
-ilevia bus 10 gambetta -d flandres -n 5    # les 5 prochains bus vers Lille Flandres
-ilevia velo gare                       # toutes les stations V'Lille contenant « gare »
+chti bus 10                          # arrêts de la ligne 10
+chti bus 10 gambetta                 # passages à « Gambetta », dans tous les sens
+chti bus l1 republique -d wambrechies  # passages de la Liane 1 vers Wambrechies
+chti tram croise laroche --vers roubaix
+chti tram -d tourcoing               # arrêts du tram vers Tourcoing
+chti metro 1 republique -d chu
+chti metro 2 gare lille flandres -n 10   # les 10 prochaines rames dans chaque sens
+chti bus 10 gambetta -d flandres -n 5    # les 5 prochains bus vers Lille Flandres
+chti velo gare                       # toutes les stations V'Lille contenant « gare »
 ```
 
 ### Lecture du résultat
@@ -94,7 +99,7 @@ ilevia velo gare                       # toutes les stations V'Lille contenant �
 | Stations V'Lille | `https://media.ilevia.fr/opendata/station_information.json` | GBFS 2.3 |
 | Disponibilité V'Lille | `https://media.ilevia.fr/opendata/station_status.json` | GBFS 2.3 |
 
-Le GTFS (~9 Mo) est mis en cache dans `~/.cache/ilevia` (ou `$XDG_CACHE_HOME/ilevia`) et rafraîchi
+Le GTFS (~9 Mo) est mis en cache dans `~/.cache/chtilevia` (ou `$XDG_CACHE_HOME/chtilevia`) et rafraîchi
 automatiquement toutes les 24 h.
 
 ### Requêtes curl brutes
@@ -125,7 +130,7 @@ curl -s -o ilevia.pb https://proxy.transport.data.gouv.fr/resource/ilevia-lille-
 ```
 
 Le flux temps réel est du protobuf binaire : il n'est pas lisible avec `jq`, d'où le petit décodeur
-Python embarqué dans `ilevia`.
+Python embarqué dans `chti`.
 
 ### Limites
 
@@ -139,7 +144,7 @@ Python embarqué dans `ilevia`.
 
 ### Organisation du script
 
-Tout tient dans le fichier `ilevia` :
+Tout tient dans le fichier `chti` :
 
 | Partie | Rôle |
 |---|---|
@@ -168,7 +173,7 @@ chaque modification**, pour s'assurer qu'on n'a rien cassé.
 
 ```sh
 tests/run.sh                      # tests de non-régression : 21 cas, hors ligne, ~5 s
-shellcheck ilevia tests/run.sh    # analyse du shell (paquet shellcheck)
+shellcheck chti tests/run.sh    # analyse du shell (paquet shellcheck)
 ```
 
 **Avant chaque commit**, les deux doivent passer : `tests/run.sh` doit afficher `0 échec(s)`, et
@@ -176,12 +181,12 @@ shellcheck ilevia tests/run.sh    # analyse du shell (paquet shellcheck)
 
 #### Pourquoi des tests « figés » ?
 
-Les horaires changent chaque minute : en lançant `ilevia bus 10 marais` à la main, impossible de
+Les horaires changent chaque minute : en lançant `chti bus 10 marais` à la main, impossible de
 savoir si « 12:53 dans 7 min » est juste ou faux, puisque la bonne réponse change sans arrêt.
 Les tests figent donc le monde :
 
 1. **Données figées** : une copie des flux enregistrée à un instant précis (`tests/fixtures/`).
-2. **Heure figée** : le script croit qu'on est à cet instant-là (variable `ILEVIA_NOW`).
+2. **Heure figée** : le script croit qu'on est à cet instant-là (variable `CHTI_NOW`).
 3. **Réponses de référence** : la sortie correcte de chaque commande, relue et enregistrée une fois
    pour toutes (`tests/expected/<cas>.txt`).
 
@@ -207,7 +212,7 @@ Quand une sortie diffère de la référence, le cas est marqué `ÉCHEC` avec la
 `-` = ligne attendue absente, `+` = ligne en trop.
 
 ```
-ÉCHEC bus-options-avant-arret  (ilevia bus 10 --nombre=2 --vers=chu marais)
+ÉCHEC bus-options-avant-arret  (chti bus 10 --nombre=2 --vers=chu marais)
       -10 — Eglise Du Marais  (EGLISE DU MARAIS 59160 LOMME)
       -  aucun passage prévu
       -
@@ -230,7 +235,7 @@ Deux situations possibles :
    ```
    - **heure** : `MIDI` (10/10 12:46), `SOIR` (10/10 23:50) ou `MINUIT` (11/10 00:00) ;
    - **flux temps réel** : `rt-midi.pb`, `rt-minuit.pb`, ou `aucun` pour simuler un flux indisponible ;
-   - **arguments** : ceux passés à `ilevia`. Seules les lignes 10, tram et M1 existent dans les fixtures.
+   - **arguments** : ceux passés à `chti`. Seules les lignes 10, tram et M1 existent dans les fixtures.
 2. Lancer `tests/run.sh --update`.
 3. Relire `tests/expected/nom-du-cas.txt` et vérifier que la sortie est juste.
 4. Commiter le cas avec sa référence.
@@ -273,22 +278,22 @@ Utilisées par les tests, elles servent aussi à reproduire un cas à la main :
 
 | Variable | Effet |
 |---|---|
-| `ILEVIA_NOW` | Heure courante figée (timestamp epoch) |
-| `ILEVIA_GTFS_URL`, `ILEVIA_RT_URL`, `ILEVIA_GBFS_URL` | Sources de données (acceptent `file://`) |
-| `XDG_CACHE_HOME` | Emplacement du cache (`$XDG_CACHE_HOME/ilevia`) |
+| `CHTI_NOW` | Heure courante figée (timestamp epoch) |
+| `CHTI_GTFS_URL`, `CHTI_RT_URL`, `CHTI_GBFS_URL` | Sources de données (acceptent `file://`) |
+| `XDG_CACHE_HOME` | Emplacement du cache (`$XDG_CACHE_HOME/chtilevia`) |
 
 ```sh
 # Rejouer à la main le cas « bus-temps-reel », sans toucher au cache habituel
-XDG_CACHE_HOME=/tmp/ilevia-test ILEVIA_NOW=1791629160 \
-ILEVIA_GTFS_URL="file://$PWD/tests/fixtures/gtfs.zip" \
-ILEVIA_RT_URL="file://$PWD/tests/fixtures/rt-midi.pb" \
-./ilevia bus 10 marais
+XDG_CACHE_HOME=/tmp/chti-test CHTI_NOW=1791629160 \
+CHTI_GTFS_URL="file://$PWD/tests/fixtures/gtfs.zip" \
+CHTI_RT_URL="file://$PWD/tests/fixtures/rt-midi.pb" \
+./chti bus 10 marais
 ```
 
 Au premier lancement, le message « Mise à jour du référentiel GTFS… » s'affiche en plus, le temps
 de construire le cache de test.
 
-Pour tester le comportement hors ligne : `HTTPS_PROXY=http://127.0.0.1:9 ./ilevia bus 10 gambetta`
+Pour tester le comportement hors ligne : `HTTPS_PROXY=http://127.0.0.1:9 ./chti bus 10 gambetta`
 (le script doit retomber sur les horaires théoriques).
 
 ### Commits

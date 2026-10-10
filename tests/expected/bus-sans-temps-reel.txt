@@ -1,4 +1,4 @@
-ilevia : flux temps réel indisponible, horaires théoriques uniquement
+chti : flux temps réel indisponible, horaires théoriques uniquement
 
 10 — Gambetta  (GAMBETTA 59130 LAMBERSART)
   → Lille Gare Lille Flandres

@@ -1,5 +1,5 @@
 #!/bin/sh
-# Tests de non-régression : chaque cas lance ilevia sur les fixtures figées, à une heure figée,
+# Tests de non-régression : chaque cas lance chti sur les fixtures figées, à une heure figée,
 # et compare la sortie (stdout + stderr + code retour) à tests/expected/<cas>.txt.
 #
 # Usage : tests/run.sh            lance les tests
@@ -9,7 +9,7 @@ set -eu
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 FIX="$ROOT/tests/fixtures"
 EXPECTED="$ROOT/tests/expected"
-WORK=$(mktemp -d "${TMPDIR:-/tmp}/ilevia-tests.XXXXXX")
+WORK=$(mktemp -d "${TMPDIR:-/tmp}/chti-tests.XXXXXX")
 trap 'rm -rf "$WORK"' EXIT INT TERM
 
 update=0
@@ -21,11 +21,11 @@ SOIR=1791669000   # 2026-10-10 23:50:00
 MINUIT=1791669618 # 2026-10-11 00:00:18
 
 export XDG_CACHE_HOME="$WORK/cache"
-export ILEVIA_GTFS_URL="file://$FIX/gtfs.zip"
-export ILEVIA_GBFS_URL="file://$FIX"
+export CHTI_GTFS_URL="file://$FIX/gtfs.zip"
+export CHTI_GBFS_URL="file://$FIX"
 
 # Index GTFS construit une fois pour tous les cas
-"$ROOT/ilevia" update >/dev/null 2>&1
+"$ROOT/chti" update >/dev/null 2>&1
 
 # nom | heure | flux temps réel (fichier de fixtures, ou « aucun ») | arguments
 CASES='
@@ -72,8 +72,8 @@ while IFS='|' read -r name clock rt args; do
 	set -- $args
 	out="$WORK/$name.txt"
 	code=0
-	ILEVIA_NOW=$now ILEVIA_RT_URL=$rt_url "$ROOT/ilevia" "$@" >"$out" 2>&1 || code=$?
-	# Le message d'erreur de curl varie selon les versions : on ne garde que celui d'ilevia
+	CHTI_NOW=$now CHTI_RT_URL=$rt_url "$ROOT/chti" "$@" >"$out" 2>&1 || code=$?
+	# Le message d'erreur de curl varie selon les versions : on ne garde que celui de chti
 	grep -v '^curl: ' "$out" >"$out.tmp" || true
 	printf '[exit %s]\n' "$code" >>"$out.tmp"
 	mv "$out.tmp" "$out"
@@ -86,7 +86,7 @@ while IFS='|' read -r name clock rt args; do
 		echo "ok    $name"
 	else
 		fail=$((fail + 1))
-		echo "ÉCHEC $name  (ilevia $args)"
+		echo "ÉCHEC $name  (chti $args)"
 		sed 's/^/      /' "$WORK/$name.diff"
 	fi
 done <<EOF

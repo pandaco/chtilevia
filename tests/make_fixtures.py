@@ -27,7 +27,7 @@ def read(path):
 
 
 def write(zf, name, fields, rows):
-    path = f"/tmp/ilevia-fixture-{os.getpid()}-{name}"
+    path = f"/tmp/chti-fixture-{os.getpid()}-{name}"
     with open(path, "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=fields, lineterminator="\n")
         w.writeheader()
