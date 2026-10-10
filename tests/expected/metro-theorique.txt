@@ -1,0 +1,9 @@
+
+M1 — République Beaux-Arts  (RÉPUBLIQUE BEAUX-ARTS 59000 LILLE)
+  → Lille Chu - Eurasanté
+     12:46  dans 1 min     🕒 théorique
+     12:50  dans 4 min     🕒 théorique
+  → Villeneuve D Ascq 4 Cantons Stade P. Mauroy
+     12:46  dans 1 min     🕒 théorique
+     12:50  dans 4 min     🕒 théorique
+[exit 0]

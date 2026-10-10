@@ -1,0 +1,83 @@
+Ligne 10 — LOMME HEGEL-CHU O LAMBRET/ LILLE FLANDRES
+
+  Direction Lille Gare Lille Flandres :
+    • Chu - Centre O. Lambret
+    • Chasseurs De Driant
+    • Augereau
+    • Rue De Londres
+    • Loos Mairie
+    • Clemenceau
+    • Château Bigo Danel
+    • Bazinghien
+    • Port Fluvial
+    • Lomme Hegel
+    • Blanchisseurs
+    • Leo Lagrange
+    • Eglise Du Marais
+    • Lamy
+    • Marais
+    • Egalite
+    • Croix Du Temple
+    • Anatole France
+    • Hotel De Ville
+    • Lomme-Lambersart
+    • Pont Supérieur
+    • Victoire
+    • Hotel De Ville
+    • La Carnoy
+    • Lambersart Bourg
+    • Liberte
+    • Avenue De Gaulle
+    • Jussieu
+    • Gambetta
+    • Canon D'Or
+    • Pont Royal
+    • Magasin
+    • Voltaire
+    • Pont Neuf
+    • Les Bateliers
+    • Ramadier
+    • Lycee Pasteur
+    • Gare Lille Flandres
+
+  Direction Lille Chu - Centre O. Lambret :
+    • Gare Lille Flandres
+    • Lycee Pasteur
+    • Ramadier
+    • Les Bateliers
+    • Pont Neuf
+    • Voltaire
+    • Magasin
+    • Esplanade
+    • Pont Royal
+    • Canon D'Or
+    • Gambetta
+    • Jussieu
+    • Clouet
+    • Avenue De Gaulle
+    • Liberte
+    • Lambersart Bourg
+    • La Carnoy
+    • Hotel De Ville
+    • Victoire
+    • Lavoisier
+    • Lomme-Lambersart
+    • Hotel De Ville
+    • Anatole France
+    • Croix Du Temple
+    • Egalite
+    • Marais
+    • Lamy
+    • Leo Lagrange
+    • Blanchisseurs
+    • Lomme Hegel
+    • Port Fluvial
+    • Bazinghien
+    • Château Bigo Danel
+    • Clemenceau
+    • Loos Mairie
+    • Rue De Londres
+    • Augereau
+    • Chasseurs De Driant
+    • Chu - Centre O. Lambret
+[exit 0]

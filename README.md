@@ -161,21 +161,39 @@ Le Python est embarqué via un heredoc (`run_py`) et lancé en mode isolé (`pyt
 - Messages utilisateur en français, erreurs sur stderr via `die`, code retour non nul en cas d'échec.
 - Fichiers de travail non versionnés dans `./tmp` (ignoré par git).
 
-### Vérifier une modification
+### Tests
 
 ```sh
-sh -n ilevia                      # syntaxe shell
-shellcheck ilevia                 # si disponible
-./ilevia update                   # reconstruit l'index GTFS
-./ilevia bus 10 gambetta -d flandres -n 5
-./ilevia tram croise laroche
-./ilevia metro 1 republique
-./ilevia velo rihour
-./ilevia bus 999; echo $?         # doit afficher une erreur et renvoyer 1
+tests/run.sh                      # tests de non-régression (hors ligne, ~5 s)
+shellcheck ilevia tests/run.sh    # paquet shellcheck
 ```
 
-Pour tester le comportement hors ligne : `HTTPS_PROXY=http://127.0.0.1:9 ./ilevia bus 10 gambetta`
-(doit retomber sur les horaires théoriques).
+Les tests n'utilisent pas le réseau. Ils lancent `ilevia` sur des **fixtures figées**
+(`tests/fixtures/`) à une **heure figée**, puis comparent stdout, stderr et le code retour à
+`tests/expected/<cas>.txt`. Ils couvrent le temps réel avec propagation du retard, le passage de minuit,
+le service du lendemain, l'absence de flux temps réel, les filtres `-d` / `-n`, V'Lille et les erreurs.
+
+| Fichier | Rôle |
+|---|---|
+| `tests/run.sh` | Liste des cas (`nom \| heure \| flux temps réel \| arguments`) et comparaison des sorties |
+| `tests/fixtures/` | Sous-ensemble du GTFS (lignes 10, tram, M1 ; 10–12/10/2026), 2 instantanés GTFS-RT (12:46 et 00:00), V'Lille |
+| `tests/expected/` | Sorties attendues |
+| `tests/make_fixtures.py` | Régénère les fixtures à partir d'un instantané brut des flux |
+
+**Ajouter un cas** : ajouter une ligne dans `CASES` de `tests/run.sh`, lancer `tests/run.sh --update`,
+puis **relire** le fichier `tests/expected/<cas>.txt` généré avant de le commiter : `--update`
+enregistre la sortie actuelle telle quelle, y compris si elle est fausse.
+
+Variables d'environnement utilisées par les tests (utilisables aussi à la main) :
+
+| Variable | Effet |
+|---|---|
+| `ILEVIA_NOW` | Heure courante figée (timestamp epoch) |
+| `ILEVIA_GTFS_URL`, `ILEVIA_RT_URL`, `ILEVIA_GBFS_URL` | Sources de données (acceptent `file://`) |
+| `XDG_CACHE_HOME` | Emplacement du cache (`$XDG_CACHE_HOME/ilevia`) |
+
+Pour tester à la main le comportement hors ligne : `HTTPS_PROXY=http://127.0.0.1:9 ./ilevia bus 10 gambetta`
+(le script doit retomber sur les horaires théoriques).
 
 ### Commits
 

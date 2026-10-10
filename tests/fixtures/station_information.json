@@ -1,0 +1,108 @@
+{
+ "ttl": 0,
+ "version": "2.3",
+ "data": {
+  "stations": [
+   {
+    "name": "Rihour",
+    "capacity": 32,
+    "station_id": "10",
+    "lat": 50.63589,
+    "lon": 3.062471,
+    "post_code": "59000",
+    "parking_type": "street_parking",
+    "parking_hoop": true,
+    "is_virtual_station": false
+   },
+   {
+    "name": "Gare Jean Lebas",
+    "capacity": 17,
+    "station_id": "219",
+    "lat": 50.695563,
+    "lon": 3.164242,
+    "post_code": "59100",
+    "parking_type": "street_parking",
+    "parking_hoop": true,
+    "is_virtual_station": false
+   },
+   {
+    "name": "Tourcoing gare",
+    "capacity": 18,
+    "station_id": "242",
+    "lat": 50.716907,
+    "lon": 3.167436,
+    "post_code": "59200",
+    "parking_type": "street_parking",
+    "parking_hoop": true,
+    "is_virtual_station": false
+   },
+   {
+    "name": "Gare Lille Flandres",
+    "capacity": 32,
+    "station_id": "25",
+    "lat": 50.636399,
+    "lon": 3.069354,
+    "post_code": "59000",
+    "parking_type": "street_parking",
+    "parking_hoop": true,
+    "is_virtual_station": false
+   },
+   {
+    "name": "Port de Lille",
+    "capacity": 26,
+    "station_id": "33",
+    "lat": 50.63022,
+    "lon": 3.035681,
+    "post_code": "59000",
+    "parking_type": "street_parking",
+    "parking_hoop": true,
+    "is_virtual_station": false
+   },
+   {
+    "name": "Gare Lille Europe",
+    "capacity": 32,
+    "station_id": "82",
+    "lat": 50.63999,
+    "lon": 3.075204,
+    "post_code": "59000",
+    "parking_type": "street_parking",
+    "parking_hoop": true,
+    "is_virtual_station": false
+   },
+   {
+    "name": "La Madeleine Gare",
+    "capacity": 17,
+    "station_id": "97",
+    "lat": 50.65937,
+    "lon": 3.074057,
+    "post_code": "59110",
+    "parking_type": "street_parking",
+    "parking_hoop": true,
+    "is_virtual_station": false
+   },
+   {
+    "name": "Sainte Hélène",
+    "capacity": 12,
+    "station_id": "185",
+    "lat": 50.65722,
+    "lon": 3.056147,
+    "post_code": "59350",
+    "parking_type": "street_parking",
+    "parking_hoop": true,
+    "is_virtual_station": false
+   },
+   {
+    "name": "Gare d'eau",
+    "capacity": 14,
+    "station_id": "317",
+    "lat": 50.62911,
+    "lon": 3.02139,
+    "post_code": "59000",
+    "parking_type": "street_parking",
+    "parking_hoop": true,
+    "is_virtual_station": false
+   }
+  ]
+ },
+ "last_updated": 1791669619
+}

@@ -3,9 +3,10 @@
 # Dépendances : curl, jq, unzip, python3 (bibliothèque standard uniquement).
 set -eu
 
-GTFS_URL="https://media.ilevia.fr/opendata/gtfs.zip"
-RT_URL="https://proxy.transport.data.gouv.fr/resource/ilevia-lille-gtfs-rt"
-GBFS_URL="https://media.ilevia.fr/opendata"
+# Les ILEVIA_* permettent de pointer vers des fixtures (file://) et de figer l'heure dans les tests
+GTFS_URL="${ILEVIA_GTFS_URL:-https://media.ilevia.fr/opendata/gtfs.zip}"
+RT_URL="${ILEVIA_RT_URL:-https://proxy.transport.data.gouv.fr/resource/ilevia-lille-gtfs-rt}"
+GBFS_URL="${ILEVIA_GBFS_URL:-https://media.ilevia.fr/opendata}"
 CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/ilevia"
 GTFS_MAX_AGE_MIN=1440
 GTFS_RETRY_MIN=60
@@ -98,7 +99,7 @@ velo() {
 	[ -n "$1" ] || die "précise un nom de station, ex : ilevia velo rihour"
 	fetch "$GBFS_URL/station_information.json" "$TMP/info.json" || die "V'Lille injoignable"
 	fetch "$GBFS_URL/station_status.json" "$TMP/status.json" || die "V'Lille injoignable"
-	jq -r -n --arg q "$1" --slurpfile info "$TMP/info.json" --slurpfile status "$TMP/status.json" '
+	jq -r -n --arg q "$1" --argjson clock "${ILEVIA_NOW:-null}" --slurpfile info "$TMP/info.json" --slurpfile status "$TMP/status.json" '
 		def fold: ascii_downcase
 			| gsub("[àâäÀÂÄ]"; "a") | gsub("[éèêëÉÈÊË]"; "e") | gsub("[îïÎÏ]"; "i")
 			| gsub("[ôöÔÖ]"; "o") | gsub("[ùûüÙÛÜ]"; "u") | gsub("[çÇ]"; "c")
@@ -113,7 +114,7 @@ velo() {
 			   elif ($s.is_installed and $s.is_renting) | not then "  ⛔ station hors service"
 			   else "  🚲 \($s.num_bikes_available) vélo(s) dispo   🅿️  \($s.num_docks_available) place(s) libre(s)"
 				+ (if $s.is_returning then "" else "   ⚠️  dépôt impossible" end)
-				+ "\n  maj il y a \(((now - $s.last_reported) / 60 | floor)) min"
+				+ "\n  maj il y a \(((($clock // now) - $s.last_reported) / 60 | floor)) min"
 			   end) + "\n"
 		  end'
 }
@@ -321,7 +322,7 @@ def departures(gtfs, rt_path, line, query, direction, count):
         die(f"aucun arrêt de la ligne {route['route_short_name']} ne correspond à « {query} » "
             "(relance sans arrêt pour voir la liste)")
 
-    now = datetime.now(TZ)
+    now = datetime.fromtimestamp(int(os.environ["ILEVIA_NOW"]), TZ) if os.environ.get("ILEVIA_NOW") else datetime.now(TZ)
     now_ts = now.timestamp()
     rt = read_rt(rt_path, trips.keys()) if rt_path else {}
 

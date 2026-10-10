@@ -1,0 +1,16 @@
+ilevia : flux temps réel indisponible, horaires théoriques uniquement
+
+10 — Gambetta  (GAMBETTA 59130 LAMBERSART)
+  → Lille Gare Lille Flandres
+     00:07  dans 17 min    🕒 théorique
+     00:37  dans 47 min    🕒 théorique
+     08:01  dans 8 h 11    🕒 théorique
+  → Lomme Lomme Hegel
+     00:14  dans 24 min    🕒 théorique
+     00:46  dans 56 min    🕒 théorique
+     21:43  dans 21 h 53   🕒 théorique
+  → Lille Chu - Centre O. Lambret
+     07:36  dans 7 h 46    🕒 théorique
+     08:08  dans 8 h 18    🕒 théorique
+     08:39  dans 8 h 49    🕒 théorique
+[exit 0]

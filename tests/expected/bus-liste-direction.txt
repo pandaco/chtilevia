@@ -1,0 +1,34 @@
+Ligne 10 — LOMME HEGEL-CHU O LAMBRET/ LILLE FLANDRES
+
+  Direction Lomme Lomme Hegel :
+    • Gare Lille Flandres
+    • Lycee Pasteur
+    • Ramadier
+    • Les Bateliers
+    • Pont Neuf
+    • Voltaire
+    • Magasin
+    • Esplanade
+    • Pont Royal
+    • Canon D'Or
+    • Gambetta
+    • Jussieu
+    • Clouet
+    • Avenue De Gaulle
+    • Liberte
+    • Lambersart Bourg
+    • La Carnoy
+    • Hotel De Ville
+    • Victoire
+    • Lavoisier
+    • Lomme-Lambersart
+    • Hotel De Ville
+    • Anatole France
+    • Croix Du Temple
+    • Egalite
+    • Marais
+    • Lamy
+    • Leo Lagrange
+    • Blanchisseurs
+    • Lomme Hegel
+[exit 0]

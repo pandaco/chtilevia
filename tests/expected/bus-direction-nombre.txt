@@ -1,0 +1,17 @@
+
+10 — Eglise Du Marais  (EGLISE DU MARAIS 59160 LOMME)
+  → Lille Gare Lille Flandres
+     12:51  dans 5 min     ⏱  temps réel
+     13:14  dans 28 min    ⏱  temps réel
+     13:20  dans 35 min    ⏱  temps réel
+     13:36  dans 50 min    🕒 théorique
+     13:52  dans 1 h 06    🕒 théorique
+
+10 — Marais  (LOMME MARAIS 59160 LOMME)
+  → Lille Gare Lille Flandres
+     12:53  dans 7 min     ⏱  temps réel
+     13:15  dans 30 min    ⏱  temps réel
+     13:22  dans 37 min    ⏱  temps réel
+     13:38  dans 52 min    🕒 théorique
+     13:54  dans 1 h 08    🕒 théorique
+[exit 0]
