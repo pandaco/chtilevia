@@ -1,0 +1,475 @@
+#!/bin/sh
+# ilevia — prochains passages Ilévia (bus, tram, métro) et dispo V'Lille, en ligne de commande.
+# Dépendances : curl, jq, unzip, python3 (bibliothèque standard uniquement).
+set -eu
+
+GTFS_URL="https://media.ilevia.fr/opendata/gtfs.zip"
+RT_URL="https://proxy.transport.data.gouv.fr/resource/ilevia-lille-gtfs-rt"
+GBFS_URL="https://media.ilevia.fr/opendata"
+CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/ilevia"
+GTFS_MAX_AGE_MIN=1440
+
+usage() {
+	cat <<'EOF'
+Usage :
+  ilevia bus <ligne> [arrêt] [-d direction] [-n nombre]   ex : ilevia bus 10 gambetta -d flandres -n 5
+  ilevia tram [arrêt] [-d direction] [-n nombre]          ex : ilevia tram croise laroche -d roubaix
+  ilevia metro <1|2> [arrêt] [-d direction] [-n nombre]   ex : ilevia metro 1 republique -d chu   (théorique)
+  ilevia velo <station>                                   ex : ilevia velo rihour
+  ilevia update                                           re-télécharge le référentiel GTFS
+
+Sans arrêt, la liste des arrêts de la ligne est affichée.
+-d / --direction / --vers : ne garde que les courses dont la destination contient ce texte.
+-n / --nombre : nombre de passages affichés par direction (3 par défaut).
+La recherche ignore la casse et les accents.
+EOF
+}
+
+die() {
+	printf 'ilevia : %s\n' "$*" >&2
+	exit 1
+}
+
+need() {
+	for cmd in "$@"; do
+		command -v "$cmd" >/dev/null 2>&1 || die "commande requise introuvable : $cmd"
+	done
+}
+
+fetch() {
+	curl -fsSL --max-time 30 -o "$2" "$1"
+}
+
+TMP=$(mktemp -d "${TMPDIR:-/tmp}/ilevia.XXXXXX")
+trap 'rm -rf "$TMP"' EXIT INT TERM
+
+# Vrai si le fichier $1 existe et a moins de $2 minutes
+fresh() {
+	[ -f "$1" ] && [ -z "$(find "$1" -mmin +"$2" 2>/dev/null)" ]
+}
+
+# Télécharge le GTFS et reconstruit l'index si absent, trop vieux ou si $1 = force.
+gtfs_refresh() {
+	if [ "${1:-}" != force ] && [ -f "$CACHE/gtfs/stamp" ]; then
+		fresh "$CACHE/gtfs/stamp" "$GTFS_MAX_AGE_MIN" && return 0
+	fi
+	need unzip
+	printf 'Mise à jour du référentiel GTFS…\n' >&2
+	if ! fetch "$GTFS_URL" "$TMP/gtfs.zip" || ! unzip -q -o "$TMP/gtfs.zip" -d "$TMP/gtfs"; then
+		# Réseau KO : on garde l'ancien cache s'il existe
+		[ -f "$CACHE/gtfs/stamp" ] || die "téléchargement du GTFS impossible ($GTFS_URL)"
+		printf 'ilevia : GTFS non mis à jour, utilisation du cache existant\n' >&2
+		return 0
+	fi
+	run_py index "$TMP/gtfs"
+	mkdir -p "$CACHE"
+	rm -rf "$CACHE/gtfs.old"
+	[ -d "$CACHE/gtfs" ] && mv "$CACHE/gtfs" "$CACHE/gtfs.old"
+	mv "$TMP/gtfs" "$CACHE/gtfs"
+	rm -rf "$CACHE/gtfs.old"
+	touch "$CACHE/gtfs/stamp"
+}
+
+# Prochains passages : $1 = nom court de la ligne GTFS, $2 = recherche d'arrêt (optionnelle),
+# $3 = recherche de direction (optionnelle), $4 = nombre de passages par direction
+departures() {
+	need python3
+	gtfs_refresh
+	rt=""
+	case "$1" in
+	M1 | M2) ;; # pas de temps réel métro en open data
+	*)
+		if fetch "$RT_URL" "$TMP/rt.pb"; then
+			rt="$TMP/rt.pb"
+		else
+			printf 'ilevia : flux temps réel indisponible, horaires théoriques uniquement\n' >&2
+		fi
+		;;
+	esac
+	run_py departures "$CACHE/gtfs" "$rt" "$1" "$2" "$3" "$4"
+}
+
+velo() {
+	need jq
+	[ -n "$1" ] || die "précise un nom de station, ex : ilevia velo rihour"
+	fetch "$GBFS_URL/station_information.json" "$TMP/info.json" || die "V'Lille injoignable"
+	fetch "$GBFS_URL/station_status.json" "$TMP/status.json" || die "V'Lille injoignable"
+	jq -r -n --arg q "$1" --slurpfile info "$TMP/info.json" --slurpfile status "$TMP/status.json" '
+		def fold: ascii_downcase
+			| gsub("[àâäÀÂÄ]"; "a") | gsub("[éèêëÉÈÊË]"; "e") | gsub("[îïÎÏ]"; "i")
+			| gsub("[ôöÔÖ]"; "o") | gsub("[ùûüÙÛÜ]"; "u") | gsub("[çÇ]"; "c")
+			| gsub("[^a-z0-9]+"; " ") | ltrimstr(" ") | rtrimstr(" ");
+		($status[0].data.stations | map({key: .station_id, value: .}) | from_entries) as $st
+		| ($q | fold) as $needle
+		| [$info[0].data.stations[] | select(.name | fold | contains($needle))]
+		| if length == 0 then "Aucune station V'\''Lille ne correspond à « \($q) ».\n" | halt_error(1)
+		  else .[] | . as $i | ($st[$i.station_id] // {}) as $s
+			| "\($i.name)  (\($i.capacity) bornes)\n"
+			+ (if ($s | length) == 0 then "  ⚠️  statut indisponible"
+			   elif ($s.is_installed and $s.is_renting) | not then "  ⛔ station hors service"
+			   else "  🚲 \($s.num_bikes_available) vélo(s) dispo   🅿️  \($s.num_docks_available) place(s) libre(s)"
+				+ (if $s.is_returning then "" else "   ⚠️  dépôt impossible" end)
+				+ "\n  maj il y a \(((now - $s.last_reported) / 60 | floor)) min"
+			   end) + "\n"
+		  end'
+}
+
+run_py() {
+	python3 -I - "$@" <<'PY'
+import csv, os, sys, time, unicodedata
+from collections import defaultdict
+from datetime import datetime, timedelta
+
+try:
+    from zoneinfo import ZoneInfo
+    TZ = ZoneInfo("Europe/Paris")
+except Exception:  # pas de base tz : heure locale de la machine
+    TZ = None
+
+
+def die(msg):
+    print(f"ilevia : {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+def fold(s):
+    # Minuscules, sans accents ni ponctuation, pour une recherche tolérante
+    s = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode().lower()
+    return " ".join("".join(c if c.isalnum() else " " for c in s).split())
+
+
+def rows(path):
+    with open(path, newline="", encoding="utf-8-sig") as f:
+        yield from csv.DictReader(f)
+
+
+def to_sec(hms):
+    h, m, s = hms.split(":")
+    return int(h) * 3600 + int(m) * 60 + int(s)
+
+
+# --- Index : découpe stop_times.txt (53 Mo) en un petit fichier par ligne ---
+
+def build_index(gtfs):
+    route_of = {r["trip_id"]: r["route_id"] for r in rows(f"{gtfs}/trips.txt")}
+    os.makedirs(f"{gtfs}/idx", exist_ok=True)
+    out = {}
+    try:
+        for r in rows(f"{gtfs}/stop_times.txt"):
+            route = route_of.get(r["trip_id"])
+            if route is None:
+                continue
+            f = out.get(route)
+            if f is None:
+                f = out[route] = open(f"{gtfs}/idx/{route}.tsv", "w", encoding="utf-8")
+            f.write(f'{r["trip_id"]}\t{r["stop_id"]}\t{r["stop_sequence"]}\t{r["departure_time"] or r["arrival_time"]}\n')
+    finally:
+        for f in out.values():
+            f.close()
+
+
+# --- Décodeur protobuf minimal pour GTFS-Realtime ---
+
+def varint(b, i):
+    r = s = 0
+    while True:
+        x = b[i]
+        i += 1
+        r |= (x & 0x7F) << s
+        s += 7
+        if x < 128:
+            return r, i
+
+
+def pb(b):
+    # Renvoie {numéro de champ: [valeurs]} ; les champs length-delimited restent en bytes
+    i, out = 0, defaultdict(list)
+    while i < len(b):
+        key, i = varint(b, i)
+        field, wire = key >> 3, key & 7
+        if wire == 0:
+            v, i = varint(b, i)
+        elif wire == 2:
+            n, i = varint(b, i)
+            v, i = b[i:i + n], i + n
+        elif wire == 1:
+            v, i = b[i:i + 8], i + 8
+        elif wire == 5:
+            v, i = b[i:i + 4], i + 4
+        else:
+            raise ValueError(f"wire type {wire} non géré")
+        out[field].append(v)
+    return out
+
+
+def signed(v):
+    return v - (1 << 64) if v >= 1 << 63 else v
+
+
+def read_rt(path, trip_ids):
+    """trip_id -> {"cancelled": bool, "stops": {stop_id: (time|None, delay|None)}, "last": stop_id}"""
+    trips = {}
+    feed = pb(open(path, "rb").read())
+    for ent in feed[2]:
+        for tu_raw in pb(ent)[3]:
+            tu = pb(tu_raw)
+            trip = pb(tu[1][0]) if tu[1] else {}
+            tid = trip[1][0].decode() if trip.get(1) else ""
+            if tid not in trip_ids:
+                continue
+            info = {"cancelled": trip.get(4, [0])[0] == 3, "stops": {}, "last": None}
+            for stu_raw in tu[2]:
+                stu = pb(stu_raw)
+                if not stu.get(4) or stu.get(5, [0])[0] == 1:  # pas d'arrêt ou arrêt SKIPPED
+                    continue
+                sid = stu[4][0].decode()
+                ev = pb((stu.get(3) or stu.get(2))[0]) if (stu.get(3) or stu.get(2)) else {}
+                t = ev[2][0] if ev.get(2) else None
+                d = signed(ev[1][0]) if ev.get(1) else None
+                info["stops"][sid] = (t, d)
+                info["last"] = sid
+            trips[tid] = info
+    return trips
+
+
+# --- Prochains passages ---
+
+def rt_times(stl, info, dates):
+    """Horaires temps réel d'une course : le flux ne donne que les prochains arrêts,
+    le dernier retard connu est donc propagé aux arrêts suivants (règle GTFS-RT).
+    Les arrêts précédant la première mise à jour sont considérés comme déjà passés."""
+    known = [(sec, info["stops"][sid]) for _, sid, sec in stl if sid in info["stops"]]
+    if not known:
+        return {}
+    # Jour de service : celui qui colle le mieux au premier horaire temps réel
+    sec0, (t0, d0) = known[0]
+    base = min((midnight(d) for d in dates), key=lambda b: abs((t0 or b + sec0 + (d0 or 0)) - b - sec0))
+    out, delay = {}, None
+    for _, sid, sec in stl:
+        theo = base + sec
+        t, d = info["stops"].get(sid, (None, None))
+        if t is None and d is not None:
+            t = theo + d
+        if t is not None:
+            delay = t - theo
+            out[sid] = t
+        elif delay is not None:
+            out[sid] = theo + delay
+    return out
+
+
+def service_dates(now):
+    # La veille peut courir après minuit (horaires > 24:00:00) ; le lendemain sert
+    # quand on demande plus de passages qu'il n'en reste ce soir
+    today = now.date()
+    return [today - timedelta(days=1), today, today + timedelta(days=1)]
+
+
+def midnight(d):
+    # Origine des horaires GTFS : « midi moins 12 h » du jour de service
+    noon = datetime(d.year, d.month, d.day, 12, tzinfo=TZ)
+    return noon.timestamp() - 12 * 3600
+
+
+def departures(gtfs, rt_path, line, query, direction, count):
+    count = int(count)
+    route = next((r for r in rows(f"{gtfs}/routes.txt") if r["route_short_name"].upper() == line.upper()), None)
+    if route is None:
+        die(f"ligne inconnue : {line}")
+    rid = route["route_id"]
+
+    trips = {r["trip_id"]: r for r in rows(f"{gtfs}/trips.txt") if r["route_id"] == rid}
+    if direction:
+        # Filtre sur la destination affichée (headsign) des courses
+        wanted_dir = fold(direction)
+        kept = {tid: t for tid, t in trips.items() if wanted_dir in fold(t["trip_headsign"])}
+        if not kept:
+            heads = sorted({t["trip_headsign"] for t in trips.values() if t["trip_headsign"]})
+            die(f"aucune direction de la ligne {route['route_short_name']} ne correspond à « {direction} »\n"
+                + "directions possibles :\n" + "\n".join(f"  • {h}" for h in heads))
+        trips = kept
+    stops = {r["stop_id"]: r for r in rows(f"{gtfs}/stops.txt")}
+    sched = defaultdict(list)  # trip_id -> [(seq, stop_id, secondes)]
+    with open(f"{gtfs}/idx/{rid}.tsv", encoding="utf-8") as f:
+        for ln in f:
+            tid, sid, seq, hms = ln.rstrip("\n").split("\t")
+            sched[tid].append((int(seq), sid, to_sec(hms)))
+
+    def area(sid):
+        s = stops.get(sid, {})
+        return s.get("parent_station") or sid
+
+    def area_name(aid):
+        return stops.get(aid, {}).get("stop_name", aid)
+
+    if not query:
+        list_stops(route, trips, sched, area, area_name)
+        return
+
+    needle = fold(query)
+    matched = defaultdict(set)  # zone d'arrêt -> stop_ids desservis par la ligne
+    for tid in trips:  # seulement les courses retenues (filtre de direction)
+        for _, sid, _ in sched.get(tid, []):
+            aid = area(sid)
+            if needle in fold(area_name(aid)) or needle in fold(stops.get(sid, {}).get("stop_name", "")):
+                matched[aid].add(sid)
+    if not matched:
+        die(f"aucun arrêt de la ligne {route['route_short_name']} ne correspond à « {query} » "
+            "(relance sans arrêt pour voir la liste)")
+
+    now = datetime.now(TZ)
+    now_ts = now.timestamp()
+    rt = read_rt(rt_path, trips.keys()) if rt_path else {}
+
+    active = defaultdict(set)  # service_id -> dates actives (veille / jour J / lendemain)
+    wanted = {d.strftime("%Y%m%d"): d for d in service_dates(now)}
+    with open(f"{gtfs}/calendar_dates.txt", encoding="utf-8-sig") as f:
+        for ln in f:
+            parts = ln.rstrip("\r\n").split(",")
+            if len(parts) == 3 and parts[1] in wanted and parts[2] == "1":
+                active[parts[0]].add(wanted[parts[1]])
+
+    all_sids = set().union(*matched.values())
+    events = defaultdict(set)  # stop_id -> {(timestamp, destination, temps_réel)}
+    for tid, trip in trips.items():
+        stl = sorted(sched.get(tid, []))
+        if not stl:
+            continue
+        dest = trip["trip_headsign"] or area_name(area(stl[-1][1]))
+        info = rt.get(tid)
+        if info is None:
+            for d in active.get(trip["service_id"], ()):
+                base = midnight(d)
+                for _, sid, sec in stl:
+                    if sid in all_sids:
+                        events[sid].add((base + sec, dest, False))
+            continue
+        if info["cancelled"]:
+            continue
+        for sid, t in rt_times(stl, info, active.get(trip["service_id"]) or service_dates(now)).items():
+            if sid in all_sids:
+                events[sid].add((t, dest, True))
+
+    for aid, sids in sorted(matched.items(), key=lambda kv: area_name(kv[0])):
+        events_here = sorted(e for sid in sids for e in events[sid] if e[0] >= now_ts - 30)
+        s = stops.get(aid, {})
+        print(f"\n{route['route_short_name']} — {area_name(aid)}  ({s.get('stop_desc', '').strip(' -')})")
+        if not events_here:
+            print("  aucun passage prévu")
+            continue
+        by_dest = defaultdict(list)
+        for e in events_here:
+            by_dest[e[1]].append(e)
+        for dest, evs in sorted(by_dest.items(), key=lambda kv: kv[1][0][0]):
+            print(f"  → {dest}")
+            for t, _, live in evs[:count]:
+                mins = round((t - now_ts) / 60)
+                if mins <= 0:
+                    when = "à l'approche"
+                elif mins < 60:
+                    when = f"dans {mins} min"
+                else:
+                    when = f"dans {mins // 60} h {mins % 60:02d}"
+                hhmm = datetime.fromtimestamp(t, TZ).strftime("%H:%M")
+                print(f"     {hhmm}  {when:<14} {'⏱  temps réel' if live else '🕒 théorique'}")
+
+
+def list_stops(route, trips, sched, area, area_name):
+    # Pour chaque sens, la course la plus longue donne l'ordre des arrêts
+    best = {}
+    for tid, trip in trips.items():
+        d = trip["direction_id"]
+        if tid in sched and len(sched[tid]) > len(sched.get(best.get(d), [])):
+            best[d] = tid
+    print(f"Ligne {route['route_short_name']} — {route['route_desc']}")
+    for _, tid in sorted(best.items()):
+        print(f"\n  Direction {trips[tid]['trip_headsign']} :")
+        seen = []
+        for _, sid, _ in sorted(sched[tid]):
+            name = area_name(area(sid))
+            if not seen or seen[-1] != name:
+                seen.append(name)
+                print(f"    • {name}")
+
+
+mode = sys.argv[1]
+if mode == "index":
+    build_index(sys.argv[2])
+elif mode == "departures":
+    departures(*sys.argv[2:8])
+PY
+}
+
+[ $# -ge 1 ] || {
+	usage
+	exit 1
+}
+cmd=$1
+shift
+
+# Sépare les mots de l'arrêt de l'option -d/--direction/--vers, placée n'importe où
+transit() {
+	line=$1
+	shift
+	stop=""
+	direction=""
+	count=3
+	while [ $# -gt 0 ]; do
+		case "$1" in
+		-d | --direction | --vers)
+			[ $# -ge 2 ] || die "option $1 : précise une direction, ex : $1 flandres"
+			direction=$2
+			shift 2
+			;;
+		--direction=* | --vers=*)
+			direction=${1#*=}
+			shift
+			;;
+		-n | --nombre)
+			[ $# -ge 2 ] || die "option $1 : précise un nombre, ex : $1 5"
+			count=$2
+			shift 2
+			;;
+		--nombre=*)
+			count=${1#*=}
+			shift
+			;;
+		*)
+			stop="${stop:+$stop }$1"
+			shift
+			;;
+		esac
+	done
+	case "$count" in
+	'' | *[!0-9]* | 0) die "nombre de passages invalide : « $count » (entier ≥ 1 attendu)" ;;
+	esac
+	departures "$line" "$stop" "$direction" "$count"
+}
+
+case "$cmd" in
+bus)
+	[ $# -ge 1 ] || die "précise une ligne, ex : ilevia bus 10"
+	transit "$@"
+	;;
+tram) transit TRAM "$@" ;;
+metro | métro)
+	case "${1:-}" in
+	1 | m1 | M1) line=M1 ;;
+	2 | m2 | M2) line=M2 ;;
+	*) die "ligne de métro : 1 ou 2" ;;
+	esac
+	shift
+	transit "$line" "$@"
+	;;
+velo | vélo | vlille) velo "$*" ;;
+update)
+	need python3
+	gtfs_refresh force
+	printf 'Référentiel GTFS à jour dans %s\n' "$CACHE/gtfs"
+	;;
+-h | --help | help) usage ;;
+*)
+	usage >&2
+	exit 1
+	;;
+esac
