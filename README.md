@@ -163,28 +163,113 @@ Le Python est embarqué via un heredoc (`run_py`) et lancé en mode isolé (`pyt
 
 ### Tests
 
+Deux outils vérifient le script. Ils ne servent pas à l'usage quotidien, seulement **après
+chaque modification**, pour s'assurer qu'on n'a rien cassé.
+
 ```sh
-tests/run.sh                      # tests de non-régression (hors ligne, ~5 s)
-shellcheck ilevia tests/run.sh    # paquet shellcheck
+tests/run.sh                      # tests de non-régression : 21 cas, hors ligne, ~5 s
+shellcheck ilevia tests/run.sh    # analyse du shell (paquet shellcheck)
 ```
 
-Les tests n'utilisent pas le réseau. Ils lancent `ilevia` sur des **fixtures figées**
-(`tests/fixtures/`) à une **heure figée**, puis comparent stdout, stderr et le code retour à
-`tests/expected/<cas>.txt`. Ils couvrent le temps réel avec propagation du retard, le passage de minuit,
-le service du lendemain, l'absence de flux temps réel, les filtres `-d` / `-n`, V'Lille et les erreurs.
+**Avant chaque commit**, les deux doivent passer : `tests/run.sh` doit afficher `0 échec(s)`, et
+`shellcheck` ne doit rien afficher.
+
+#### Pourquoi des tests « figés » ?
+
+Les horaires changent chaque minute : en lançant `ilevia bus 10 marais` à la main, impossible de
+savoir si « 12:53 dans 7 min » est juste ou faux, puisque la bonne réponse change sans arrêt.
+Les tests figent donc le monde :
+
+1. **Données figées** : une copie des flux enregistrée à un instant précis (`tests/fixtures/`).
+2. **Heure figée** : le script croit qu'on est à cet instant-là (variable `ILEVIA_NOW`).
+3. **Réponses de référence** : la sortie correcte de chaque commande, relue et enregistrée une fois
+   pour toutes (`tests/expected/<cas>.txt`).
+
+`tests/run.sh` relance chaque commande dans ces conditions et compare sa sortie (stdout, stderr et
+code retour) à la référence. Les mêmes entrées doivent toujours donner exactement la même sortie.
 
 | Fichier | Rôle |
 |---|---|
-| `tests/run.sh` | Liste des cas (`nom \| heure \| flux temps réel \| arguments`) et comparaison des sorties |
-| `tests/fixtures/` | Sous-ensemble du GTFS (lignes 10, tram, M1 ; 10–12/10/2026), 2 instantanés GTFS-RT (12:46 et 00:00), V'Lille |
-| `tests/expected/` | Sorties attendues |
-| `tests/make_fixtures.py` | Régénère les fixtures à partir d'un instantané brut des flux |
+| `tests/run.sh` | Liste des cas et comparaison des sorties |
+| `tests/fixtures/gtfs.zip` | Extrait du GTFS : lignes 10, tram et M1, du 10 au 12/10/2026 |
+| `tests/fixtures/rt-midi.pb`, `rt-minuit.pb` | Flux temps réel enregistrés le 10/10/2026 à 12:46 et le 11/10 à 00:00 |
+| `tests/fixtures/station_*.json` | Quelques stations V'Lille, dont une hors service |
+| `tests/expected/` | Sorties de référence, une par cas |
+| `tests/make_fixtures.py` | Régénère les fixtures à partir d'un nouvel instantané (voir plus bas) |
 
-**Ajouter un cas** : ajouter une ligne dans `CASES` de `tests/run.sh`, lancer `tests/run.sh --update`,
-puis **relire** le fichier `tests/expected/<cas>.txt` généré avant de le commiter : `--update`
-enregistre la sortie actuelle telle quelle, y compris si elle est fausse.
+Cas couverts : temps réel avec propagation du retard, passage de minuit, service du lendemain,
+flux temps réel indisponible, fin de service du métro, filtres `-d` et `-n` (y compris placés avant
+l'arrêt), V'Lille (accents, plusieurs résultats, station hors service) et les messages d'erreur.
 
-Variables d'environnement utilisées par les tests (utilisables aussi à la main) :
+#### Lire un échec
+
+Quand une sortie diffère de la référence, le cas est marqué `ÉCHEC` avec la différence :
+`-` = ligne attendue absente, `+` = ligne en trop.
+
+```
+ÉCHEC bus-options-avant-arret  (ilevia bus 10 --nombre=2 --vers=chu marais)
+      -10 — Eglise Du Marais  (EGLISE DU MARAIS 59160 LOMME)
+      -  aucun passage prévu
+      -
+       10 — Marais  (LOMME MARAIS 59160 LOMME)
+```
+
+Deux situations possibles :
+
+- **Régression** (la nouvelle sortie est fausse) : corriger le script, relancer `tests/run.sh`.
+- **Changement voulu** (nouveau format d'affichage, correction de bug…) : régénérer les
+  références avec `tests/run.sh --update`, puis **relire** `git diff tests/expected/` : seules les
+  différences attendues doivent apparaître. `--update` enregistre la sortie actuelle telle quelle,
+  y compris si elle est fausse : sans relecture, un bug deviendrait la référence.
+
+#### Ajouter un cas
+
+1. Ajouter une ligne dans la variable `CASES` de `tests/run.sh` :
+   ```
+   nom-du-cas | MIDI | rt-midi.pb | bus 10 gambetta -d flandres
+   ```
+   - **heure** : `MIDI` (10/10 12:46), `SOIR` (10/10 23:50) ou `MINUIT` (11/10 00:00) ;
+   - **flux temps réel** : `rt-midi.pb`, `rt-minuit.pb`, ou `aucun` pour simuler un flux indisponible ;
+   - **arguments** : ceux passés à `ilevia`. Seules les lignes 10, tram et M1 existent dans les fixtures.
+2. Lancer `tests/run.sh --update`.
+3. Relire `tests/expected/nom-du-cas.txt` et vérifier que la sortie est juste.
+4. Commiter le cas avec sa référence.
+
+#### Régénérer les fixtures
+
+Rarement nécessaire : par exemple si Ilévia change le format de ses données. Les fixtures doivent
+alors être recréées à partir d'un nouvel instantané :
+
+```sh
+mkdir -p tmp/raw && cd tmp/raw
+curl -sL -o gtfs.zip https://media.ilevia.fr/opendata/gtfs.zip && unzip -o gtfs.zip
+curl -s -o rt-midi.pb https://proxy.transport.data.gouv.fr/resource/ilevia-lille-gtfs-rt     # en journée
+curl -s -o rt-minuit.pb https://proxy.transport.data.gouv.fr/resource/ilevia-lille-gtfs-rt   # vers minuit
+curl -s -O https://media.ilevia.fr/opendata/station_information.json
+curl -s -O https://media.ilevia.fr/opendata/station_status.json
+cd ../..
+python3 -I tests/make_fixtures.py tmp/raw tests/fixtures
+```
+
+Ensuite :
+
+1. Adapter `DATES` dans `tests/make_fixtures.py` aux jours de l'instantané, puis relancer la commande ci-dessus.
+2. Adapter `MIDI`, `SOIR` et `MINUIT` dans `tests/run.sh` aux heures de capture (timestamp epoch, ex. `date -j -f '%Y-%m-%d %H:%M:%S' '2026-10-10 12:46:00' +%s`).
+3. Lancer `tests/run.sh --update` et relire **toutes** les références.
+
+Les données brutes restent dans `tmp/` et ne sont pas versionnées.
+
+#### shellcheck
+
+Le shell est piégeux : une variable sans guillemets ou un nom de fichier avec un espace peuvent
+faire planter le script dans certains cas seulement. `shellcheck` relit le script sans l'exécuter et
+signale ces pièges, comme un correcteur orthographique. S'il n'affiche rien, aucun problème n'a été
+trouvé. Un avertissement volontairement ignoré doit être justifié en commentaire
+(`# shellcheck disable=SC2086 # raison`).
+
+#### Variables d'environnement
+
+Utilisées par les tests, elles servent aussi à reproduire un cas à la main :
 
 | Variable | Effet |
 |---|---|
@@ -192,7 +277,18 @@ Variables d'environnement utilisées par les tests (utilisables aussi à la main
 | `ILEVIA_GTFS_URL`, `ILEVIA_RT_URL`, `ILEVIA_GBFS_URL` | Sources de données (acceptent `file://`) |
 | `XDG_CACHE_HOME` | Emplacement du cache (`$XDG_CACHE_HOME/ilevia`) |
 
-Pour tester à la main le comportement hors ligne : `HTTPS_PROXY=http://127.0.0.1:9 ./ilevia bus 10 gambetta`
+```sh
+# Rejouer à la main le cas « bus-temps-reel », sans toucher au cache habituel
+XDG_CACHE_HOME=/tmp/ilevia-test ILEVIA_NOW=1791629160 \
+ILEVIA_GTFS_URL="file://$PWD/tests/fixtures/gtfs.zip" \
+ILEVIA_RT_URL="file://$PWD/tests/fixtures/rt-midi.pb" \
+./ilevia bus 10 marais
+```
+
+Au premier lancement, le message « Mise à jour du référentiel GTFS… » s'affiche en plus, le temps
+de construire le cache de test.
+
+Pour tester le comportement hors ligne : `HTTPS_PROXY=http://127.0.0.1:9 ./ilevia bus 10 gambetta`
 (le script doit retomber sur les horaires théoriques).
 
 ### Commits
