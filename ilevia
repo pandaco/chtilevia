@@ -8,6 +8,7 @@ RT_URL="https://proxy.transport.data.gouv.fr/resource/ilevia-lille-gtfs-rt"
 GBFS_URL="https://media.ilevia.fr/opendata"
 CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/ilevia"
 GTFS_MAX_AGE_MIN=1440
+GTFS_RETRY_MIN=60
 
 usage() {
 	cat <<'EOF'
@@ -52,6 +53,8 @@ fresh() {
 gtfs_refresh() {
 	if [ "${1:-}" != force ] && [ -f "$CACHE/gtfs/stamp" ]; then
 		fresh "$CACHE/gtfs/stamp" "$GTFS_MAX_AGE_MIN" && return 0
+		# Cache périmé mais dernier essai raté récemment : on ne retente pas à chaque appel
+		fresh "$CACHE/gtfs/retry" "$GTFS_RETRY_MIN" && return 0
 	fi
 	need unzip
 	printf 'Mise à jour du référentiel GTFS…\n' >&2
@@ -59,6 +62,7 @@ gtfs_refresh() {
 		# Réseau KO : on garde l'ancien cache s'il existe
 		[ -f "$CACHE/gtfs/stamp" ] || die "téléchargement du GTFS impossible ($GTFS_URL)"
 		printf 'ilevia : GTFS non mis à jour, utilisation du cache existant\n' >&2
+		touch "$CACHE/gtfs/retry"
 		return 0
 	fi
 	run_py index "$TMP/gtfs"
