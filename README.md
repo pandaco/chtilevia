@@ -379,15 +379,21 @@ les implémentations de chti (script shell, serveur MCP, cœur Kotlin).
 
 #### Cœur Kotlin (`libs/`)
 
-La logique de chti est en cours de portage en Kotlin Multiplatform, en architecture hexagonale, pour
-l'appli Android et le serveur MCP. Chaque module compile pour la JVM, Android et Node.js.
+La logique de chti est portée en Kotlin Multiplatform, en architecture hexagonale, pour l'appli
+Android et le serveur MCP. Le cœur se comporte exactement comme le script : il passe les mêmes cas
+du contrat (`libs/contract`), au caractère près. Chaque module compile pour la JVM, Android et Node.js.
 
 | Module | Rôle | Dépend de |
 |---|---|---|
-| `libs/domain` | Modèles et règles métier purs (ex. `fold`, la recherche sans accents) | rien |
-| `libs/application` | Cas d'usage et ports (GTFS, temps réel, V'Lille, horloge…) | domain |
-| `libs/presentation` | Mise en forme : texte, phrases à lire, JSON du contrat | application |
-| `libs/core-tests` | Règles d'architecture (Konsist) et harnais du contrat | tout |
+| `libs/domain` | Modèles et règles métier purs : recherche sans accents, jours de service, fusion théorique / temps réel | rien (sauf kotlinx-datetime) |
+| `libs/application` | Cas d'usage, ports (GTFS, temps réel, V'Lille, favoris, horloge), grammaire des commandes, phrase libre | domain |
+| `libs/presentation` | Sorties texte, voix et JSON du contrat ; `Chti`, équivalent de la commande | application |
+| `libs/adapters` | GTFS statique (cache partagé avec le shell), GTFS-RT, V'Lille (GBFS), fichier des favoris | application |
+| `libs/core-tests` | Règles d'architecture (Konsist) et contrat joué par le cœur | tout |
+
+Le décodage des données (CSV, protobuf, JSON) est commun à toutes les cibles. L'accès aux fichiers et
+au réseau n'existe pour l'instant que sur la JVM et Android (source set `jvmShared`) ; Node viendra
+avec le serveur MCP v2.
 
 Prérequis : un JDK 17 ou plus récent (`JAVA_HOME`) et le SDK Android (`ANDROID_HOME`, installé avec
 Android Studio). Gradle (wrapper `./gradlew`) est lancé par Nx ; on peut aussi l'appeler directement :
@@ -395,14 +401,18 @@ Android Studio). Gradle (wrapper `./gradlew`) est lancé par Nx ; on peut aussi 
 ```sh
 ./gradlew test                       # tests de tous les modules, sur toutes les cibles
 ./gradlew :domain:jvmTest            # une seule cible
+./gradlew :core-tests:test           # architecture et contrat
 ```
 
 - La configuration commune des modules est dans `buildSrc/` (plugin `chtilevia.kmp-library`) et les
   versions dans `gradle/libs.versions.toml`.
-- `libs/core-tests` fait échouer le build si une couche importe ce qu'elle ne devrait pas (le domaine
-  n'importe que la bibliothèque standard, l'application que le domaine…).
-- Le harnais du contrat crée un test par cas de `libs/contract/cases.txt` ; tant qu'un cas n'est pas
-  porté en Kotlin, il est marqué « ignoré », pour voir ce qu'il reste à faire.
+- `libs/core-tests` fait échouer le build si une couche importe ce qu'elle ne devrait pas (le cœur
+  n'importe que la bibliothèque standard et kotlinx-datetime, la présentation pas les adaptateurs…).
+- Le contrat crée un test par cas de `libs/contract/cases.txt` : `Chti` est lancé sur les fixtures,
+  à l'heure du cas, et sa sortie doit être identique à `expected/<cas>.txt`.
+- Nx ne met pas en cache les tâches Gradle : les entrées qu'il en déduit ne suivent pas les
+  dépendances (une sortie d'avant un changement de version pouvait être restaurée). Gradle a son
+  propre cache et sait ce qui est à jour.
 
 #### Pourquoi des tests « figés » ?
 
