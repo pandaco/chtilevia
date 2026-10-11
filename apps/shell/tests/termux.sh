@@ -1,12 +1,12 @@
 #!/bin/sh
-# Teste la partie Android (android/) sans téléphone : les commandes Termux (pkg, termux-*) sont
+# Teste la partie Termux (apps/shell/termux/) sans téléphone : les commandes Termux (pkg, termux-*) sont
 # remplacées par des imitations qui notent ce qu'on leur demande, et chti tourne sur les fixtures.
 #
-# Usage : tests/android.sh
+# Usage : apps/shell/tests/termux.sh
 set -eu
 
-ROOT=$(cd "$(dirname "$0")/.." && pwd)
-FIX="$ROOT/tests/fixtures"
+ROOT=$(cd "$(dirname "$0")/../../.." && pwd)
+FIX="$ROOT/libs/contract/fixtures"
 WORK=$(mktemp -d "${TMPDIR:-/tmp}/chti-android.XXXXXX")
 trap 'rm -rf "$WORK"' EXIT INT TERM
 
@@ -31,7 +31,7 @@ fake() {
 }
 ln -s /bin/sh "$PREFIX/bin/sh" # Termux fournit son sh dans $PREFIX/bin
 
-# Données figées, comme tests/run.sh (12:46 le 10/10/2026)
+# Données figées, comme tests/contract.sh (12:46 le 10/10/2026)
 export XDG_CACHE_HOME="$WORK/cache" XDG_CONFIG_HOME="$WORK/config"
 export CHTI_GTFS_URL="file://$FIX/gtfs.zip" CHTI_GBFS_URL="file://$FIX"
 export CHTI_RT_URL="file://$FIX/rt-midi.pb" CHTI_NOW=1791629160
@@ -61,7 +61,7 @@ check() { # check <description> <texte attendu dans le journal>
 
 # 1. Installation
 : >"$LOG"
-sh "$ROOT/android/install.sh" >"$WORK/install.out" 2>&1 || {
+sh "$ROOT/apps/shell/termux/install.sh" >"$WORK/install.out" 2>&1 || {
 	cat "$WORK/install.out"
 	exit 1
 }

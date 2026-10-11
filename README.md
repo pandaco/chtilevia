@@ -36,8 +36,8 @@ Rihour  (32 bornes)
 Dépendances : `curl`, `jq`, `unzip`, `python3` (bibliothèque standard uniquement).
 
 ```sh
-chmod +x chti
-ln -s "$PWD/chti" ~/.local/bin/chti   # optionnel, pour l'avoir dans le PATH
+chmod +x apps/shell/chti
+ln -s "$PWD/apps/shell/chti" ~/.local/bin/chti   # optionnel, pour l'avoir dans le PATH
 ```
 
 ## Appels possibles
@@ -112,7 +112,7 @@ rentrer-velo: velo gare lille europe --prendre
 rentrer-velo: velo la madeleine gare --deposer
 ```
 
-- Un fichier d'exemple est fourni : `mkdir -p ~/.config/chtilevia && cp exemples/favoris ~/.config/chtilevia/`.
+- Un fichier d'exemple est fourni : `mkdir -p ~/.config/chtilevia && cp apps/shell/exemples/favoris ~/.config/chtilevia/`.
 - La commande est celle que tu taperais après `chti`. `#` commence un commentaire.
 - Le nom ignore la casse ; il ne doit pas reprendre une commande existante (`bus`, `velo`…).
 - Si une des commandes échoue, les suivantes sont quand même lancées et le code retour vaut `1`.
@@ -207,7 +207,7 @@ En résumé :
 
 ```sh
 # dans Termux, une fois le projet copié dans ~/chtilevia
-sh ~/chtilevia/android/install.sh      # outils, commandes, boutons du widget, horaires
+sh ~/chtilevia/apps/shell/termux/install.sh   # outils, commandes, boutons du widget, horaires
 nano ~/.config/chtilevia/favoris       # tes trajets (fichier local, jamais publié)
 ```
 
@@ -261,7 +261,7 @@ Python embarqué dans `chti`.
   sans suivi temps réel sont affichées en théorique.
 - Sans réseau, le script retombe sur les horaires théoriques du cache ; V'Lille nécessite le réseau.
 - Android : pas de mot d'activation (« Hey Google ») : il faut toucher le widget. L'installation n'a pas encore été validée sur un vrai
-  téléphone, seulement en simulant les commandes Termux (`tests/android.sh`).
+  téléphone, seulement en simulant les commandes Termux (`apps/shell/tests/termux.sh`).
 
 ## Contribution
 
@@ -289,10 +289,10 @@ Autour du script :
 
 | Fichier | Rôle |
 |---|---|
-| `exemples/favoris` | Favoris d'exemple, copiés par l'installeur Android |
-| `android/install.sh` | Installation dans Termux |
-| `android/widget.sh` | Devient la commande `chti-widget` : lance `chti --voix`, puis notification et, selon le mode, voix (`--parle`) ou message à l'écran (`--ecrit`) |
-| `android/shortcuts/*` | Les boutons du widget (un fichier = un bouton) |
+| `apps/shell/exemples/favoris` | Favoris d'exemple, copiés par l'installeur Android |
+| `apps/shell/termux/install.sh` | Installation dans Termux |
+| `apps/shell/termux/widget.sh` | Devient la commande `chti-widget` : lance `chti --voix`, puis notification et, selon le mode, voix (`--parle`) ou message à l'écran (`--ecrit`) |
+| `apps/shell/termux/shortcuts/*` | Les boutons du widget (un fichier = un bouton) |
 | `docs/android.md` | Guide d'installation et d'utilisation sur Android |
 
 ### Conventions
@@ -308,9 +308,9 @@ Deux outils vérifient le script. Ils ne servent pas à l'usage quotidien, seule
 chaque modification**, pour s'assurer qu'on n'a rien cassé.
 
 ```sh
-tests/run.sh          # tests de non-régression : 55 cas, hors ligne, ~5 s
-tests/android.sh      # partie Android, avec des commandes Termux simulées : 19 vérifications
-shellcheck chti tests/*.sh android/*.sh android/shortcuts/*   # analyse du shell (paquet shellcheck)
+apps/shell/tests/contract.sh   # tests de non-régression : 55 cas, hors ligne, ~5 s
+apps/shell/tests/termux.sh     # partie Android, avec des commandes Termux simulées : 19 vérifications
+shellcheck apps/shell/chti apps/shell/tests/*.sh apps/shell/termux/*.sh apps/shell/termux/shortcuts/*   # analyse du shell (paquet shellcheck)
 ```
 
 **Avant chaque commit**, tout doit passer : les deux scripts de test doivent afficher `0 échec(s)`,
@@ -322,24 +322,24 @@ Les horaires changent chaque minute : en lançant `chti bus 10 marais` à la mai
 savoir si « 12:53 dans 7 min » est juste ou faux, puisque la bonne réponse change sans arrêt.
 Les tests figent donc le monde :
 
-1. **Données figées** : une copie des flux enregistrée à un instant précis (`tests/fixtures/`).
+1. **Données figées** : une copie des flux enregistrée à un instant précis (`libs/contract/fixtures/`).
 2. **Heure figée** : le script croit qu'on est à cet instant-là (variable `CHTI_NOW`).
 3. **Réponses de référence** : la sortie correcte de chaque commande, relue et enregistrée une fois
-   pour toutes (`tests/expected/<cas>.txt`).
+   pour toutes (`libs/contract/expected/<cas>.txt`).
 
-`tests/run.sh` relance chaque commande dans ces conditions et compare sa sortie (stdout, stderr et
+`apps/shell/tests/contract.sh` relance chaque commande dans ces conditions et compare sa sortie (stdout, stderr et
 code retour) à la référence. Les mêmes entrées doivent toujours donner exactement la même sortie.
 Les chemins absolus sont remplacés par `<racine>` pour que les références soient valables sur toutes les machines.
 
 | Fichier | Rôle |
 |---|---|
-| `tests/run.sh` | Liste des cas et comparaison des sorties |
-| `tests/fixtures/gtfs.zip` | Extrait du GTFS : lignes 10, tram et M1, du 10 au 12/10/2026 |
-| `tests/fixtures/rt-midi.pb`, `rt-minuit.pb` | Flux temps réel enregistrés le 10/10/2026 à 12:46 et le 11/10 à 00:00 |
-| `tests/fixtures/station_*.json` | Quelques stations V'Lille, dont une hors service |
-| `tests/fixtures/config/chtilevia/favoris` | Favoris de test |
-| `tests/expected/` | Sorties de référence, une par cas |
-| `tests/make_fixtures.py` | Régénère les fixtures à partir d'un nouvel instantané (voir plus bas) |
+| `apps/shell/tests/contract.sh` | Liste des cas et comparaison des sorties |
+| `libs/contract/fixtures/gtfs.zip` | Extrait du GTFS : lignes 10, tram et M1, du 10 au 12/10/2026 |
+| `libs/contract/fixtures/rt-midi.pb`, `rt-minuit.pb` | Flux temps réel enregistrés le 10/10/2026 à 12:46 et le 11/10 à 00:00 |
+| `libs/contract/fixtures/station_*.json` | Quelques stations V'Lille, dont une hors service |
+| `libs/contract/fixtures/config/chtilevia/favoris` | Favoris de test |
+| `libs/contract/expected/` | Sorties de référence, une par cas |
+| `libs/contract/make_fixtures.py` | Régénère les fixtures à partir d'un nouvel instantané (voir plus bas) |
 
 Cas couverts : temps réel avec propagation du retard, passage de minuit, service du lendemain,
 flux temps réel indisponible, fin de service du métro, filtres `-d` et `-n` (y compris placés avant
@@ -363,31 +363,31 @@ Quand une sortie diffère de la référence, le cas est marqué `ÉCHEC` avec la
 
 Deux situations possibles :
 
-- **Régression** (la nouvelle sortie est fausse) : corriger le script, relancer `tests/run.sh`.
+- **Régression** (la nouvelle sortie est fausse) : corriger le script, relancer `apps/shell/tests/contract.sh`.
 - **Changement voulu** (nouveau format d'affichage, correction de bug…) : régénérer les
-  références avec `tests/run.sh --update`, puis **relire** `git diff tests/expected/` : seules les
+  références avec `apps/shell/tests/contract.sh --update`, puis **relire** `git diff libs/contract/expected/` : seules les
   différences attendues doivent apparaître. `--update` enregistre la sortie actuelle telle quelle,
   y compris si elle est fausse : sans relecture, un bug deviendrait la référence.
 
 #### Ajouter un cas
 
-1. Ajouter une ligne dans la liste `CASES` de `tests/run.sh` (apostrophes autorisées) :
+1. Ajouter une ligne dans la liste `CASES` de `apps/shell/tests/contract.sh` (apostrophes autorisées) :
    ```
    nom-du-cas | MIDI | rt-midi.pb | bus 10 gambetta -d flandres
    ```
    - **heure** : `MIDI` (10/10 12:46), `SOIR` (10/10 23:50) ou `MINUIT` (11/10 00:00) ;
    - **flux temps réel** : `rt-midi.pb`, `rt-minuit.pb`, ou `aucun` pour simuler un flux indisponible ;
    - **arguments** : ceux passés à `chti`. Seules les lignes 10, tram et M1 existent dans les fixtures.
-2. Lancer `tests/run.sh --update`.
-3. Relire `tests/expected/nom-du-cas.txt` et vérifier que la sortie est juste.
+2. Lancer `apps/shell/tests/contract.sh --update`.
+3. Relire `libs/contract/expected/nom-du-cas.txt` et vérifier que la sortie est juste.
 4. Commiter le cas avec sa référence.
 
 #### Tests Android simulés
 
-`tests/android.sh` vérifie la partie `android/` sans téléphone. Il crée un faux Termux dans un dossier
+`apps/shell/tests/termux.sh` vérifie la partie Termux (`apps/shell/termux/`) sans téléphone. Il crée un faux Termux dans un dossier
 temporaire : `pkg`, `termux-speech-to-text`, `termux-notification`, `termux-toast` et `termux-tts-speak` y sont
 remplacés par de petites imitations qui notent ce qu'on leur demande dans un journal. Le test lance
-ensuite le vrai `android/install.sh`, puis les vrais boutons du widget sur les fixtures, et vérifie
+ensuite le vrai `apps/shell/termux/install.sh`, puis les vrais boutons du widget sur les fixtures, et vérifie
 dans le journal ce qui aurait été affiché et lu à voix haute : *Parler* doit répondre à la voix, les
 boutons de favoris par écrit et jamais à la voix. La phrase « entendue » est fixée par
 la variable `FAKE_PHRASE`.
@@ -405,14 +405,14 @@ curl -s -o rt-minuit.pb https://proxy.transport.data.gouv.fr/resource/ilevia-lil
 curl -s -O https://media.ilevia.fr/opendata/station_information.json
 curl -s -O https://media.ilevia.fr/opendata/station_status.json
 cd ../..
-python3 -I tests/make_fixtures.py tmp/raw tests/fixtures
+python3 -I libs/contract/make_fixtures.py tmp/raw libs/contract/fixtures
 ```
 
 Ensuite :
 
-1. Adapter `DATES` dans `tests/make_fixtures.py` aux jours de l'instantané, puis relancer la commande ci-dessus.
-2. Adapter `MIDI`, `SOIR` et `MINUIT` dans `tests/run.sh` aux heures de capture (timestamp epoch, ex. `date -j -f '%Y-%m-%d %H:%M:%S' '2026-10-10 12:46:00' +%s`).
-3. Lancer `tests/run.sh --update` et relire **toutes** les références.
+1. Adapter `DATES` dans `libs/contract/make_fixtures.py` aux jours de l'instantané, puis relancer la commande ci-dessus.
+2. Adapter `MIDI`, `SOIR` et `MINUIT` dans `apps/shell/tests/contract.sh` aux heures de capture (timestamp epoch, ex. `date -j -f '%Y-%m-%d %H:%M:%S' '2026-10-10 12:46:00' +%s`).
+3. Lancer `apps/shell/tests/contract.sh --update` et relire **toutes** les références.
 
 Les données brutes restent dans `tmp/` et ne sont pas versionnées.
 
@@ -438,15 +438,15 @@ Utilisées par les tests, elles servent aussi à reproduire un cas à la main :
 ```sh
 # Rejouer à la main le cas « bus-temps-reel », sans toucher au cache habituel
 XDG_CACHE_HOME=/tmp/chti-test CHTI_NOW=1791629160 \
-CHTI_GTFS_URL="file://$PWD/tests/fixtures/gtfs.zip" \
-CHTI_RT_URL="file://$PWD/tests/fixtures/rt-midi.pb" \
-./chti bus 10 marais
+CHTI_GTFS_URL="file://$PWD/libs/contract/fixtures/gtfs.zip" \
+CHTI_RT_URL="file://$PWD/libs/contract/fixtures/rt-midi.pb" \
+apps/shell/chti bus 10 marais
 ```
 
 Au premier lancement, le message « Mise à jour du référentiel GTFS… » s'affiche en plus, le temps
 de construire le cache de test.
 
-Pour tester le comportement hors ligne : `HTTPS_PROXY=http://127.0.0.1:9 ./chti bus 10 gambetta`
+Pour tester le comportement hors ligne : `HTTPS_PROXY=http://127.0.0.1:9 apps/shell/chti bus 10 gambetta`
 (le script doit retomber sur les horaires théoriques).
 
 ### Commits

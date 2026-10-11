@@ -1,14 +1,16 @@
 #!/bin/sh
 # Tests de non-régression : chaque cas lance chti sur les fixtures figées, à une heure figée,
-# et compare la sortie (stdout + stderr + code retour) à tests/expected/<cas>.txt.
+# et compare la sortie (stdout + stderr + code retour) à libs/contract/expected/<cas>.txt.
 #
-# Usage : tests/run.sh            lance les tests
-#         tests/run.sh --update   régénère les sorties attendues (à relire avant de commiter !)
+# Usage : apps/shell/tests/contract.sh            lance les tests
+#         apps/shell/tests/contract.sh --update   régénère les sorties attendues (à relire avant de commiter !)
 set -eu
 
-ROOT=$(cd "$(dirname "$0")/.." && pwd)
-FIX="$ROOT/tests/fixtures"
-EXPECTED="$ROOT/tests/expected"
+# ROOT : racine du dépôt (remplacée par <racine> dans les sorties) ; données dans libs/contract
+ROOT=$(cd "$(dirname "$0")/../../.." && pwd)
+CHTI="$ROOT/apps/shell/chti"
+FIX="$ROOT/libs/contract/fixtures"
+EXPECTED="$ROOT/libs/contract/expected"
 WORK=$(mktemp -d "${TMPDIR:-/tmp}/chti-tests.XXXXXX")
 trap 'rm -rf "$WORK"' EXIT INT TERM
 
@@ -26,7 +28,7 @@ export CHTI_GBFS_URL="file://$FIX"
 export XDG_CONFIG_HOME="$FIX/config"
 
 # Index GTFS construit une fois pour tous les cas
-"$ROOT/chti" update >/dev/null 2>&1
+"$CHTI" update >/dev/null 2>&1
 
 # nom | heure | flux temps réel (fichier de fixtures, ou « aucun ») | arguments
 # (heredoc plutôt qu'une chaîne entre apostrophes : les phrases peuvent en contenir)
@@ -110,7 +112,7 @@ while IFS='|' read -r name clock rt args; do
 	set -- $args
 	out="$WORK/$name.txt"
 	code=0
-	CHTI_NOW=$now CHTI_RT_URL=$rt_url "$ROOT/chti" "$@" >"$out" 2>&1 || code=$?
+	CHTI_NOW=$now CHTI_RT_URL=$rt_url "$CHTI" "$@" >"$out" 2>&1 || code=$?
 	# Le message d'erreur de curl varie selon les versions : on ne garde que celui de chti.
 	# Les chemins absolus dépendent de la machine : on les remplace par <racine>.
 	grep -v '^curl: ' "$out" | sed "s|$ROOT|<racine>|g" >"$out.tmp" || true

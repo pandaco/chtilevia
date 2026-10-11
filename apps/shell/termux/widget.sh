@@ -2,7 +2,7 @@
 # chti-widget — lance chti pour un bouton du widget Termux et rend la réponse :
 #   --parle : notification + lecture à voix haute (question posée à la voix)
 #   --ecrit : notification + message à l'écran, sans voix (raccourci touché)
-# Installé dans Termux par android/install.sh.
+# Installé dans Termux par apps/shell/termux/install.sh.
 #   ex : chti-widget --parle vocal "métro 1 république vers chu"    chti-widget --ecrit travail
 set -u
 

@@ -1,14 +1,14 @@
 #!/bin/sh
 # Installe chtilevia dans Termux (Android) : dépendances, commandes chti et chti-widget,
 # favoris d'exemple, raccourcis du widget Termux:Widget, puis construction du cache.
-# Usage, depuis le dépôt cloné dans Termux : sh android/install.sh
+# Usage, depuis le dépôt cloné dans Termux : sh apps/shell/termux/install.sh
 set -eu
 
 if [ -z "${PREFIX:-}" ] || [ ! -d "$PREFIX/bin" ]; then
 	echo "À lancer dans Termux (variable PREFIX absente)." >&2
 	exit 1
 fi
-ROOT=$(cd "$(dirname "$0")/.." && pwd)
+ROOT=$(cd "$(dirname "$0")/.." && pwd) # apps/shell
 SHELL_PATH="$PREFIX/bin/sh"
 
 echo "1/5 Dépendances"
@@ -17,7 +17,7 @@ pkg install -y python curl jq unzip findutils gawk termux-api
 echo "2/5 Commandes chti et chti-widget"
 # /bin/sh n'existe pas sous Termux : les scripts sont lancés via le sh de Termux
 printf '#!%s\nexec sh "%s/chti" "$@"\n' "$SHELL_PATH" "$ROOT" >"$PREFIX/bin/chti"
-sed "1s|.*|#!$SHELL_PATH|" "$ROOT/android/widget.sh" >"$PREFIX/bin/chti-widget"
+sed "1s|.*|#!$SHELL_PATH|" "$ROOT/termux/widget.sh" >"$PREFIX/bin/chti-widget"
 chmod +x "$PREFIX/bin/chti" "$PREFIX/bin/chti-widget"
 
 echo "3/5 Favoris"
@@ -33,7 +33,7 @@ fi
 echo "4/5 Raccourcis du widget"
 # tasks/ : lancés en arrière-plan, sans ouvrir de terminal
 mkdir -p "$HOME/.shortcuts/tasks"
-for shortcut in "$ROOT"/android/shortcuts/*; do
+for shortcut in "$ROOT"/termux/shortcuts/*; do
 	target="$HOME/.shortcuts/tasks/$(basename "$shortcut")"
 	sed "1s|.*|#!$SHELL_PATH|" "$shortcut" >"$target"
 	chmod +x "$target"

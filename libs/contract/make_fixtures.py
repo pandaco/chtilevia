@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Génère tests/fixtures/ à partir d'un instantané brut des flux Ilévia.
+"""Génère libs/contract/fixtures/ à partir d'un instantané brut des flux Ilévia.
 
-Usage : python3 -I tests/make_fixtures.py <dossier_brut> <dossier_fixtures>
+Usage : python3 -I libs/contract/make_fixtures.py <dossier_brut> <dossier_fixtures>
 
 <dossier_brut> contient : le GTFS extrait (*.txt), rt-midi.pb, rt-minuit.pb,
 station_information.json et station_status.json. On n'en garde qu'un sous-ensemble

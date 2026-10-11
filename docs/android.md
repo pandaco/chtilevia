@@ -5,7 +5,7 @@ quotidien : **à la voix** ou **en un clic** depuis l'écran d'accueil. Tout tou
 pas de serveur, pas de compte, pas d'abonnement.
 
 > Ce guide n'a pas encore été déroulé sur un vrai téléphone, seulement avec des commandes Termux
-> simulées (`tests/android.sh`). Si une étape ne se passe pas comme décrit, voir [Dépannage](#dépannage).
+> simulées (`apps/shell/tests/termux.sh`). Si une étape ne se passe pas comme décrit, voir [Dépannage](#dépannage).
 
 ## Ce que tu obtiens
 
@@ -64,7 +64,7 @@ Si le projet est sur un dépôt git (GitHub…), tu peux aussi faire :
 De préférence en Wi-Fi (il télécharge ~9 Mo d'horaires) :
 
 ```sh
-sh ~/chtilevia/android/install.sh
+sh ~/chtilevia/apps/shell/termux/install.sh
 ```
 
 Il affiche 5 étapes :
@@ -175,7 +175,7 @@ Toutes les commandes du [README](../README.md#appels-possibles) marchent aussi d
 - **Les horaires** se mettent à jour tout seuls, une fois par jour, au premier usage.
   Pour forcer : `chti update`.
 - **Le projet** : recopie la nouvelle archive comme à l'étape 2 (en remplaçant l'ancien dossier :
-  `rm -rf ~/chtilevia` avant `unzip`), puis relance `sh ~/chtilevia/android/install.sh`.
+  `rm -rf ~/chtilevia` avant `unzip`), puis relance `sh ~/chtilevia/apps/shell/termux/install.sh`.
   Tes favoris sont conservés.
 
 ## Dépannage
@@ -191,7 +191,7 @@ Toutes les commandes du [README](../README.md#appels-possibles) marchent aussi d
 | « L'arrêt … n'est pas desservi … en direction de … » | L'arrêt existe, mais la ligne n'y passe que dans d'autres directions (souvent une ligne à sens unique à cet endroit) : la réponse les cite. |
 | Le premier usage de la journée est lent | Normal : les horaires sont retéléchargés et préparés une fois par jour (quelques secondes). |
 | Les heures sont décalées | Vérifie le fuseau horaire du téléphone (Paramètres → Date et heure). |
-| `chti : commande requise introuvable` | Un outil manque : relance `sh ~/chtilevia/android/install.sh`. |
+| `chti : commande requise introuvable` | Un outil manque : relance `sh ~/chtilevia/apps/shell/termux/install.sh`. |
 
 ## Désinstaller
 
