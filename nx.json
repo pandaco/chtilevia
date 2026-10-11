@@ -22,6 +22,9 @@
         "default",
         "^default"
       ]
+    },
+    "@nx/gradle:gradle": {
+      "cache": false
     }
   },
   "plugins": [
