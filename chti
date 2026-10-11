@@ -18,7 +18,7 @@ Usage :
   chti bus <ligne> [arrêt] [-d direction] [-n nombre]   ex : chti bus 10 gambetta -d flandres -n 5
   chti tram [arrêt] [-d direction] [-n nombre]          ex : chti tram croise laroche -d roubaix
   chti metro <1|2> [arrêt] [-d direction] [-n nombre]   ex : chti metro 1 republique -d chu   (théorique)
-  chti velo <station>                                   ex : chti velo rihour
+  chti velo <station> [--prendre|--deposer]             ex : chti velo rihour --prendre
   chti <favori>                                         ex : chti travail
   chti favoris                                          liste les favoris
   chti update                                           re-télécharge le référentiel GTFS
@@ -27,6 +27,7 @@ Sans arrêt, la liste des arrêts de la ligne est affichée.
 -d / --direction / --vers : ne garde que les courses dont la destination contient ce texte.
   « vers » s'écrit aussi sans tiret : chti tram croise laroche vers roubaix
 -n / --nombre : nombre de passages affichés par direction (3 par défaut).
+--prendre / --deposer : n'affiche que les vélos disponibles / que les places libres.
 La recherche ignore la casse et les accents.
 EOF
 }
@@ -98,12 +99,22 @@ departures() {
 	run_py departures "$CACHE/gtfs" "$rt" "$1" "$2" "$3" "$4"
 }
 
+# V'Lille : $@ = mots du nom de station, avec --prendre (vélos seuls) ou --deposer (places seules)
 velo() {
 	need jq
-	[ -n "$1" ] || die "précise un nom de station, ex : chti velo rihour"
+	station=""
+	mode=tout
+	for word in "$@"; do
+		case "$word" in
+		--prendre) mode=prendre ;;
+		--deposer | --déposer) mode=deposer ;;
+		*) station="${station:+$station }$word" ;;
+		esac
+	done
+	[ -n "$station" ] || die "précise un nom de station, ex : chti velo rihour"
 	fetch "$GBFS_URL/station_information.json" "$TMP/info.json" || die "V'Lille injoignable"
 	fetch "$GBFS_URL/station_status.json" "$TMP/status.json" || die "V'Lille injoignable"
-	jq -r -n --arg q "$1" --argjson clock "${CHTI_NOW:-null}" --slurpfile info "$TMP/info.json" --slurpfile status "$TMP/status.json" '
+	jq -r -n --arg q "$station" --arg mode "$mode" --argjson clock "${CHTI_NOW:-null}" --slurpfile info "$TMP/info.json" --slurpfile status "$TMP/status.json" '
 		def fold: ascii_downcase
 			| gsub("[àâäÀÂÄ]"; "a") | gsub("[éèêëÉÈÊË]"; "e") | gsub("[îïÎÏ]"; "i")
 			| gsub("[ôöÔÖ]"; "o") | gsub("[ùûüÙÛÜ]"; "u") | gsub("[çÇ]"; "c")
@@ -113,12 +124,18 @@ velo() {
 		| [$info[0].data.stations[] | select(.name | fold | contains($needle))]
 		| if length == 0 then "Aucune station V'\''Lille ne correspond à « \($q) ».\n" | halt_error(1)
 		  else .[] | . as $i | ($st[$i.station_id] // {}) as $s
+			| "\n  maj il y a \(((($clock // now) - ($s.last_reported // 0)) / 60 | floor)) min" as $age
 			| "\($i.name)  (\($i.capacity) bornes)\n"
 			+ (if ($s | length) == 0 then "  ⚠️  statut indisponible"
-			   elif ($s.is_installed and $s.is_renting) | not then "  ⛔ station hors service"
+			   elif $s.is_installed | not then "  ⛔ station hors service"
+			   elif $mode == "prendre" then
+				(if $s.is_renting then "  🚲 \($s.num_bikes_available) vélo(s) dispo" + $age else "  ⛔ location impossible" end)
+			   elif $mode == "deposer" then
+				(if $s.is_returning then "  🅿️  \($s.num_docks_available) place(s) libre(s)" + $age else "  ⛔ dépôt impossible" end)
+			   elif $s.is_renting | not then "  ⛔ station hors service"
 			   else "  🚲 \($s.num_bikes_available) vélo(s) dispo   🅿️  \($s.num_docks_available) place(s) libre(s)"
 				+ (if $s.is_returning then "" else "   ⚠️  dépôt impossible" end)
-				+ "\n  maj il y a \(((($clock // now) - $s.last_reported) / 60 | floor)) min"
+				+ $age
 			   end) + "\n"
 		  end'
 }
@@ -514,7 +531,7 @@ metro | métro)
 	shift
 	transit "$line" "$@"
 	;;
-velo | vélo | vlille) velo "$*" ;;
+velo | vélo | vlille) velo "$@" ;;
 update)
 	need python3
 	gtfs_refresh force

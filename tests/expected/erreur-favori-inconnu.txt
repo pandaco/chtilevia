@@ -4,7 +4,7 @@ Usage :
   chti bus <ligne> [arrêt] [-d direction] [-n nombre]   ex : chti bus 10 gambetta -d flandres -n 5
   chti tram [arrêt] [-d direction] [-n nombre]          ex : chti tram croise laroche -d roubaix
   chti metro <1|2> [arrêt] [-d direction] [-n nombre]   ex : chti metro 1 republique -d chu   (théorique)
-  chti velo <station>                                   ex : chti velo rihour
+  chti velo <station> [--prendre|--deposer]             ex : chti velo rihour --prendre
   chti <favori>                                         ex : chti travail
   chti favoris                                          liste les favoris
   chti update                                           re-télécharge le référentiel GTFS
@@ -13,5 +13,6 @@ Sans arrêt, la liste des arrêts de la ligne est affichée.
 -d / --direction / --vers : ne garde que les courses dont la destination contient ce texte.
   « vers » s'écrit aussi sans tiret : chti tram croise laroche vers roubaix
 -n / --nombre : nombre de passages affichés par direction (3 par défaut).
+--prendre / --deposer : n'affiche que les vélos disponibles / que les places libres.
 La recherche ignore la casse et les accents.
 [exit 1]

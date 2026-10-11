@@ -7,5 +7,5 @@
 
 travail:      tram croise laroche vers roubaix -n 2
 
-rentrer-velo: velo gare lille europe
-rentrer-velo: velo la madeleine gare
+rentrer-velo: velo gare lille europe --prendre   # vélos dispo au départ
+rentrer-velo: velo la madeleine gare --deposer  # places libres à l'arrivée

@@ -1,9 +1,9 @@
 Gare Lille Europe  (32 bornes)
-  🚲 14 vélo(s) dispo   🅿️  18 place(s) libre(s)
+  🚲 14 vélo(s) dispo
   maj il y a 4 min
 
 La Madeleine Gare  (17 bornes)
-  🚲 4 vélo(s) dispo   🅿️  13 place(s) libre(s)
+  🅿️  13 place(s) libre(s)
   maj il y a 3 min
 
 [exit 0]

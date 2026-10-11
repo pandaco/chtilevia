@@ -51,6 +51,9 @@ velo-plusieurs          | MINUIT | aucun        | velo gare
 velo-accents            | MINUIT | aucun        | velo SAINTE HELENE
 velo-hors-service       | MINUIT | aucun        | velo port de lille
 erreur-velo             | MINUIT | aucun        | velo zzz
+velo-prendre            | MINUIT | aucun        | velo --prendre rihour
+velo-deposer            | MINUIT | aucun        | velo sainte helene --déposer
+velo-prendre-hs         | MINUIT | aucun        | velo port de lille --prendre
 bus-vers-sans-tiret     | MIDI   | rt-midi.pb   | bus 10 marais vers lille flandres -n 1
 favoris-liste           | MIDI   | aucun        | favoris
 favori-tram             | MIDI   | rt-midi.pb   | travail

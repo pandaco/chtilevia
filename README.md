@@ -52,6 +52,8 @@ ln -s "$PWD/chti" ~/.local/bin/chti   # optionnel, pour l'avoir dans le PATH
 | `chti tram [arrêt] [-d <direction>] [-n <nombre>]` | Idem pour le tramway (Lille ↔ Roubaix / Tourcoing) |
 | `chti metro <1\|2> [arrêt] [-d <direction>] [-n <nombre>]` | Idem pour le métro M1 ou M2 (horaires théoriques) |
 | `chti velo <station>` | Vélos disponibles et places libres des stations V'Lille correspondantes |
+| `chti velo <station> --prendre` | Seulement les vélos disponibles (pour partir) |
+| `chti velo <station> --deposer` | Seulement les places libres (pour rendre le vélo) |
 | `chti <favori>` | Lance la ou les commandes enregistrées sous ce nom (voir [Favoris](#favoris)) |
 | `chti favoris` | Liste les favoris |
 | `chti update` | Force le re-téléchargement du référentiel GTFS |
@@ -71,6 +73,9 @@ ln -s "$PWD/chti" ~/.local/bin/chti   # optionnel, pour l'avoir dans le PATH
 - **`-n <nombre>`** (alias `--nombre`, ou `--nombre=<nombre>`) : nombre de prochains passages affichés
   par direction, entier ≥ 1, **3 par défaut**. Si le service du jour ne suffit pas, les premiers
   départs du lendemain sont affichés. Combinable avec `-d`, dans n'importe quel ordre.
+- **`--prendre`** / **`--deposer`** (ou `--déposer`) : pour V'Lille, n'affiche que les vélos
+  disponibles, ou que les places libres. Indique aussi « location / dépôt impossible » si la station
+  le refuse.
 - **`metro`** accepte `1`, `2`, `m1`, `m2` ; `métro`, `vélo` et `vlille` sont acceptés comme alias.
 
 ### Exemples
@@ -100,8 +105,8 @@ Un favori donne un nom court à une ou plusieurs commandes : `chti travail` au l
 travail:      tram croise laroche vers roubaix -n 2
 
 # Rentrer à vélo : vélos au départ, places à l'arrivée (un nom répété = commandes enchaînées)
-rentrer-velo: velo gare lille europe
-rentrer-velo: velo la madeleine gare
+rentrer-velo: velo gare lille europe --prendre
+rentrer-velo: velo la madeleine gare --deposer
 ```
 
 - Un fichier d'exemple est fourni : `mkdir -p ~/.config/chtilevia && cp exemples/favoris ~/.config/chtilevia/`.
@@ -234,7 +239,7 @@ Les chemins absolus sont remplacés par `<racine>` pour que les références soi
 
 Cas couverts : temps réel avec propagation du retard, passage de minuit, service du lendemain,
 flux temps réel indisponible, fin de service du métro, filtres `-d` et `-n` (y compris placés avant
-l'arrêt), le mot `vers`, V'Lille (accents, plusieurs résultats, station hors service), les favoris
+l'arrêt), le mot `vers`, V'Lille (accents, plusieurs résultats, station hors service, `--prendre` / `--deposer`), les favoris
 (liste, enchaînement, casse du nom, commande en échec, favori inconnu) et les messages d'erreur.
 
 #### Lire un échec
