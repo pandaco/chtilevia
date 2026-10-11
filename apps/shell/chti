@@ -34,7 +34,9 @@ La recherche ignore la casse et les accents.
 EOF
 }
 
+# die <code> <message> : code stable (pour les machines), message en français (pour les humains)
 die() {
+	shift # le code ne sert qu'à la sortie JSON
 	if [ "${CHTI_VOIX:-}" = 1 ]; then
 		# Phrase à lire : majuscule initiale
 		printf '%s\n' "$*" | awk '{ print toupper(substr($0, 1, 1)) substr($0, 2) }' >&2
@@ -46,7 +48,7 @@ die() {
 
 need() {
 	for cmd in "$@"; do
-		command -v "$cmd" >/dev/null 2>&1 || die "commande requise introuvable : $cmd"
+		command -v "$cmd" >/dev/null 2>&1 || die missing_dependency "commande requise introuvable : $cmd"
 	done
 }
 
@@ -77,7 +79,7 @@ gtfs_refresh() {
 	printf 'Mise à jour du référentiel GTFS…\n' >&2
 	if ! fetch "$GTFS_URL" "$TMP/gtfs.zip" || ! unzip -q -o "$TMP/gtfs.zip" -d "$TMP/gtfs"; then
 		# Réseau KO : on garde l'ancien cache s'il existe
-		[ -f "$CACHE/gtfs/stamp" ] || die "téléchargement du GTFS impossible ($GTFS_URL)"
+		[ -f "$CACHE/gtfs/stamp" ] || die gtfs_unavailable "téléchargement du GTFS impossible ($GTFS_URL)"
 		printf 'chti : GTFS non mis à jour, utilisation du cache existant\n' >&2
 		touch "$CACHE/gtfs/retry"
 		return 0
@@ -123,9 +125,9 @@ velo() {
 		*) station="${station:+$station }$word" ;;
 		esac
 	done
-	[ -n "$station" ] || die "précise un nom de station, ex : chti velo rihour"
-	fetch "$GBFS_URL/station_information.json" "$TMP/info.json" || die "V'Lille injoignable"
-	fetch "$GBFS_URL/station_status.json" "$TMP/status.json" || die "V'Lille injoignable"
+	[ -n "$station" ] || die missing_station "précise un nom de station, ex : chti velo rihour"
+	fetch "$GBFS_URL/station_information.json" "$TMP/info.json" || die bike_service_unreachable "V'Lille injoignable"
+	fetch "$GBFS_URL/station_status.json" "$TMP/status.json" || die bike_service_unreachable "V'Lille injoignable"
 	jq -r -n --arg q "$station" --arg mode "$mode" --arg voice "${CHTI_VOIX:-0}" --argjson clock "${CHTI_NOW:-null}" --slurpfile info "$TMP/info.json" --slurpfile status "$TMP/status.json" '
 		def fold: ascii_downcase
 			| gsub("[àâäÀÂÄ]"; "a") | gsub("[éèêëÉÈÊË]"; "e") | gsub("[îïÎÏ]"; "i")
@@ -224,7 +226,10 @@ def bullet_list(title, items):
     return f"\n{title} :\n" + "\n".join(f"  • {i}" for i in items)
 
 
-def die(msg):
+def die(code, msg, hint=None):
+    # code : identifiant stable (sortie JSON) ; hint = (titre, clé, éléments) : suggestions listées
+    if hint:
+        msg += bullet_list(hint[0], hint[2])
     print(msg[:1].upper() + msg[1:] if VOICE else f"chti : {msg}", file=sys.stderr)
     sys.exit(1)
 
@@ -372,7 +377,7 @@ def departures(gtfs, rt_path, line, query, direction, count):
     count = int(count)
     route = next((r for r in rows(f"{gtfs}/routes.txt") if r["route_short_name"].upper() == line.upper()), None)
     if route is None:
-        die(f"ligne inconnue : {line}")
+        die("unknown_line", f"ligne inconnue : {line}")
     rid = route["route_id"]
 
     trips = {r["trip_id"]: r for r in rows(f"{gtfs}/trips.txt") if r["route_id"] == rid}
@@ -383,8 +388,9 @@ def departures(gtfs, rt_path, line, query, direction, count):
         kept = {tid: t for tid, t in trips.items() if wanted_dir in fold(t["trip_headsign"])}
         if not kept:
             heads = sorted({t["trip_headsign"] for t in trips.values() if t["trip_headsign"]})
-            die(f"aucune direction de la ligne {route['route_short_name']} ne correspond à « {direction} »"
-                + bullet_list("directions possibles", heads))
+            die("unknown_direction",
+                f"aucune direction de la ligne {route['route_short_name']} ne correspond à « {direction} »",
+                ("directions possibles", "directions", heads))
         trips = kept
     stops = {r["stop_id"]: r for r in rows(f"{gtfs}/stops.txt")}
     sched = defaultdict(list)  # trip_id -> [(seq, stop_id, secondes)]
@@ -402,7 +408,7 @@ def departures(gtfs, rt_path, line, query, direction, count):
 
     if not query:
         if VOICE:
-            die(f"Précise un arrêt, par exemple : {spoken_line(route).lower()} {area_name(area(next(iter(sched.values()))[0][1])).lower()}.")
+            die("missing_stop", f"Précise un arrêt, par exemple : {spoken_line(route).lower()} {area_name(area(next(iter(sched.values()))[0][1])).lower()}.")
         list_stops(route, trips, sched, area, area_name)
         return
 
@@ -426,10 +432,11 @@ def departures(gtfs, rt_path, line, query, direction, count):
             heads = sorted({t["trip_headsign"] for t in all_trips.values()
                             if t["trip_headsign"] and any(s in elsewhere for s in
                                                           {area(sid) for _, sid, _ in sched.get(t["trip_id"], [])})})
-            die(f"l'arrêt {names} n'est pas desservi par la ligne {route['route_short_name']} "
-                f"en direction de « {direction} »" + bullet_list("directions qui le desservent", heads))
+            die("stop_not_in_direction",
+                f"l'arrêt {names} n'est pas desservi par la ligne {route['route_short_name']} "
+                f"en direction de « {direction} »", ("directions qui le desservent", "directions", heads))
     if not matched:
-        die(f"aucun arrêt de la ligne {route['route_short_name']} ne correspond à « {query} » "
+        die("unknown_stop", f"aucun arrêt de la ligne {route['route_short_name']} ne correspond à « {query} » "
             "(relance sans arrêt pour voir la liste)")
 
     now = datetime.fromtimestamp(int(os.environ["CHTI_NOW"]), TZ) if os.environ.get("CHTI_NOW") else datetime.now(TZ)
@@ -590,7 +597,7 @@ def strip_leading(words, fillers):
 def parse_phrase(fav_path, phrase):
     words = fold(phrase).split()
     if not words:
-        die("Je n'ai rien entendu.")
+        die("empty_phrase", "Je n'ai rien entendu.")
     favorites = favorite_names(fav_path)
     # « vers » / « direction » / « en direction de » : le reste de la phrase est la direction
     direction = []
@@ -602,14 +609,14 @@ def parse_phrase(fav_path, phrase):
             break
     body = strip_leading(words, FILLERS)
     if not body:
-        die(f"Je n'ai pas compris « {phrase} ». {EXAMPLE}")
+        die("not_understood", f"Je n'ai pas compris « {phrase} ». {EXAMPLE}")
     if not direction and spoken_key(" ".join(body)) in favorites:
         return [favorites[spoken_key(" ".join(body))]]
 
     head, rest = body[0], body[1:]
     if head in ("bus", "ligne", "liane"):
         if not rest:
-            die(f"Quelle ligne ? {EXAMPLE}")
+            die("missing_line", f"Quelle ligne ? {EXAMPLE}")
         line = NUMBERS.get(" ".join(rest[:2]), None)
         if line:
             rest = rest[2:]
@@ -620,7 +627,7 @@ def parse_phrase(fav_path, phrase):
         args = ["bus", line.upper()]
     elif head in ("metro", "metros"):
         if not rest or NUMBERS.get(rest[0], rest[0]).lstrip("m") not in ("1", "2"):
-            die("Quel métro ? Dis par exemple : métro 1 république.")
+            die("unknown_metro", "Quel métro ? Dis par exemple : métro 1 république.")
         args, rest = ["metro", NUMBERS.get(rest[0], rest[0]).lstrip("m")], rest[1:]
     elif head in ("tram", "tramway"):
         args = ["tram"]
@@ -635,14 +642,14 @@ def parse_phrase(fav_path, phrase):
         rest = [w for w in rest if w not in ("pour", "un", "mon", "velo", "velos")]
         rest = strip_leading(rest, STOP_FILLERS)
         if not rest:
-            die("Quelle station ? Dis par exemple : vélo rihour.")
+            die("missing_station", "Quelle station ? Dis par exemple : vélo rihour.")
         return ["velo", *rest, *mode]
     else:
-        die(f"Je n'ai pas compris « {phrase} ». {EXAMPLE}")
+        die("not_understood", f"Je n'ai pas compris « {phrase} ». {EXAMPLE}")
 
     stop = strip_leading(rest, STOP_FILLERS)
     if not stop:
-        die(f"Quel arrêt ? Dis par exemple : {' '.join(args)} gambetta.")
+        die("missing_stop", f"Quel arrêt ? Dis par exemple : {' '.join(args)} gambetta.")
     return [*args, *stop, *(["-d", " ".join(direction)] if direction else [])]
 
 
@@ -691,7 +698,7 @@ transit() {
 			shift
 			;;
 		-d | --direction | --vers)
-			[ $# -ge 2 ] || die "option $1 : précise une direction, ex : $1 flandres"
+			[ $# -ge 2 ] || die missing_option_value "option $1 : précise une direction, ex : $1 flandres"
 			direction=$2
 			shift 2
 			;;
@@ -700,7 +707,7 @@ transit() {
 			shift
 			;;
 		-n | --nombre)
-			[ $# -ge 2 ] || die "option $1 : précise un nombre, ex : $1 5"
+			[ $# -ge 2 ] || die missing_option_value "option $1 : précise un nombre, ex : $1 5"
 			count=$2
 			shift 2
 			;;
@@ -719,14 +726,14 @@ transit() {
 		esac
 	done
 	case "$count" in
-	'' | *[!0-9]* | 0) die "nombre de passages invalide : « $count » (entier ≥ 1 attendu)" ;;
+	'' | *[!0-9]* | 0) die invalid_count "nombre de passages invalide : « $count » (entier ≥ 1 attendu)" ;;
 	esac
 	departures "$line" "$stop" "$direction" "$count"
 }
 
 case "$cmd" in
 bus)
-	[ $# -ge 1 ] || die "précise une ligne, ex : chti bus 10"
+	[ $# -ge 1 ] || die missing_line "précise une ligne, ex : chti bus 10"
 	transit "$@"
 	;;
 tram) transit TRAM "$@" ;;
@@ -734,7 +741,7 @@ metro | métro)
 	case "${1:-}" in
 	1 | m1 | M1) line=M1 ;;
 	2 | m2 | M2) line=M2 ;;
-	*) die "ligne de métro : 1 ou 2" ;;
+	*) die unknown_metro "ligne de métro : 1 ou 2" ;;
 	esac
 	shift
 	transit "$line" "$@"
@@ -769,7 +776,7 @@ PARSED
 		run_favorite "$cmd" || status=$?
 		[ "$status" -eq 2 ] || exit "$status"
 	fi
-	[ "${CHTI_VOIX:-}" = 1 ] && die "Je ne connais pas la commande ou le favori « $cmd »."
+	[ "${CHTI_VOIX:-}" = 1 ] && die unknown_command "Je ne connais pas la commande ou le favori « $cmd »."
 	printf 'chti : commande ou favori inconnu : %s (voir chti favoris)\n\n' "$cmd" >&2
 	usage >&2
 	exit 1
