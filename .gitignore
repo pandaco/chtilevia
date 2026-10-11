@@ -1,3 +1,7 @@
 tmp/
 node_modules/
 .nx/
+.gradle/
+build/
+.kotlin/
+local.properties

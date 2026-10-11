@@ -1,0 +1,8 @@
+# Versions exactes, publiées depuis au moins deux semaines au moment du choix
+[versions]
+kotlin = "2.4.20"
+agp = "9.4.1"
+
+[libraries]
+kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+android-gradle-plugin = { module = "com.android.tools.build:gradle", version.ref = "agp" }
