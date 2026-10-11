@@ -52,6 +52,8 @@ ln -s "$PWD/chti" ~/.local/bin/chti   # optionnel, pour l'avoir dans le PATH
 | `chti tram [arrêt] [-d <direction>] [-n <nombre>]` | Idem pour le tramway (Lille ↔ Roubaix / Tourcoing) |
 | `chti metro <1\|2> [arrêt] [-d <direction>] [-n <nombre>]` | Idem pour le métro M1 ou M2 (horaires théoriques) |
 | `chti velo <station>` | Vélos disponibles et places libres des stations V'Lille correspondantes |
+| `chti <favori>` | Lance la ou les commandes enregistrées sous ce nom (voir [Favoris](#favoris)) |
+| `chti favoris` | Liste les favoris |
 | `chti update` | Force le re-téléchargement du référentiel GTFS |
 | `chti help` | Affiche l'aide |
 
@@ -64,6 +66,8 @@ ln -s "$PWD/chti" ~/.local/bin/chti   # optionnel, pour l'avoir dans le PATH
 - **`-d <direction>`** (alias `--direction`, `--vers`, ou `--vers=<direction>`) : ne garde que les
   courses dont la destination contient ce texte. Placée n'importe où après la ligne.
   Une direction inconnue affiche la liste des directions possibles.
+  Le mot **`vers`** sans tiret marche aussi : tous les mots qui le suivent forment la direction
+  (`chti bus 10 gambetta vers lille flandres`).
 - **`-n <nombre>`** (alias `--nombre`, ou `--nombre=<nombre>`) : nombre de prochains passages affichés
   par direction, entier ≥ 1, **3 par défaut**. Si le service du jour ne suffit pas, les premiers
   départs du lendemain sont affichés. Combinable avec `-d`, dans n'importe quel ordre.
@@ -81,14 +85,38 @@ chti metro 1 republique -d chu
 chti metro 2 gare lille flandres -n 10   # les 10 prochaines rames dans chaque sens
 chti bus 10 gambetta -d flandres -n 5    # les 5 prochains bus vers Lille Flandres
 chti velo gare                       # toutes les stations V'Lille contenant « gare »
+chti tram croise laroche vers roubaix  # « vers » sans tiret
+chti travail                         # un favori
 ```
+
+### Favoris
+
+Un favori donne un nom court à une ou plusieurs commandes : `chti travail` au lieu de
+`chti tram croise laroche vers roubaix -n 2`. Ils sont lus dans `~/.config/chtilevia/favoris`
+(ou `$XDG_CONFIG_HOME/chtilevia/favoris`), au format `nom: commande` :
+
+```
+# Le tram pour aller au travail
+travail:      tram croise laroche vers roubaix -n 2
+
+# Rentrer à vélo : vélos au départ, places à l'arrivée (un nom répété = commandes enchaînées)
+rentrer-velo: velo gare lille europe
+rentrer-velo: velo la madeleine gare
+```
+
+- Un fichier d'exemple est fourni : `mkdir -p ~/.config/chtilevia && cp exemples/favoris ~/.config/chtilevia/`.
+- La commande est celle que tu taperais après `chti`. `#` commence un commentaire.
+- Le nom ignore la casse ; il ne doit pas reprendre une commande existante (`bus`, `velo`…).
+- Si une des commandes échoue, les suivantes sont quand même lancées et le code retour vaut `1`.
+- Attention aux directions trop larges : pour le bus 10, « vers lille » correspond aux deux sens
+  (Lille Flandres et Lille CHU). Vérifie avec `chti bus 10 -d lille`.
 
 ### Lecture du résultat
 
 - Les N prochains passages par direction (`-n`, 3 par défaut) ; au-delà d'une heure, l'attente
   s'affiche en heures (`dans 8 h 04`).
 - `⏱  temps réel` : horaire issu du suivi des véhicules ; `🕒 théorique` : horaire planifié.
-- Code retour `0` en cas de succès, `1` si ligne / arrêt / direction / station introuvable ou si le service est injoignable.
+- Code retour `0` en cas de succès, `1` si ligne / arrêt / direction / station / favori introuvable ou si le service est injoignable.
 
 ## Sources de données (open data, sans clé d'API)
 
@@ -192,6 +220,7 @@ Les tests figent donc le monde :
 
 `tests/run.sh` relance chaque commande dans ces conditions et compare sa sortie (stdout, stderr et
 code retour) à la référence. Les mêmes entrées doivent toujours donner exactement la même sortie.
+Les chemins absolus sont remplacés par `<racine>` pour que les références soient valables sur toutes les machines.
 
 | Fichier | Rôle |
 |---|---|
@@ -199,12 +228,14 @@ code retour) à la référence. Les mêmes entrées doivent toujours donner exac
 | `tests/fixtures/gtfs.zip` | Extrait du GTFS : lignes 10, tram et M1, du 10 au 12/10/2026 |
 | `tests/fixtures/rt-midi.pb`, `rt-minuit.pb` | Flux temps réel enregistrés le 10/10/2026 à 12:46 et le 11/10 à 00:00 |
 | `tests/fixtures/station_*.json` | Quelques stations V'Lille, dont une hors service |
+| `tests/fixtures/config/chtilevia/favoris` | Favoris de test |
 | `tests/expected/` | Sorties de référence, une par cas |
 | `tests/make_fixtures.py` | Régénère les fixtures à partir d'un nouvel instantané (voir plus bas) |
 
 Cas couverts : temps réel avec propagation du retard, passage de minuit, service du lendemain,
 flux temps réel indisponible, fin de service du métro, filtres `-d` et `-n` (y compris placés avant
-l'arrêt), V'Lille (accents, plusieurs résultats, station hors service) et les messages d'erreur.
+l'arrêt), le mot `vers`, V'Lille (accents, plusieurs résultats, station hors service), les favoris
+(liste, enchaînement, casse du nom, commande en échec, favori inconnu) et les messages d'erreur.
 
 #### Lire un échec
 
@@ -281,6 +312,7 @@ Utilisées par les tests, elles servent aussi à reproduire un cas à la main :
 | `CHTI_NOW` | Heure courante figée (timestamp epoch) |
 | `CHTI_GTFS_URL`, `CHTI_RT_URL`, `CHTI_GBFS_URL` | Sources de données (acceptent `file://`) |
 | `XDG_CACHE_HOME` | Emplacement du cache (`$XDG_CACHE_HOME/chtilevia`) |
+| `XDG_CONFIG_HOME` | Emplacement des favoris (`$XDG_CONFIG_HOME/chtilevia/favoris`) |
 
 ```sh
 # Rejouer à la main le cas « bus-temps-reel », sans toucher au cache habituel

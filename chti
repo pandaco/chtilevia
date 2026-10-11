@@ -8,6 +8,7 @@ GTFS_URL="${CHTI_GTFS_URL:-https://media.ilevia.fr/opendata/gtfs.zip}"
 RT_URL="${CHTI_RT_URL:-https://proxy.transport.data.gouv.fr/resource/ilevia-lille-gtfs-rt}"
 GBFS_URL="${CHTI_GBFS_URL:-https://media.ilevia.fr/opendata}"
 CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/chtilevia"
+FAVORITES="${XDG_CONFIG_HOME:-$HOME/.config}/chtilevia/favoris"
 GTFS_MAX_AGE_MIN=1440
 GTFS_RETRY_MIN=60
 
@@ -18,10 +19,13 @@ Usage :
   chti tram [arrêt] [-d direction] [-n nombre]          ex : chti tram croise laroche -d roubaix
   chti metro <1|2> [arrêt] [-d direction] [-n nombre]   ex : chti metro 1 republique -d chu   (théorique)
   chti velo <station>                                   ex : chti velo rihour
+  chti <favori>                                         ex : chti travail
+  chti favoris                                          liste les favoris
   chti update                                           re-télécharge le référentiel GTFS
 
 Sans arrêt, la liste des arrêts de la ligne est affichée.
 -d / --direction / --vers : ne garde que les courses dont la destination contient ce texte.
+  « vers » s'écrit aussi sans tiret : chti tram croise laroche vers roubaix
 -n / --nombre : nombre de passages affichés par direction (3 par défaut).
 La recherche ignore la casse et les accents.
 EOF
@@ -117,6 +121,40 @@ velo() {
 				+ "\n  maj il y a \(((($clock // now) - $s.last_reported) / 60 | floor)) min"
 			   end) + "\n"
 		  end'
+}
+
+# Commandes d'un favori, une par ligne (« nom: commande »), sans les commentaires
+favorite_commands() {
+	[ -f "$FAVORITES" ] || return 0
+	sed -e 's/#.*//' "$FAVORITES" | awk -F: -v name="$1" '
+		{ key = tolower($1); gsub(/^[ \t]+|[ \t]+$/, "", key) }
+		key == tolower(name) && NF > 1 { sub(/^[^:]*:[ \t]*/, ""); sub(/[ \t]+$/, ""); if ($0 != "") print }'
+}
+
+favorites_list() {
+	if [ ! -s "$FAVORITES" ]; then
+		printf 'Aucun favori. Crée le fichier %s\n' "$FAVORITES"
+		printf 'au format « nom: commande », ex : travail: tram croise laroche vers roubaix\n'
+		return 0
+	fi
+	printf 'Favoris (%s) :\n' "$FAVORITES"
+	sed -e 's/#.*//' -e 's/[[:space:]]*$//' -e '/^$/d' -e 's/^/  /' "$FAVORITES"
+}
+
+# Lance chaque commande du favori $1 ; renvoie 2 si le favori n'existe pas, 1 si une commande échoue
+run_favorite() {
+	cmds=$(favorite_commands "$1")
+	[ -n "$cmds" ] || return 2
+	status=0
+	set -f # pas d'expansion de jokers dans les arguments
+	while IFS= read -r line; do
+		# shellcheck disable=SC2086 # découpage volontaire de la commande en arguments
+		sh "$0" $line || status=1
+	done <<FAV
+$cmds
+FAV
+	set +f
+	return "$status"
 }
 
 run_py() {
@@ -412,15 +450,21 @@ PY
 cmd=$1
 shift
 
-# Sépare les mots de l'arrêt de l'option -d/--direction/--vers, placée n'importe où
+# Sépare les mots de l'arrêt de l'option -d/--direction/--vers, placée n'importe où.
+# Le mot « vers » seul fait passer les mots suivants dans la direction.
 transit() {
 	line=$1
 	shift
 	stop=""
 	direction=""
 	count=3
+	after_vers=0
 	while [ $# -gt 0 ]; do
 		case "$1" in
+		vers)
+			after_vers=1
+			shift
+			;;
 		-d | --direction | --vers)
 			[ $# -ge 2 ] || die "option $1 : précise une direction, ex : $1 flandres"
 			direction=$2
@@ -440,7 +484,11 @@ transit() {
 			shift
 			;;
 		*)
-			stop="${stop:+$stop }$1"
+			if [ "$after_vers" = 1 ]; then
+				direction="${direction:+$direction }$1"
+			else
+				stop="${stop:+$stop }$1"
+			fi
 			shift
 			;;
 		esac
@@ -472,8 +520,15 @@ update)
 	gtfs_refresh force
 	printf 'Référentiel GTFS à jour dans %s\n' "$CACHE/gtfs"
 	;;
+favoris) favorites_list ;;
 -h | --help | help) usage ;;
 *)
+	if [ $# -eq 0 ]; then
+		status=0
+		run_favorite "$cmd" || status=$?
+		[ "$status" -eq 2 ] || exit "$status"
+	fi
+	printf 'chti : commande ou favori inconnu : %s (voir chti favoris)\n\n' "$cmd" >&2
 	usage >&2
 	exit 1
 	;;

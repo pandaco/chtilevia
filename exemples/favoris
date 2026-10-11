@@ -1,0 +1,11 @@
+# Favoris chti : « nom: commande chti », une commande par ligne.
+# Un même nom sur plusieurs lignes lance les commandes dans l'ordre.
+# Usage : chti travail   (ou à la voix : « travail »)
+#
+# Attention aux directions trop larges : pour le bus 10, « vers lille » correspond aux
+# deux sens (Lille Flandres et Lille CHU). Vérifie avec : chti bus 10 -d lille
+
+travail:      tram croise laroche vers roubaix -n 2
+
+rentrer-velo: velo gare lille europe
+rentrer-velo: velo la madeleine gare

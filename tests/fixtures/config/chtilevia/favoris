@@ -1,0 +1,5 @@
+# Favoris de test (lignes présentes dans les fixtures)
+travail:      tram croise laroche vers roubaix -n 2
+Rentrer-Velo: velo gare lille europe   # nom en majuscules : la recherche ignore la casse
+rentrer-velo: velo la madeleine gare
+casse:        bus 999

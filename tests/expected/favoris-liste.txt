@@ -1,0 +1,6 @@
+Favoris (<racine>/tests/fixtures/config/chtilevia/favoris) :
+  travail:      tram croise laroche vers roubaix -n 2
+  Rentrer-Velo: velo gare lille europe
+  rentrer-velo: velo la madeleine gare
+  casse:        bus 999
+[exit 0]

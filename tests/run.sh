@@ -23,6 +23,7 @@ MINUIT=1791669618 # 2026-10-11 00:00:18
 export XDG_CACHE_HOME="$WORK/cache"
 export CHTI_GTFS_URL="file://$FIX/gtfs.zip"
 export CHTI_GBFS_URL="file://$FIX"
+export XDG_CONFIG_HOME="$FIX/config"
 
 # Index GTFS construit une fois pour tous les cas
 "$ROOT/chti" update >/dev/null 2>&1
@@ -50,6 +51,12 @@ velo-plusieurs          | MINUIT | aucun        | velo gare
 velo-accents            | MINUIT | aucun        | velo SAINTE HELENE
 velo-hors-service       | MINUIT | aucun        | velo port de lille
 erreur-velo             | MINUIT | aucun        | velo zzz
+bus-vers-sans-tiret     | MIDI   | rt-midi.pb   | bus 10 marais vers lille flandres -n 1
+favoris-liste           | MIDI   | aucun        | favoris
+favori-tram             | MIDI   | rt-midi.pb   | travail
+favori-velo-casse       | MINUIT | aucun        | RENTRER-VELO
+favori-en-erreur        | MIDI   | rt-midi.pb   | casse
+erreur-favori-inconnu   | MIDI   | aucun        | inconnu
 '
 
 pass=0
@@ -73,8 +80,9 @@ while IFS='|' read -r name clock rt args; do
 	out="$WORK/$name.txt"
 	code=0
 	CHTI_NOW=$now CHTI_RT_URL=$rt_url "$ROOT/chti" "$@" >"$out" 2>&1 || code=$?
-	# Le message d'erreur de curl varie selon les versions : on ne garde que celui de chti
-	grep -v '^curl: ' "$out" >"$out.tmp" || true
+	# Le message d'erreur de curl varie selon les versions : on ne garde que celui de chti.
+	# Les chemins absolus dépendent de la machine : on les remplace par <racine>.
+	grep -v '^curl: ' "$out" | sed "s|$ROOT|<racine>|g" >"$out.tmp" || true
 	printf '[exit %s]\n' "$code" >>"$out.tmp"
 	mv "$out.tmp" "$out"
 
