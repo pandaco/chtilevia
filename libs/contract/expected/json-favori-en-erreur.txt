@@ -1,0 +1,13 @@
+{
+  "type": "favorite",
+  "name": "casse",
+  "results": [
+    {
+      "type": "error",
+      "code": "unknown_line",
+      "message": "ligne inconnue : 999",
+      "details": {}
+    }
+  ]
+}
+[exit 1]

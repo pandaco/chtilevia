@@ -23,6 +23,7 @@ Usage :
   chti favoris                                          liste les favoris
   chti update                                           re-télécharge le référentiel GTFS
   chti --voix <commande>                                réponse en phrases, pour la synthèse vocale
+  chti --json <commande>                                réponse JSON, pour les programmes (schéma : libs/contract/schema)
   chti vocal "<phrase>"                                 ex : chti vocal "prochain tram à croisé laroche vers roubaix"
 
 Sans arrêt, la liste des arrêts de la ligne est affichée.
@@ -36,6 +37,12 @@ EOF
 
 # die <code> <message> : code stable (pour les machines), message en français (pour les humains)
 die() {
+	if [ "${CHTI_JSON:-}" = 1 ]; then
+		# Sur stdout : la réponse reste un document JSON, même en cas d'erreur
+		printf '{\n  "type": "error",\n  "code": %s,\n  "message": %s,\n  "details": {}\n}\n' \
+			"$(json_string "$1")" "$(json_string "$2")"
+		exit 1
+	fi
 	shift # le code ne sert qu'à la sortie JSON
 	if [ "${CHTI_VOIX:-}" = 1 ]; then
 		# Phrase à lire : majuscule initiale
@@ -44,6 +51,16 @@ die() {
 		printf 'chti : %s\n' "$*" >&2
 	fi
 	exit 1
+}
+
+# Chaîne JSON entre guillemets, sans dépendre de jq (die doit marcher même si jq manque)
+json_string() {
+	printf '%s' "$1" | awk 'BEGIN { ORS = "" }
+		{ gsub(/\\/, "\\\\"); gsub(/"/, "\\\""); gsub(/\t/, "\\t"); if (NR > 1) print "\\n"; print }' | {
+		printf '"'
+		cat
+		printf '"'
+	}
 }
 
 need() {
@@ -80,7 +97,8 @@ gtfs_refresh() {
 	if ! fetch "$GTFS_URL" "$TMP/gtfs.zip" || ! unzip -q -o "$TMP/gtfs.zip" -d "$TMP/gtfs"; then
 		# Réseau KO : on garde l'ancien cache s'il existe
 		[ -f "$CACHE/gtfs/stamp" ] || die gtfs_unavailable "téléchargement du GTFS impossible ($GTFS_URL)"
-		printf 'chti : GTFS non mis à jour, utilisation du cache existant\n' >&2
+		WARNINGS="${WARNINGS:+$WARNINGS,}gtfs_stale"
+		[ "${CHTI_JSON:-}" = 1 ] || printf 'chti : GTFS non mis à jour, utilisation du cache existant\n' >&2
 		touch "$CACHE/gtfs/retry"
 		return 0
 	fi
@@ -105,12 +123,13 @@ departures() {
 		if fetch "$RT_URL" "$TMP/rt.pb"; then
 			rt="$TMP/rt.pb"
 		else
-			[ "${CHTI_VOIX:-}" = 1 ] ||
+			WARNINGS="${WARNINGS:+$WARNINGS,}realtime_unavailable"
+			[ "${CHTI_VOIX:-}" = 1 ] || [ "${CHTI_JSON:-}" = 1 ] ||
 				printf 'chti : flux temps réel indisponible, horaires théoriques uniquement\n' >&2
 		fi
 		;;
 	esac
-	run_py departures "$CACHE/gtfs" "$rt" "$1" "$2" "$3" "$4"
+	run_py departures "$CACHE/gtfs" "$rt" "$1" "$2" "$3" "$4" "${WARNINGS:-}"
 }
 
 # V'Lille : $@ = mots du nom de station, avec --prendre (vélos seuls) ou --deposer (places seules)
@@ -128,6 +147,10 @@ velo() {
 	[ -n "$station" ] || die missing_station "précise un nom de station, ex : chti velo rihour"
 	fetch "$GBFS_URL/station_information.json" "$TMP/info.json" || die bike_service_unreachable "V'Lille injoignable"
 	fetch "$GBFS_URL/station_status.json" "$TMP/status.json" || die bike_service_unreachable "V'Lille injoignable"
+	if [ "${CHTI_JSON:-}" = 1 ]; then
+		velo_json "$station" "$mode"
+		return
+	fi
 	jq -r -n --arg q "$station" --arg mode "$mode" --arg voice "${CHTI_VOIX:-0}" --argjson clock "${CHTI_NOW:-null}" --slurpfile info "$TMP/info.json" --slurpfile status "$TMP/status.json" '
 		def fold: ascii_downcase
 			| gsub("[àâäÀÂÄ]"; "a") | gsub("[éèêëÉÈÊË]"; "e") | gsub("[îïÎÏ]"; "i")
@@ -169,6 +192,37 @@ velo() {
 		  end'
 }
 
+# Version JSON de velo : faits bruts par station, l'interprétation (prendre / déposer) au client
+velo_json() {
+	jq -n --arg q "$1" --arg mode "$2" --argjson clock "${CHTI_NOW:-null}" \
+		--slurpfile info "$TMP/info.json" --slurpfile status "$TMP/status.json" '
+		def fold: ascii_downcase
+			| gsub("[àâäÀÂÄ]"; "a") | gsub("[éèêëÉÈÊË]"; "e") | gsub("[îïÎÏ]"; "i")
+			| gsub("[ôöÔÖ]"; "o") | gsub("[ùûüÙÛÜ]"; "u") | gsub("[çÇ]"; "c")
+			| gsub("[^a-z0-9]+"; " ") | ltrimstr(" ") | rtrimstr(" ");
+		($status[0].data.stations | map({key: .station_id, value: .}) | from_entries) as $st
+		| ($q | fold) as $needle
+		| [$info[0].data.stations[] | select(.name | fold | contains($needle))]
+		| if length == 0 then
+			{type: "error", code: "unknown_station",
+			 message: "Aucune station V'\''Lille ne correspond à « \($q) ».", details: {}}
+		  else
+			{type: "bike_stations", query: $q,
+			 mode: ({tout: "all", prendre: "take", deposer: "return"}[$mode]),
+			 stations: map(. as $i | ($st[$i.station_id] // null) as $s
+				| {id: $i.station_id, name: $i.name, capacity: $i.capacity,
+				   status: (if $s == null then "unknown"
+					elif ($s.is_installed | not) or (($s.is_renting or $s.is_returning) | not) then "out_of_service"
+					else "ok" end),
+				   bikes: $s.num_bikes_available, docks: $s.num_docks_available,
+				   renting: $s.is_renting, returning: $s.is_returning,
+				   last_reported: (if $s.last_reported then $s.last_reported | todate else null end),
+				   age_minutes: (if $s.last_reported then ((($clock // now) - $s.last_reported) / 60 | floor) else null end)})}
+		  end' >"$TMP/velo.json"
+	cat "$TMP/velo.json"
+	jq -e '.type != "error"' "$TMP/velo.json" >/dev/null || exit 1
+}
+
 # Commandes d'un favori, une par ligne (« nom: commande »), sans les commentaires
 favorite_commands() {
 	[ -f "$FAVORITES" ] || return 0
@@ -178,6 +232,17 @@ favorite_commands() {
 }
 
 favorites_list() {
+	if [ "${CHTI_JSON:-}" = 1 ]; then
+		# Une entrée par favori (premier nom rencontré), avec toutes ses commandes
+		{ [ -f "$FAVORITES" ] && sed -e 's/#.*//' "$FAVORITES" || :; } | jq -R -n --arg path "$FAVORITES" '
+			[inputs | select(test(":")) | capture("^\\s*(?<name>[^:]*?)\\s*:\\s*(?<cmd>.*?)\\s*$")
+			 | select(.name != "" and .cmd != "")]
+			| reduce .[] as $f ([]; (map(.name | ascii_downcase) | index($f.name | ascii_downcase)) as $i
+				| if $i == null then . + [{name: $f.name, commands: [$f.cmd]}]
+				  else .[$i].commands += [$f.cmd] end)
+			| {type: "favorites", path: $path, favorites: .}'
+		return 0
+	fi
 	if [ ! -s "$FAVORITES" ]; then
 		printf 'Aucun favori. Crée le fichier %s\n' "$FAVORITES"
 		printf 'au format « nom: commande », ex : travail: tram croise laroche vers roubaix\n'
@@ -192,20 +257,35 @@ run_favorite() {
 	cmds=$(favorite_commands "$1")
 	[ -n "$cmds" ] || return 2
 	status=0
+	i=0
 	set -f # pas d'expansion de jokers dans les arguments
 	while IFS= read -r line; do
-		# shellcheck disable=SC2086 # découpage volontaire de la commande en arguments
-		sh "$0" $line || status=1
+		i=$((i + 1))
+		if [ "${CHTI_JSON:-}" = 1 ]; then
+			# Un document par commande, rassemblés ensuite dans la réponse du favori
+			# shellcheck disable=SC2086 # découpage volontaire de la commande en arguments
+			sh "$0" $line >"$TMP/fav.$i.json" || status=1
+		else
+			# shellcheck disable=SC2086 # découpage volontaire de la commande en arguments
+			sh "$0" $line || status=1
+		fi
 	done <<FAV
 $cmds
 FAV
 	set +f
+	if [ "${CHTI_JSON:-}" = 1 ]; then
+		n=1
+		while [ "$n" -le "$i" ]; do
+			cat "$TMP/fav.$n.json"
+			n=$((n + 1))
+		done | jq -s --arg name "$1" '{type: "favorite", name: $name, results: .}'
+	fi
 	return "$status"
 }
 
 run_py() {
 	python3 -I - "$@" <<'PY'
-import csv, os, sys, time, unicodedata
+import csv, json, os, sys, time, unicodedata
 from collections import defaultdict
 from datetime import datetime, timedelta
 
@@ -217,6 +297,15 @@ except Exception:  # pas de base tz : heure locale de la machine
 
 
 VOICE = os.environ.get("CHTI_VOIX") == "1"
+JSON = os.environ.get("CHTI_JSON") == "1"
+WARNING_MESSAGES = {
+    "realtime_unavailable": "flux temps réel indisponible, horaires théoriques uniquement",
+    "gtfs_stale": "GTFS non mis à jour, utilisation du cache existant",
+}
+
+
+def emit(doc):
+    print(json.dumps(doc, ensure_ascii=False, indent=2))
 
 
 def bullet_list(title, items):
@@ -228,6 +317,9 @@ def bullet_list(title, items):
 
 def die(code, msg, hint=None):
     # code : identifiant stable (sortie JSON) ; hint = (titre, clé, éléments) : suggestions listées
+    if JSON:
+        emit({"type": "error", "code": code, "message": msg, "details": {hint[1]: hint[2]} if hint else {}})
+        sys.exit(1)
     if hint:
         msg += bullet_list(hint[0], hint[2])
     print(msg[:1].upper() + msg[1:] if VOICE else f"chti : {msg}", file=sys.stderr)
@@ -373,7 +465,17 @@ def midnight(d):
     return noon.timestamp() - 12 * 3600
 
 
-def departures(gtfs, rt_path, line, query, direction, count):
+def line_info(route):
+    mode = {"0": "tram", "1": "metro"}.get(route["route_type"], "bus")
+    return {"id": route["route_id"], "name": route["route_short_name"], "mode": mode,
+            "label": spoken_line(route), "description": route["route_desc"]}
+
+
+def iso(ts):
+    return datetime.fromtimestamp(ts, TZ).isoformat(timespec="seconds")
+
+
+def departures(gtfs, rt_path, line, query, direction, count, warnings=""):
     count = int(count)
     route = next((r for r in rows(f"{gtfs}/routes.txt") if r["route_short_name"].upper() == line.upper()), None)
     if route is None:
@@ -472,8 +574,21 @@ def departures(gtfs, rt_path, line, query, direction, count):
             if sid in all_sids:
                 events[sid].add((t, dest, True))
 
+    doc_stops = []
     for aid, sids in sorted(matched.items(), key=lambda kv: area_name(kv[0])):
         events_here = sorted(e for sid in sids for e in events[sid] if e[0] >= now_ts - 30)
+        if JSON:
+            by_dest = defaultdict(list)
+            for e in events_here:
+                by_dest[e[1]].append(e)
+            doc_stops.append({
+                "id": aid, "name": area_name(aid),
+                "description": stops.get(aid, {}).get("stop_desc", "").strip(" -"),
+                "directions": [{"headsign": dest, "departures": [
+                    {"time": iso(t), "minutes": max(0, round((t - now_ts) / 60)), "realtime": live}
+                    for t, _, live in evs[:count]]}
+                    for dest, evs in sorted(by_dest.items(), key=lambda kv: kv[1][0][0])]})
+            continue
         if VOICE:
             say_departures(route, area_name(aid), events_here, count, now_ts)
             continue
@@ -497,6 +612,9 @@ def departures(gtfs, rt_path, line, query, direction, count):
                     when = f"dans {mins // 60} h {mins % 60:02d}"
                 hhmm = datetime.fromtimestamp(t, TZ).strftime("%H:%M")
                 print(f"     {hhmm}  {when:<14} {'⏱  temps réel' if live else '🕒 théorique'}")
+    if JSON:
+        emit({"type": "departures", "line": line_info(route), "now": iso(now_ts), "stops": doc_stops,
+              "warnings": [{"code": w, "message": WARNING_MESSAGES[w]} for w in warnings.split(",") if w]})
 
 
 def spoken_line(route):
@@ -544,6 +662,17 @@ def list_stops(route, trips, sched, area, area_name):
         d = trip["direction_id"]
         if tid in sched and len(sched[tid]) > len(sched.get(best.get(d), [])):
             best[d] = tid
+    if JSON:
+        directions = []
+        for _, tid in sorted(best.items()):
+            names = []
+            for _, sid, _ in sorted(sched[tid]):
+                name = area_name(area(sid))
+                if not names or names[-1] != name:
+                    names.append(name)
+            directions.append({"headsign": trips[tid]["trip_headsign"], "stops": names})
+        emit({"type": "stops", "line": line_info(route), "directions": directions})
+        return
     print(f"Ligne {route['route_short_name']} — {route['route_desc']}")
     for _, tid in sorted(best.items()):
         print(f"\n  Direction {trips[tid]['trip_headsign']} :")
@@ -657,22 +786,25 @@ mode = sys.argv[1]
 if mode == "index":
     build_index(sys.argv[2])
 elif mode == "departures":
-    departures(*sys.argv[2:8])
+    departures(*sys.argv[2:9])
 elif mode == "parse":
     print("\n".join(parse_phrase(sys.argv[2], sys.argv[3])))
 PY
 }
 
-# --voix peut se placer n'importe où : on la retire des arguments
+# --voix et --json peuvent se placer n'importe où : on les retire des arguments
 for arg in "$@"; do
 	shift
-	if [ "$arg" = --voix ]; then
-		CHTI_VOIX=1
-		continue
-	fi
-	set -- "$@" "$arg"
+	case "$arg" in
+	--voix) CHTI_VOIX=1 ;;
+	--json) CHTI_JSON=1 ;;
+	*) set -- "$@" "$arg" ;;
+	esac
 done
 [ "${CHTI_VOIX:-}" = 1 ] && export CHTI_VOIX
+[ "${CHTI_JSON:-}" = 1 ] && export CHTI_JSON
+[ "${CHTI_VOIX:-}" = 1 ] && [ "${CHTI_JSON:-}" = 1 ] &&
+	die unsupported_combination "--voix et --json ne peuvent pas être utilisés ensemble"
 
 [ $# -ge 1 ] || {
 	usage
@@ -750,11 +882,17 @@ velo | vélo | vlille) velo "$@" ;;
 update)
 	need python3
 	gtfs_refresh force
-	printf 'Référentiel GTFS à jour dans %s\n' "$CACHE/gtfs"
+	if [ "${CHTI_JSON:-}" = 1 ]; then
+		printf '{\n  "type": "update",\n  "path": %s\n}\n' "$(json_string "$CACHE/gtfs")"
+	else
+		printf 'Référentiel GTFS à jour dans %s\n' "$CACHE/gtfs"
+	fi
 	;;
 favoris) favorites_list ;;
 vocal)
 	# Phrase reconnue à la voix -> commande chti, réponse en mode voix
+	[ "${CHTI_JSON:-}" = 1 ] &&
+		die unsupported_combination "vocal ne s'utilise pas avec --json : l'assistant interprète la phrase lui-même"
 	CHTI_VOIX=1
 	export CHTI_VOIX
 	need python3
@@ -777,6 +915,7 @@ PARSED
 		[ "$status" -eq 2 ] || exit "$status"
 	fi
 	[ "${CHTI_VOIX:-}" = 1 ] && die unknown_command "Je ne connais pas la commande ou le favori « $cmd »."
+	[ "${CHTI_JSON:-}" = 1 ] && die unknown_command "commande ou favori inconnu : $cmd (voir chti favoris)"
 	printf 'chti : commande ou favori inconnu : %s (voir chti favoris)\n\n' "$cmd" >&2
 	usage >&2
 	exit 1

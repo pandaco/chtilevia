@@ -1,0 +1,7 @@
+{
+  "type": "error",
+  "code": "unsupported_combination",
+  "message": "--voix et --json ne peuvent pas être utilisés ensemble",
+  "details": {}
+}
+[exit 1]

@@ -1,0 +1,72 @@
+{
+  "type": "departures",
+  "line": {
+    "id": "10",
+    "name": "10",
+    "mode": "bus",
+    "label": "Bus 10",
+    "description": "LOMME HEGEL-CHU O LAMBRET/ LILLE FLANDRES"
+  },
+  "now": "2026-10-10T23:50:00+02:00",
+  "stops": [
+    {
+      "id": "677",
+      "name": "Gambetta",
+      "description": "GAMBETTA 59130 LAMBERSART",
+      "directions": [
+        {
+          "headsign": "Lille Gare Lille Flandres",
+          "departures": [
+            {
+              "time": "2026-10-11T00:07:00+02:00",
+              "minutes": 17,
+              "realtime": false
+            },
+            {
+              "time": "2026-10-11T00:37:00+02:00",
+              "minutes": 47,
+              "realtime": false
+            }
+          ]
+        },
+        {
+          "headsign": "Lomme Lomme Hegel",
+          "departures": [
+            {
+              "time": "2026-10-11T00:14:00+02:00",
+              "minutes": 24,
+              "realtime": false
+            },
+            {
+              "time": "2026-10-11T00:46:00+02:00",
+              "minutes": 56,
+              "realtime": false
+            }
+          ]
+        },
+        {
+          "headsign": "Lille Chu - Centre O. Lambret",
+          "departures": [
+            {
+              "time": "2026-10-11T07:36:00+02:00",
+              "minutes": 466,
+              "realtime": false
+            },
+            {
+              "time": "2026-10-11T08:08:00+02:00",
+              "minutes": 498,
+              "realtime": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "warnings": [
+    {
+      "code": "realtime_unavailable",
+      "message": "flux temps réel indisponible, horaires théoriques uniquement"
+    }
+  ]
+}
+[exit 0]

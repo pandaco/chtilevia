@@ -1,0 +1,45 @@
+{
+  "type": "favorite",
+  "name": "rentrer-velo",
+  "results": [
+    {
+      "type": "bike_stations",
+      "query": "gare lille europe",
+      "mode": "take",
+      "stations": [
+        {
+          "id": "82",
+          "name": "Gare Lille Europe",
+          "capacity": 32,
+          "status": "ok",
+          "bikes": 14,
+          "docks": 18,
+          "renting": true,
+          "returning": true,
+          "last_reported": "2026-10-10T21:56:18Z",
+          "age_minutes": 4
+        }
+      ]
+    },
+    {
+      "type": "bike_stations",
+      "query": "la madeleine gare",
+      "mode": "return",
+      "stations": [
+        {
+          "id": "97",
+          "name": "La Madeleine Gare",
+          "capacity": 17,
+          "status": "ok",
+          "bikes": 4,
+          "docks": 13,
+          "renting": true,
+          "returning": true,
+          "last_reported": "2026-10-10T21:56:54Z",
+          "age_minutes": 3
+        }
+      ]
+    }
+  ]
+}
+[exit 0]

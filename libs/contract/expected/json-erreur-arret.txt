@@ -1,0 +1,7 @@
+{
+  "type": "error",
+  "code": "unknown_stop",
+  "message": "aucun arrêt de la ligne 10 ne correspond à « zzz » (relance sans arrêt pour voir la liste)",
+  "details": {}
+}
+[exit 1]

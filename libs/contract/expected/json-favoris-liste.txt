@@ -1,0 +1,26 @@
+{
+  "type": "favorites",
+  "path": "<racine>/libs/contract/fixtures/config/chtilevia/favoris",
+  "favorites": [
+    {
+      "name": "travail",
+      "commands": [
+        "tram croise laroche vers roubaix -n 2"
+      ]
+    },
+    {
+      "name": "Rentrer-Velo",
+      "commands": [
+        "velo gare lille europe --prendre",
+        "velo la madeleine gare --deposer"
+      ]
+    },
+    {
+      "name": "casse",
+      "commands": [
+        "bus 999"
+      ]
+    }
+  ]
+}
+[exit 0]

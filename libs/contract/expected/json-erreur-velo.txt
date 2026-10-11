@@ -1,0 +1,7 @@
+{
+  "type": "error",
+  "code": "unknown_station",
+  "message": "Aucune station V'Lille ne correspond à « zzz ».",
+  "details": {}
+}
+[exit 1]

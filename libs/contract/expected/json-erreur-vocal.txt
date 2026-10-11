@@ -1,0 +1,7 @@
+{
+  "type": "error",
+  "code": "unsupported_combination",
+  "message": "vocal ne s'utilise pas avec --json : l'assistant interprète la phrase lui-même",
+  "details": {}
+}
+[exit 1]

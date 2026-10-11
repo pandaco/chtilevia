@@ -1,0 +1,79 @@
+{
+  "type": "departures",
+  "line": {
+    "id": "10",
+    "name": "10",
+    "mode": "bus",
+    "label": "Bus 10",
+    "description": "LOMME HEGEL-CHU O LAMBRET/ LILLE FLANDRES"
+  },
+  "now": "2026-10-11T00:00:18+02:00",
+  "stops": [
+    {
+      "id": "1000",
+      "name": "Eglise Du Marais",
+      "description": "EGLISE DU MARAIS 59160 LOMME",
+      "directions": [
+        {
+          "headsign": "Lille Gare Lille Flandres",
+          "departures": [
+            {
+              "time": "2026-10-11T00:19:30+02:00",
+              "minutes": 19,
+              "realtime": true
+            },
+            {
+              "time": "2026-10-11T07:42:00+02:00",
+              "minutes": 462,
+              "realtime": false
+            },
+            {
+              "time": "2026-10-11T08:09:00+02:00",
+              "minutes": 489,
+              "realtime": false
+            },
+            {
+              "time": "2026-10-11T08:39:00+02:00",
+              "minutes": 519,
+              "realtime": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "1008",
+      "name": "Marais",
+      "description": "LOMME MARAIS 59160 LOMME",
+      "directions": [
+        {
+          "headsign": "Lille Gare Lille Flandres",
+          "departures": [
+            {
+              "time": "2026-10-11T00:21:01+02:00",
+              "minutes": 21,
+              "realtime": true
+            },
+            {
+              "time": "2026-10-11T07:44:00+02:00",
+              "minutes": 464,
+              "realtime": false
+            },
+            {
+              "time": "2026-10-11T08:11:00+02:00",
+              "minutes": 491,
+              "realtime": false
+            },
+            {
+              "time": "2026-10-11T08:41:00+02:00",
+              "minutes": 521,
+              "realtime": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "warnings": []
+}
+[exit 0]

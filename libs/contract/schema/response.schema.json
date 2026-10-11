@@ -1,0 +1,220 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:chtilevia:contract:response",
+  "title": "Réponse de chti --json",
+  "description": "Document unique écrit sur stdout par `chti --json <commande>`. Le champ `type` indique sa forme. Code retour 0 en cas de succès, 1 si la réponse (ou un résultat de favori) est une erreur.",
+  "oneOf": [
+    { "$ref": "#/$defs/departures" },
+    { "$ref": "#/$defs/stops" },
+    { "$ref": "#/$defs/bike_stations" },
+    { "$ref": "#/$defs/favorites" },
+    { "$ref": "#/$defs/favorite" },
+    { "$ref": "#/$defs/update" },
+    { "$ref": "#/$defs/error" }
+  ],
+  "$defs": {
+    "line": {
+      "type": "object",
+      "description": "Ligne Ilévia.",
+      "required": ["id", "name", "mode", "label", "description"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "description": "route_id GTFS" },
+        "name": { "type": "string", "description": "Nom court GTFS (10, TRAM, M1…)" },
+        "mode": { "enum": ["bus", "tram", "metro"] },
+        "label": { "type": "string", "description": "Nom à dire ou afficher (Bus 10, Tram, Métro 1)" },
+        "description": { "type": "string", "description": "Description GTFS de la ligne (terminus)" }
+      }
+    },
+    "departures": {
+      "type": "object",
+      "description": "Prochains passages à un ou plusieurs arrêts correspondant à la recherche.",
+      "required": ["type", "line", "now", "stops", "warnings"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "departures" },
+        "line": { "$ref": "#/$defs/line" },
+        "now": { "type": "string", "format": "date-time", "description": "Heure de référence du calcul, heure de Paris avec décalage" },
+        "stops": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "name", "description", "directions"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string", "description": "Zone d'arrêt GTFS (parent_station, sinon stop_id)" },
+              "name": { "type": "string" },
+              "description": { "type": "string", "description": "Nom long et commune" },
+              "directions": {
+                "type": "array",
+                "description": "Une entrée par destination, de la plus proche à la plus lointaine ; vide si aucun passage prévu.",
+                "items": {
+                  "type": "object",
+                  "required": ["headsign", "departures"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "headsign": { "type": "string", "description": "Destination affichée" },
+                    "departures": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": ["time", "minutes", "realtime"],
+                        "additionalProperties": false,
+                        "properties": {
+                          "time": { "type": "string", "format": "date-time" },
+                          "minutes": { "type": "integer", "minimum": 0, "description": "Minutes avant le passage (0 = à l'approche)" },
+                          "realtime": { "type": "boolean", "description": "true : temps réel ; false : horaire théorique" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["code", "message"],
+            "additionalProperties": false,
+            "properties": {
+              "code": { "enum": ["realtime_unavailable", "gtfs_stale"] },
+              "message": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "stops": {
+      "type": "object",
+      "description": "Arrêts d'une ligne, dans l'ordre, pour chaque sens.",
+      "required": ["type", "line", "directions"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "stops" },
+        "line": { "$ref": "#/$defs/line" },
+        "directions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["headsign", "stops"],
+            "additionalProperties": false,
+            "properties": {
+              "headsign": { "type": "string" },
+              "stops": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        }
+      }
+    },
+    "bike_stations": {
+      "type": "object",
+      "description": "Stations V'Lille dont le nom contient la recherche. Faits bruts : le mode indique seulement l'intention de l'utilisateur.",
+      "required": ["type", "query", "mode", "stations"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "bike_stations" },
+        "query": { "type": "string" },
+        "mode": { "enum": ["all", "take", "return"], "description": "all : tout ; take : prendre un vélo ; return : déposer un vélo" },
+        "stations": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["id", "name", "capacity", "status", "bikes", "docks", "renting", "returning", "last_reported", "age_minutes"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string" },
+              "name": { "type": "string" },
+              "capacity": { "type": "integer" },
+              "status": { "enum": ["ok", "out_of_service", "unknown"], "description": "out_of_service : non installée, ou ni location ni dépôt possibles ; unknown : pas de statut publié" },
+              "bikes": { "type": ["integer", "null"] },
+              "docks": { "type": ["integer", "null"] },
+              "renting": { "type": ["boolean", "null"], "description": "Location possible" },
+              "returning": { "type": ["boolean", "null"], "description": "Dépôt possible" },
+              "last_reported": { "type": ["string", "null"], "format": "date-time", "description": "UTC" },
+              "age_minutes": { "type": ["integer", "null"] }
+            }
+          }
+        }
+      }
+    },
+    "favorites": {
+      "type": "object",
+      "required": ["type", "path", "favorites"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "favorites" },
+        "path": { "type": "string", "description": "Fichier des favoris" },
+        "favorites": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "commands"],
+            "additionalProperties": false,
+            "properties": {
+              "name": { "type": "string" },
+              "commands": { "type": "array", "minItems": 1, "items": { "type": "string" }, "description": "Arguments de chti, une commande par élément" }
+            }
+          }
+        }
+      }
+    },
+    "favorite": {
+      "type": "object",
+      "description": "Résultat de chaque commande d'un favori, dans l'ordre.",
+      "required": ["type", "name", "results"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "favorite" },
+        "name": { "type": "string" },
+        "results": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              { "$ref": "#/$defs/departures" },
+              { "$ref": "#/$defs/stops" },
+              { "$ref": "#/$defs/bike_stations" },
+              { "$ref": "#/$defs/error" }
+            ]
+          }
+        }
+      }
+    },
+    "update": {
+      "type": "object",
+      "required": ["type", "path"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "update" },
+        "path": { "type": "string", "description": "Dossier du référentiel GTFS mis à jour" }
+      }
+    },
+    "error": {
+      "type": "object",
+      "required": ["type", "code", "message", "details"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "error" },
+        "code": {
+          "enum": [
+            "missing_dependency", "gtfs_unavailable", "unknown_line", "missing_line", "unknown_metro",
+            "unknown_stop", "unknown_direction", "stop_not_in_direction", "missing_stop", "invalid_count",
+            "missing_option_value", "missing_station", "unknown_station", "bike_service_unreachable",
+            "unknown_command", "unsupported_combination"
+          ]
+        },
+        "message": { "type": "string", "description": "Message en français, à montrer tel quel" },
+        "details": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "directions": { "type": "array", "items": { "type": "string" }, "description": "Directions possibles (unknown_direction, stop_not_in_direction)" }
+          }
+        }
+      }
+    }
+  }
+}

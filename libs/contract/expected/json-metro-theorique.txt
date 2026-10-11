@@ -1,0 +1,52 @@
+{
+  "type": "departures",
+  "line": {
+    "id": "ME1",
+    "name": "M1",
+    "mode": "metro",
+    "label": "Métro 1",
+    "description": "CHU EURASANTÉ <> 4 CANTONS STADE P MAUROY"
+  },
+  "now": "2026-10-10T12:46:00+02:00",
+  "stops": [
+    {
+      "id": "773",
+      "name": "République Beaux-Arts",
+      "description": "RÉPUBLIQUE BEAUX-ARTS 59000 LILLE",
+      "directions": [
+        {
+          "headsign": "Lille Chu - Eurasanté",
+          "departures": [
+            {
+              "time": "2026-10-10T12:46:45+02:00",
+              "minutes": 1,
+              "realtime": false
+            },
+            {
+              "time": "2026-10-10T12:50:05+02:00",
+              "minutes": 4,
+              "realtime": false
+            }
+          ]
+        },
+        {
+          "headsign": "Villeneuve D Ascq 4 Cantons Stade P. Mauroy",
+          "departures": [
+            {
+              "time": "2026-10-10T12:46:59+02:00",
+              "minutes": 1,
+              "realtime": false
+            },
+            {
+              "time": "2026-10-10T12:50:19+02:00",
+              "minutes": 4,
+              "realtime": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "warnings": []
+}
+[exit 0]

@@ -57,6 +57,7 @@ ln -s "$PWD/apps/shell/chti" ~/.local/bin/chti   # optionnel, pour l'avoir dans 
 | `chti <favori>` | Lance la ou les commandes enregistrées sous ce nom (voir [Favoris](#favoris)) |
 | `chti favoris` | Liste les favoris |
 | `chti --voix <commande>` | Même réponse, en phrases à lire à voix haute (voir [Sortie parlée](#sortie-parlée)) |
+| `chti --json <commande>` | Même réponse, en JSON pour les programmes (voir [Sortie JSON](#sortie-json)) |
 | `chti vocal "<phrase>"` | Comprend une phrase libre et répond en mode voix (voir [Phrases comprises](#phrases-comprises)) |
 | `chti update` | Force le re-téléchargement du référentiel GTFS |
 | `chti help` | Affiche l'aide |
@@ -148,6 +149,39 @@ La Madeleine Gare : 13 places libres.
 - Au-delà d'une heure, l'heure est donnée (« à 7 h 42 »). Un horaire sans temps réel est suivi de
   « (prévu) », ou la phrase se termine par « Horaires théoriques. » s'ils le sont tous.
 - Les erreurs sont aussi des phrases, sur stderr, sans le préfixe `chti :`.
+
+### Sortie JSON
+
+`--json` (placé n'importe où) remplace l'affichage par un document JSON unique sur stdout, pour les
+programmes : serveur MCP pour les assistants IA, scripts, widgets. Sa forme est décrite par le
+schéma [`libs/contract/schema/response.schema.json`](libs/contract/schema/response.schema.json).
+
+```
+$ chti --json bus 10 marais -d flandres -n 1
+{
+  "type": "departures",
+  "line": { "id": "10", "name": "10", "mode": "bus", "label": "Bus 10", … },
+  "now": "2026-10-10T12:46:00+02:00",
+  "stops": [
+    { "id": "1008", "name": "Marais", "description": "LOMME MARAIS 59160 LOMME",
+      "directions": [
+        { "headsign": "Lille Gare Lille Flandres",
+          "departures": [ { "time": "2026-10-10T12:53:01+02:00", "minutes": 7, "realtime": true } ] } ] }
+  ],
+  "warnings": []
+}
+```
+
+- `type` donne la forme du document : `departures`, `stops` (ligne sans arrêt), `bike_stations`,
+  `favorites`, `favorite` (un résultat par commande du favori), `update` ou `error`.
+- Les erreurs sont aussi du JSON sur stdout (`"type": "error"`), avec un `code` stable
+  (`unknown_line`, `unknown_direction`…), le `message` en français et parfois des `details`
+  (directions possibles). Le code retour reste `1`.
+- Les avertissements (flux temps réel indisponible, GTFS non mis à jour) sont dans `warnings`, pas
+  sur stderr.
+- Pour V'Lille, le JSON donne les faits bruts (vélos, places, location / dépôt possibles) ;
+  `--prendre` / `--deposer` sont seulement rappelés dans `mode`.
+- Incompatible avec `--voix` et avec `vocal` : un programme interprète la phrase lui-même.
 
 ### Phrases comprises
 
@@ -308,7 +342,7 @@ Deux outils vérifient le script. Ils ne servent pas à l'usage quotidien, seule
 chaque modification**, pour s'assurer qu'on n'a rien cassé.
 
 ```sh
-apps/shell/tests/contract.sh   # tests de non-régression : 55 cas, hors ligne, ~5 s
+apps/shell/tests/contract.sh   # tests de non-régression : 79 cas, hors ligne, ~7 s
 apps/shell/tests/termux.sh     # partie Android, avec des commandes Termux simulées : 19 vérifications
 shellcheck apps/shell/chti apps/shell/tests/*.sh apps/shell/termux/*.sh apps/shell/termux/shortcuts/*   # analyse du shell (paquet shellcheck)
 ```
@@ -361,7 +395,8 @@ flux temps réel indisponible, fin de service du métro, filtres `-d` et `-n` (y
 l'arrêt), le mot `vers`, V'Lille (accents, plusieurs résultats, station hors service, `--prendre` / `--deposer`), les favoris
 (liste, enchaînement, casse du nom, commande en échec, favori inconnu), la sortie parlée `--voix`,
 la compréhension des phrases (`vocal` : chiffres en lettres, « à l'arrêt », « en direction de »,
-favoris, phrases incomprises) et les messages d'erreur.
+favoris, phrases incomprises), la sortie JSON `--json` (passages, arrêts, V'Lille, favoris,
+erreurs avec code, échappement des guillemets) et les messages d'erreur.
 
 #### Lire un échec
 

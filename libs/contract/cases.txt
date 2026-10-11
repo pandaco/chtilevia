@@ -56,3 +56,28 @@ vocal-incompris         | MIDI   | aucun        | vocal bonjour
 vocal-ligne-manquante   | MIDI   | aucun        | vocal bus
 vocal-metro-inconnu     | MIDI   | aucun        | vocal métro 3 république
 vocal-vide              | MIDI   | aucun        | vocal
+# Sortie JSON (--json) : documents décrits par schema/response.schema.json
+json-bus-temps-reel        | MIDI   | rt-midi.pb   | --json bus 10 marais -d flandres -n 2
+json-bus-sans-temps-reel   | SOIR   | aucun        | bus 10 gambetta -n 2 --json
+json-metro-theorique       | MIDI   | rt-midi.pb   | --json metro 1 republique -n 2
+json-minuit-lendemain      | MINUIT | rt-minuit.pb | --json bus 10 marais -d flandres -n 4
+json-tram-temps-reel       | MIDI   | rt-midi.pb   | --json tram croise laroche vers roubaix -n 2
+json-liste-arrets          | MIDI   | rt-midi.pb   | --json bus 10
+json-velo-station          | MINUIT | aucun        | --json velo rihour
+json-velo-plusieurs        | MINUIT | aucun        | --json velo gare
+json-velo-hors-service     | MINUIT | aucun        | --json velo port de lille
+json-velo-prendre          | MINUIT | aucun        | --json velo rihour --prendre
+json-favoris-liste         | MIDI   | aucun        | --json favoris
+json-favori-tram           | MIDI   | rt-midi.pb   | --json travail
+json-favori-velo           | MINUIT | aucun        | --json rentrer-velo
+json-favori-en-erreur      | MIDI   | rt-midi.pb   | --json casse
+json-erreur-ligne          | MIDI   | rt-midi.pb   | --json bus 999
+json-erreur-direction      | MIDI   | rt-midi.pb   | --json bus 10 marais -d zzz
+json-erreur-arret          | MIDI   | rt-midi.pb   | --json bus 10 zzz
+json-erreur-arret-autre-sens | MIDI | rt-midi.pb   | --json bus 10 esplanade -d flandres
+json-erreur-nombre         | MIDI   | rt-midi.pb   | --json tram -n abc
+json-erreur-velo           | MINUIT | aucun        | --json velo zzz
+json-erreur-inconnu        | MIDI   | aucun        | --json inconnu
+json-erreur-avec-voix      | MIDI   | aucun        | --json --voix bus 10 marais
+json-erreur-vocal          | MIDI   | aucun        | --json vocal métro un république
+json-erreur-guillemets     | MIDI   | aucun        | --json "zz\z

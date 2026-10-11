@@ -1,0 +1,37 @@
+{
+  "type": "departures",
+  "line": {
+    "id": "71",
+    "name": "TRAM",
+    "mode": "tram",
+    "label": "Tram",
+    "description": "LILLE <> ROUBAIX / TOURCOING"
+  },
+  "now": "2026-10-10T12:46:00+02:00",
+  "stops": [
+    {
+      "id": "1137",
+      "name": "Croise Laroche",
+      "description": "CROISE LAROCHE 59700 MARCQ EN BAROEUL",
+      "directions": [
+        {
+          "headsign": "Roubaix Eurotéléport",
+          "departures": [
+            {
+              "time": "2026-10-10T12:47:26+02:00",
+              "minutes": 1,
+              "realtime": true
+            },
+            {
+              "time": "2026-10-10T12:59:16+02:00",
+              "minutes": 13,
+              "realtime": true
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "warnings": []
+}
+[exit 0]

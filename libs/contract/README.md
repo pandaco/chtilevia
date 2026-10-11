@@ -17,6 +17,7 @@ Ce dossier ne contient que des données. Chaque implémentation a son propre ex�
 | `fixtures/config/chtilevia/favoris` | Favoris de test |
 | `expected/<nom>.txt` | Sortie de référence de chaque cas |
 | `make_fixtures.py` | Régénère les fixtures à partir d'un nouvel instantané |
+| `schema/response.schema.json` | Schéma JSON (2020-12) des réponses de `chti --json` : format de réponse commun à toutes les façades (MCP, AppFunctions…) |
 
 ## Format des cas
 
@@ -60,6 +61,9 @@ Pour le shell, cela passe par ces variables d'environnement :
 - lignes commençant par `curl: ` supprimées (le texte varie selon les versions de curl) ;
 - chemin absolu de la racine du dépôt remplacé par `<racine>` ;
 - dernière ligne : `[exit N]`, le code retour.
+
+Les cas `json-*` produisent un document JSON (suivi de la ligne `[exit N]`) qui doit respecter
+`schema/response.schema.json`.
 
 ## Ajouter un cas
 

@@ -1,0 +1,80 @@
+{
+  "type": "bike_stations",
+  "query": "gare",
+  "mode": "all",
+  "stations": [
+    {
+      "id": "219",
+      "name": "Gare Jean Lebas",
+      "capacity": 17,
+      "status": "ok",
+      "bikes": 0,
+      "docks": 16,
+      "renting": true,
+      "returning": true,
+      "last_reported": "2026-10-10T21:58:46Z",
+      "age_minutes": 1
+    },
+    {
+      "id": "242",
+      "name": "Tourcoing gare",
+      "capacity": 18,
+      "status": "ok",
+      "bikes": 0,
+      "docks": 18,
+      "renting": true,
+      "returning": true,
+      "last_reported": "2026-10-10T21:57:35Z",
+      "age_minutes": 2
+    },
+    {
+      "id": "25",
+      "name": "Gare Lille Flandres",
+      "capacity": 32,
+      "status": "ok",
+      "bikes": 0,
+      "docks": 32,
+      "renting": true,
+      "returning": true,
+      "last_reported": "2026-10-10T21:57:48Z",
+      "age_minutes": 2
+    },
+    {
+      "id": "82",
+      "name": "Gare Lille Europe",
+      "capacity": 32,
+      "status": "ok",
+      "bikes": 14,
+      "docks": 18,
+      "renting": true,
+      "returning": true,
+      "last_reported": "2026-10-10T21:56:18Z",
+      "age_minutes": 4
+    },
+    {
+      "id": "97",
+      "name": "La Madeleine Gare",
+      "capacity": 17,
+      "status": "ok",
+      "bikes": 4,
+      "docks": 13,
+      "renting": true,
+      "returning": true,
+      "last_reported": "2026-10-10T21:56:54Z",
+      "age_minutes": 3
+    },
+    {
+      "id": "317",
+      "name": "Gare d'eau",
+      "capacity": 14,
+      "status": "ok",
+      "bikes": 8,
+      "docks": 6,
+      "renting": true,
+      "returning": true,
+      "last_reported": "2026-10-10T21:58:17Z",
+      "age_minutes": 2
+    }
+  ]
+}
+[exit 0]

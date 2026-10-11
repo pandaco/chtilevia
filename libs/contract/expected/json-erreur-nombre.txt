@@ -1,0 +1,7 @@
+{
+  "type": "error",
+  "code": "invalid_count",
+  "message": "nombre de passages invalide : « abc » (entier ≥ 1 attendu)",
+  "details": {}
+}
+[exit 1]

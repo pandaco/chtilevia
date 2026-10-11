@@ -1,0 +1,7 @@
+{
+  "type": "error",
+  "code": "unknown_command",
+  "message": "commande ou favori inconnu : inconnu (voir chti favoris)",
+  "details": {}
+}
+[exit 1]
