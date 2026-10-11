@@ -1,0 +1,4 @@
+#!/bin/sh
+# Widget : écoute une phrase (« métro 1 république vers chu ») et répond à voix haute
+phrase=$(termux-speech-to-text)
+chti-widget --parle vocal "$phrase"

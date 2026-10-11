@@ -1,0 +1,3 @@
+#!/bin/sh
+# Widget : affiche le favori « rentrer-velo » (voir ~/.config/chtilevia/favoris), sans voix
+chti-widget --ecrit rentrer-velo

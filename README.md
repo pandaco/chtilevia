@@ -128,7 +128,7 @@ rentrer-velo: velo la madeleine gare --deposer
 ### Sortie parlée
 
 `--voix` (placé n'importe où) remplace l'affichage par des phrases simples, sans emoji ni colonnes,
-pensées pour la synthèse vocale. Il est pensé pour un usage vocal, mais
+pensées pour la synthèse vocale. Il sert au [widget Android](#sur-android), mais
 marche partout :
 
 ```
@@ -174,6 +174,41 @@ Règles :
 - Les mots d'introduction (« quand passe le prochain… », « à l'arrêt ») sont ignorés en début de
   phrase et en début de nom d'arrêt, mais jamais au milieu d'un nom (« Pont de Bois » reste intact).
 - Si la phrase n'est pas comprise, la réponse le dit et donne un exemple (code retour `1`).
+
+## Sur Android
+
+Sur un téléphone Android, `chti` tourne directement sur le téléphone, **sans serveur**. Un widget
+d'écran d'accueil propose deux façons de demander, et la réponse suit la façon de demander :
+
+- **à la voix** : le bouton *Parler* écoute ta question et **lit la réponse à voix haute** ;
+- **en un clic** : un bouton de favori **affiche la réponse**, sans voix (message à l'écran).
+
+| Bouton du widget | Ce qu'il fait | Réponse |
+|---|---|---|
+| **Parler** | Écoute une phrase (« métro 1 République vers CHU », « vélo Rihour pour déposer », « travail »…) | À voix haute + notification |
+| **Travail** | Favori `travail` | Écrite : message à l'écran + notification |
+| **Rentrer à vélo** | Favori `rentrer-velo` : vélos au départ, places à l'arrivée | Écrite : message à l'écran + notification |
+
+Un favori dit à voix haute (« travail » via *Parler*) répond donc à la voix ; le même favori touché
+sur son bouton répond par écrit. Les phrases comprises sont décrites dans
+[Phrases comprises](#phrases-comprises).
+
+> Pourquoi pas l'appli Gemini ? Elle ne peut appeler un outil personnel (« custom app ») que pour
+> les comptes aux États-Unis, en anglais, et seulement via un serveur. Le widget est la seule voie
+> vocale sans serveur depuis la France.
+
+**👉 Installation et utilisation pas à pas : [docs/android.md](docs/android.md)**. Le guide couvre les
+applis à installer (Termux, Termux:API, Termux:Widget depuis F-Droid), la copie du projet sans le
+publier, l'installeur, les favoris, l'ajout du widget, les phrases comprises, l'ajout de boutons,
+la mise à jour, le dépannage et la désinstallation.
+
+En résumé :
+
+```sh
+# dans Termux, une fois le projet copié dans ~/chtilevia
+sh ~/chtilevia/android/install.sh      # outils, commandes, boutons du widget, horaires
+nano ~/.config/chtilevia/favoris       # tes trajets (fichier local, jamais publié)
+```
 
 ## Sources de données (open data, sans clé d'API)
 
@@ -224,12 +259,14 @@ Python embarqué dans `chti`.
   arrêts suivants, le dernier retard connu est propagé (comportement standard GTFS-RT). Les courses
   sans suivi temps réel sont affichées en théorique.
 - Sans réseau, le script retombe sur les horaires théoriques du cache ; V'Lille nécessite le réseau.
+- Android : pas de mot d'activation (« Hey Google ») : il faut toucher le widget. L'installation n'a pas encore été validée sur un vrai
+  téléphone, seulement en simulant les commandes Termux (`tests/android.sh`).
 
 ## Contribution
 
 ### Organisation du script
 
-Tout tient dans le fichier `chti` :
+L'essentiel tient dans le fichier `chti` :
 
 | Partie | Rôle |
 |---|---|
@@ -241,8 +278,21 @@ Tout tient dans le fichier `chti` :
 | python — `pb`, `read_rt` | Décodeur protobuf minimal pour GTFS-Realtime |
 | python — `rt_times` | Horaires temps réel d'une course, avec propagation du retard |
 | python — `departures`, `list_stops` | Recherche d'arrêt / direction, fusion théorique + temps réel, affichage |
+| sh — `favorite_commands`, `run_favorite` | Lecture du fichier de favoris, enchaînement des commandes |
+| python — `say_departures`, `spoken_line` | Sortie parlée (`--voix`) des passages ; la sortie parlée V'Lille est dans le filtre jq de `velo` |
+| python — `parse_phrase` | `chti vocal` : phrase libre → arguments de `chti` |
 
 Le Python est embarqué via un heredoc (`run_py`) et lancé en mode isolé (`python3 -I`).
+
+Autour du script :
+
+| Fichier | Rôle |
+|---|---|
+| `exemples/favoris` | Favoris d'exemple, copiés par l'installeur Android |
+| `android/install.sh` | Installation dans Termux |
+| `android/widget.sh` | Devient la commande `chti-widget` : lance `chti --voix`, puis notification et, selon le mode, voix (`--parle`) ou message à l'écran (`--ecrit`) |
+| `android/shortcuts/*` | Les boutons du widget (un fichier = un bouton) |
+| `docs/android.md` | Guide d'installation et d'utilisation sur Android |
 
 ### Conventions
 
@@ -257,12 +307,13 @@ Deux outils vérifient le script. Ils ne servent pas à l'usage quotidien, seule
 chaque modification**, pour s'assurer qu'on n'a rien cassé.
 
 ```sh
-tests/run.sh                      # tests de non-régression : 21 cas, hors ligne, ~5 s
-shellcheck chti tests/run.sh    # analyse du shell (paquet shellcheck)
+tests/run.sh          # tests de non-régression : 52 cas, hors ligne, ~5 s
+tests/android.sh      # partie Android, avec des commandes Termux simulées : 19 vérifications
+shellcheck chti tests/*.sh android/*.sh android/shortcuts/*   # analyse du shell (paquet shellcheck)
 ```
 
-**Avant chaque commit**, les deux doivent passer : `tests/run.sh` doit afficher `0 échec(s)`, et
-`shellcheck` ne doit rien afficher.
+**Avant chaque commit**, tout doit passer : les deux scripts de test doivent afficher `0 échec(s)`,
+et `shellcheck` ne doit rien afficher.
 
 #### Pourquoi des tests « figés » ?
 
@@ -329,6 +380,16 @@ Deux situations possibles :
 2. Lancer `tests/run.sh --update`.
 3. Relire `tests/expected/nom-du-cas.txt` et vérifier que la sortie est juste.
 4. Commiter le cas avec sa référence.
+
+#### Tests Android simulés
+
+`tests/android.sh` vérifie la partie `android/` sans téléphone. Il crée un faux Termux dans un dossier
+temporaire : `pkg`, `termux-speech-to-text`, `termux-notification`, `termux-toast` et `termux-tts-speak` y sont
+remplacés par de petites imitations qui notent ce qu'on leur demande dans un journal. Le test lance
+ensuite le vrai `android/install.sh`, puis les vrais boutons du widget sur les fixtures, et vérifie
+dans le journal ce qui aurait été affiché et lu à voix haute : *Parler* doit répondre à la voix, les
+boutons de favoris par écrit et jamais à la voix. La phrase « entendue » est fixée par
+la variable `FAKE_PHRASE`.
 
 #### Régénérer les fixtures
 
