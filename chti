@@ -22,6 +22,7 @@ Usage :
   chti <favori>                                         ex : chti travail
   chti favoris                                          liste les favoris
   chti update                                           re-télécharge le référentiel GTFS
+  chti --voix <commande>                                réponse en phrases, pour la synthèse vocale
 
 Sans arrêt, la liste des arrêts de la ligne est affichée.
 -d / --direction / --vers : ne garde que les courses dont la destination contient ce texte.
@@ -33,7 +34,12 @@ EOF
 }
 
 die() {
-	printf 'chti : %s\n' "$*" >&2
+	if [ "${CHTI_VOIX:-}" = 1 ]; then
+		# Phrase à lire : majuscule initiale
+		printf '%s\n' "$*" | awk '{ print toupper(substr($0, 1, 1)) substr($0, 2) }' >&2
+	else
+		printf 'chti : %s\n' "$*" >&2
+	fi
 	exit 1
 }
 
@@ -44,7 +50,11 @@ need() {
 }
 
 fetch() {
-	curl -fsSL --max-time 30 -o "$2" "$1"
+	if [ "${CHTI_VOIX:-}" = 1 ]; then
+		curl -fsL --max-time 30 -o "$2" "$1" # pas de message brut de curl à lire à voix haute
+	else
+		curl -fsSL --max-time 30 -o "$2" "$1"
+	fi
 }
 
 TMP=$(mktemp -d "${TMPDIR:-/tmp}/chti.XXXXXX")
@@ -92,7 +102,8 @@ departures() {
 		if fetch "$RT_URL" "$TMP/rt.pb"; then
 			rt="$TMP/rt.pb"
 		else
-			printf 'chti : flux temps réel indisponible, horaires théoriques uniquement\n' >&2
+			[ "${CHTI_VOIX:-}" = 1 ] ||
+				printf 'chti : flux temps réel indisponible, horaires théoriques uniquement\n' >&2
 		fi
 		;;
 	esac
@@ -114,7 +125,7 @@ velo() {
 	[ -n "$station" ] || die "précise un nom de station, ex : chti velo rihour"
 	fetch "$GBFS_URL/station_information.json" "$TMP/info.json" || die "V'Lille injoignable"
 	fetch "$GBFS_URL/station_status.json" "$TMP/status.json" || die "V'Lille injoignable"
-	jq -r -n --arg q "$station" --arg mode "$mode" --argjson clock "${CHTI_NOW:-null}" --slurpfile info "$TMP/info.json" --slurpfile status "$TMP/status.json" '
+	jq -r -n --arg q "$station" --arg mode "$mode" --arg voice "${CHTI_VOIX:-0}" --argjson clock "${CHTI_NOW:-null}" --slurpfile info "$TMP/info.json" --slurpfile status "$TMP/status.json" '
 		def fold: ascii_downcase
 			| gsub("[àâäÀÂÄ]"; "a") | gsub("[éèêëÉÈÊË]"; "e") | gsub("[îïÎÏ]"; "i")
 			| gsub("[ôöÔÖ]"; "o") | gsub("[ùûüÙÛÜ]"; "u") | gsub("[çÇ]"; "c")
@@ -122,7 +133,22 @@ velo() {
 		($status[0].data.stations | map({key: .station_id, value: .}) | from_entries) as $st
 		| ($q | fold) as $needle
 		| [$info[0].data.stations[] | select(.name | fold | contains($needle))]
-		| if length == 0 then "Aucune station V'\''Lille ne correspond à « \($q) ».\n" | halt_error(1)
+		| def bikes: if . == 0 then "aucun vélo disponible" elif . == 1 then "1 vélo disponible"
+			else "\(.) vélos disponibles" end;
+		  def docks: if . == 0 then "aucune place libre" elif . == 1 then "1 place libre"
+			else "\(.) places libres" end;
+		  if length == 0 then "Aucune station V'\''Lille ne correspond à « \($q) ».\n" | halt_error(1)
+		  elif $voice == "1" then .[] | . as $i | ($st[$i.station_id] // {}) as $s
+			| "\($i.name) : "
+			+ (if ($s | length) == 0 then "statut indisponible"
+			   elif $s.is_installed | not then "station hors service"
+			   elif $mode == "prendre" then
+				(if $s.is_renting then ($s.num_bikes_available | bikes) else "location impossible" end)
+			   elif $mode == "deposer" then
+				(if $s.is_returning then ($s.num_docks_available | docks) else "dépôt impossible" end)
+			   elif $s.is_renting | not then "station hors service"
+			   else ($s.num_bikes_available | bikes) + " et " + ($s.num_docks_available | docks)
+			   end) + "."
 		  else .[] | . as $i | ($st[$i.station_id] // {}) as $s
 			| "\n  maj il y a \(((($clock // now) - ($s.last_reported // 0)) / 60 | floor)) min" as $age
 			| "\($i.name)  (\($i.capacity) bornes)\n"
@@ -187,8 +213,11 @@ except Exception:  # pas de base tz : heure locale de la machine
     TZ = None
 
 
+VOICE = os.environ.get("CHTI_VOIX") == "1"
+
+
 def die(msg):
-    print(f"chti : {msg}", file=sys.stderr)
+    print(msg[:1].upper() + msg[1:] if VOICE else f"chti : {msg}", file=sys.stderr)
     sys.exit(1)
 
 
@@ -363,6 +392,8 @@ def departures(gtfs, rt_path, line, query, direction, count):
         return stops.get(aid, {}).get("stop_name", aid)
 
     if not query:
+        if VOICE:
+            die(f"Précise un arrêt, par exemple : {spoken_line(route).lower()} {area_name(area(next(iter(sched.values()))[0][1])).lower()}.")
         list_stops(route, trips, sched, area, area_name)
         return
 
@@ -412,6 +443,9 @@ def departures(gtfs, rt_path, line, query, direction, count):
 
     for aid, sids in sorted(matched.items(), key=lambda kv: area_name(kv[0])):
         events_here = sorted(e for sid in sids for e in events[sid] if e[0] >= now_ts - 30)
+        if VOICE:
+            say_departures(route, area_name(aid), events_here, count, now_ts)
+            continue
         s = stops.get(aid, {})
         print(f"\n{route['route_short_name']} — {area_name(aid)}  ({s.get('stop_desc', '').strip(' -')})")
         if not events_here:
@@ -432,6 +466,44 @@ def departures(gtfs, rt_path, line, query, direction, count):
                     when = f"dans {mins // 60} h {mins % 60:02d}"
                 hhmm = datetime.fromtimestamp(t, TZ).strftime("%H:%M")
                 print(f"     {hhmm}  {when:<14} {'⏱  temps réel' if live else '🕒 théorique'}")
+
+
+def spoken_line(route):
+    name = route["route_short_name"]
+    if route["route_type"] == "0":
+        return "Tram"
+    if route["route_type"] == "1":
+        return f"Métro {name.lstrip('Mm')}"
+    return f"Bus {name}"
+
+
+def say_departures(route, stop_name, events, count, now_ts):
+    # Une phrase par direction, sans emoji ni colonnes : pensée pour la synthèse vocale
+    head = f"{spoken_line(route)}, arrêt {stop_name}"
+    if not events:
+        print(f"{head} : aucun passage prévu.")
+        return
+    by_dest = defaultdict(list)
+    for e in events:
+        by_dest[e[1]].append(e)
+    for dest, evs in sorted(by_dest.items(), key=lambda kv: kv[1][0][0]):
+        evs = evs[:count]
+        all_planned = not any(live for _, _, live in evs)
+        parts = []
+        for t, _, live in evs:
+            mins = round((t - now_ts) / 60)
+            if mins <= 0:
+                when = "à l'approche"
+            elif mins < 60:
+                when = f"dans {mins} minute{'s' if mins > 1 else ''}"
+            else:
+                dt = datetime.fromtimestamp(t, TZ)
+                when = f"à {dt.hour} h {dt.minute:02d}" if dt.minute else f"à {dt.hour} h"
+            if not live and not all_planned:
+                when += " (prévu)"
+            parts.append(when)
+        tail = " Horaires théoriques." if all_planned else ""
+        print(f"{head}, vers {dest} : {', puis '.join(parts)}.{tail}")
 
 
 def list_stops(route, trips, sched, area, area_name):
@@ -460,6 +532,17 @@ elif mode == "departures":
 PY
 }
 
+# --voix peut se placer n'importe où : on la retire des arguments
+for arg in "$@"; do
+	shift
+	if [ "$arg" = --voix ]; then
+		CHTI_VOIX=1
+		continue
+	fi
+	set -- "$@" "$arg"
+done
+[ "${CHTI_VOIX:-}" = 1 ] && export CHTI_VOIX
+
 [ $# -ge 1 ] || {
 	usage
 	exit 1
@@ -475,6 +558,7 @@ transit() {
 	stop=""
 	direction=""
 	count=3
+	[ "${CHTI_VOIX:-}" = 1 ] && count=2 # à l'oral, 2 passages suffisent
 	after_vers=0
 	while [ $# -gt 0 ]; do
 		case "$1" in
@@ -545,6 +629,7 @@ favoris) favorites_list ;;
 		run_favorite "$cmd" || status=$?
 		[ "$status" -eq 2 ] || exit "$status"
 	fi
+	[ "${CHTI_VOIX:-}" = 1 ] && die "Je ne connais pas la commande ou le favori « $cmd »."
 	printf 'chti : commande ou favori inconnu : %s (voir chti favoris)\n\n' "$cmd" >&2
 	usage >&2
 	exit 1

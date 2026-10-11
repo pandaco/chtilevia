@@ -60,6 +60,17 @@ favori-tram             | MIDI   | rt-midi.pb   | travail
 favori-velo-casse       | MINUIT | aucun        | RENTRER-VELO
 favori-en-erreur        | MIDI   | rt-midi.pb   | casse
 erreur-favori-inconnu   | MIDI   | aucun        | inconnu
+voix-bus                | MIDI   | rt-midi.pb   | --voix bus 10 marais
+voix-option-a-la-fin    | MIDI   | rt-midi.pb   | bus 10 marais vers flandres --voix -n 3
+voix-metro-theorique    | MIDI   | rt-midi.pb   | --voix metro 1 republique
+voix-minuit-prevu       | MINUIT | rt-minuit.pb | --voix bus 10 marais -d flandres -n 3
+voix-velo               | MINUIT | aucun        | --voix velo rihour
+voix-velo-prendre       | MINUIT | aucun        | --voix velo gare --prendre
+voix-velo-hors-service  | MINUIT | aucun        | --voix velo port de lille
+voix-favori             | MINUIT | aucun        | --voix rentrer-velo
+voix-sans-arret         | MIDI   | aucun        | --voix bus 10
+voix-erreur-ligne       | MIDI   | aucun        | --voix bus 999
+voix-erreur-inconnu     | MIDI   | aucun        | --voix inconnu
 '
 
 pass=0

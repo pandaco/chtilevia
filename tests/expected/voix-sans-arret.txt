@@ -1,0 +1,2 @@
+Précise un arrêt, par exemple : bus 10 gare lille flandres.
+[exit 1]

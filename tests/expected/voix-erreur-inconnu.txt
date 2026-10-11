@@ -1,0 +1,2 @@
+Je ne connais pas la commande ou le favori « inconnu ».
+[exit 1]

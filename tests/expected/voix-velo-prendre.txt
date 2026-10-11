@@ -1,0 +1,7 @@
+Gare Jean Lebas : aucun vélo disponible.
+Tourcoing gare : aucun vélo disponible.
+Gare Lille Flandres : aucun vélo disponible.
+Gare Lille Europe : 14 vélos disponibles.
+La Madeleine Gare : 4 vélos disponibles.
+Gare d'eau : 8 vélos disponibles.
+[exit 0]

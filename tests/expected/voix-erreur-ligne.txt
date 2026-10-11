@@ -1,0 +1,2 @@
+Ligne inconnue : 999
+[exit 1]

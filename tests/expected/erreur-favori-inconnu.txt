@@ -8,6 +8,7 @@ Usage :
   chti <favori>                                         ex : chti travail
   chti favoris                                          liste les favoris
   chti update                                           re-télécharge le référentiel GTFS
+  chti --voix <commande>                                réponse en phrases, pour la synthèse vocale
 
 Sans arrêt, la liste des arrêts de la ligne est affichée.
 -d / --direction / --vers : ne garde que les courses dont la destination contient ce texte.

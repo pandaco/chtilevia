@@ -56,6 +56,7 @@ ln -s "$PWD/chti" ~/.local/bin/chti   # optionnel, pour l'avoir dans le PATH
 | `chti velo <station> --deposer` | Seulement les places libres (pour rendre le vélo) |
 | `chti <favori>` | Lance la ou les commandes enregistrées sous ce nom (voir [Favoris](#favoris)) |
 | `chti favoris` | Liste les favoris |
+| `chti --voix <commande>` | Même réponse, en phrases à lire à voix haute (voir [Sortie parlée](#sortie-parlée)) |
 | `chti update` | Force le re-téléchargement du référentiel GTFS |
 | `chti help` | Affiche l'aide |
 
@@ -122,6 +123,29 @@ rentrer-velo: velo la madeleine gare --deposer
   s'affiche en heures (`dans 8 h 04`).
 - `⏱  temps réel` : horaire issu du suivi des véhicules ; `🕒 théorique` : horaire planifié.
 - Code retour `0` en cas de succès, `1` si ligne / arrêt / direction / station / favori introuvable ou si le service est injoignable.
+
+### Sortie parlée
+
+`--voix` (placé n'importe où) remplace l'affichage par des phrases simples, sans emoji ni colonnes,
+pensées pour la synthèse vocale. Il est pensé pour un usage vocal, mais
+marche partout :
+
+```
+$ chti --voix bus 10 marais vers flandres
+Bus 10, arrêt Marais, vers Lille Gare Lille Flandres : dans 7 minutes, puis dans 30 minutes.
+
+$ chti --voix metro 1 republique -d chu
+Métro 1, arrêt République Beaux-Arts, vers Lille Chu - Eurasanté : dans 1 minute, puis dans 4 minutes. Horaires théoriques.
+
+$ chti --voix rentrer-velo
+Gare Lille Europe : 14 vélos disponibles.
+La Madeleine Gare : 13 places libres.
+```
+
+- 2 passages par direction par défaut (`-n` pour en demander plus).
+- Au-delà d'une heure, l'heure est donnée (« à 7 h 42 »). Un horaire sans temps réel est suivi de
+  « (prévu) », ou la phrase se termine par « Horaires théoriques. » s'ils le sont tous.
+- Les erreurs sont aussi des phrases, sur stderr, sans le préfixe `chti :`.
 
 ## Sources de données (open data, sans clé d'API)
 
@@ -240,7 +264,8 @@ Les chemins absolus sont remplacés par `<racine>` pour que les références soi
 Cas couverts : temps réel avec propagation du retard, passage de minuit, service du lendemain,
 flux temps réel indisponible, fin de service du métro, filtres `-d` et `-n` (y compris placés avant
 l'arrêt), le mot `vers`, V'Lille (accents, plusieurs résultats, station hors service, `--prendre` / `--deposer`), les favoris
-(liste, enchaînement, casse du nom, commande en échec, favori inconnu) et les messages d'erreur.
+(liste, enchaînement, casse du nom, commande en échec, favori inconnu), la sortie parlée `--voix`
+et les messages d'erreur.
 
 #### Lire un échec
 
