@@ -1,0 +1,5 @@
+# Heures figées (epoch) utilisées par les cas : horodatage des instantanés du flux temps réel.
+# Format : nom | epoch | date locale (Europe/Paris), pour information
+MIDI   | 1791629160 | 2026-10-10 12:46:00
+SOIR   | 1791669000 | 2026-10-10 23:50:00
+MINUIT | 1791669618 | 2026-10-11 00:00:18

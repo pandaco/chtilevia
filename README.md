@@ -340,12 +340,15 @@ Les tests figent donc le monde :
    pour toutes (`libs/contract/expected/<cas>.txt`).
 
 `apps/shell/tests/contract.sh` relance chaque commande dans ces conditions et compare sa sortie (stdout, stderr et
-code retour) à la référence. Les mêmes entrées doivent toujours donner exactement la même sortie.
+code retour) à la référence. Les mêmes entrées doivent toujours donner exactement la même sortie. Le format du contrat (cas,
+heures, sorties attendues) est décrit dans [`libs/contract/README.md`](libs/contract/README.md).
 Les chemins absolus sont remplacés par `<racine>` pour que les références soient valables sur toutes les machines.
 
 | Fichier | Rôle |
 |---|---|
-| `apps/shell/tests/contract.sh` | Liste des cas et comparaison des sorties |
+| `libs/contract/cases.txt` | Liste des cas (commande, heure, flux temps réel) |
+| `libs/contract/clocks.txt` | Heures figées des cas |
+| `apps/shell/tests/contract.sh` | Lance les cas avec le script et compare les sorties |
 | `libs/contract/fixtures/gtfs.zip` | Extrait du GTFS : lignes 10, tram et M1, du 10 au 12/10/2026 |
 | `libs/contract/fixtures/rt-midi.pb`, `rt-minuit.pb` | Flux temps réel enregistrés le 10/10/2026 à 12:46 et le 11/10 à 00:00 |
 | `libs/contract/fixtures/station_*.json` | Quelques stations V'Lille, dont une hors service |
@@ -383,11 +386,11 @@ Deux situations possibles :
 
 #### Ajouter un cas
 
-1. Ajouter une ligne dans la liste `CASES` de `apps/shell/tests/contract.sh` (apostrophes autorisées) :
+1. Ajouter une ligne dans `libs/contract/cases.txt` (apostrophes autorisées) :
    ```
    nom-du-cas | MIDI | rt-midi.pb | bus 10 gambetta -d flandres
    ```
-   - **heure** : `MIDI` (10/10 12:46), `SOIR` (10/10 23:50) ou `MINUIT` (11/10 00:00) ;
+   - **heure** : `MIDI` (10/10 12:46), `SOIR` (10/10 23:50) ou `MINUIT` (11/10 00:00), voir `libs/contract/clocks.txt` ;
    - **flux temps réel** : `rt-midi.pb`, `rt-minuit.pb`, ou `aucun` pour simuler un flux indisponible ;
    - **arguments** : ceux passés à `chti`. Seules les lignes 10, tram et M1 existent dans les fixtures.
 2. Lancer `apps/shell/tests/contract.sh --update`.
@@ -423,7 +426,7 @@ python3 -I libs/contract/make_fixtures.py tmp/raw libs/contract/fixtures
 Ensuite :
 
 1. Adapter `DATES` dans `libs/contract/make_fixtures.py` aux jours de l'instantané, puis relancer la commande ci-dessus.
-2. Adapter `MIDI`, `SOIR` et `MINUIT` dans `apps/shell/tests/contract.sh` aux heures de capture (timestamp epoch, ex. `date -j -f '%Y-%m-%d %H:%M:%S' '2026-10-10 12:46:00' +%s`).
+2. Adapter `MIDI`, `SOIR` et `MINUIT` dans `libs/contract/clocks.txt` aux heures de capture (timestamp epoch, ex. `date -j -f '%Y-%m-%d %H:%M:%S' '2026-10-10 12:46:00' +%s`).
 3. Lancer `apps/shell/tests/contract.sh --update` et relire **toutes** les références.
 
 Les données brutes restent dans `tmp/` et ne sont pas versionnées.

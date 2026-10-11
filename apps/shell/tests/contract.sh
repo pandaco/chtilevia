@@ -1,6 +1,7 @@
 #!/bin/sh
-# Tests de non-régression : chaque cas lance chti sur les fixtures figées, à une heure figée,
-# et compare la sortie (stdout + stderr + code retour) à libs/contract/expected/<cas>.txt.
+# Tests de non-régression : chaque cas de libs/contract/cases.txt lance chti sur les fixtures
+# figées, à une heure figée (libs/contract/clocks.txt), et compare la sortie (stdout + stderr +
+# code retour) à libs/contract/expected/<cas>.txt.
 #
 # Usage : apps/shell/tests/contract.sh            lance les tests
 #         apps/shell/tests/contract.sh --update   régénère les sorties attendues (à relire avant de commiter !)
@@ -9,88 +10,35 @@ set -eu
 # ROOT : racine du dépôt (remplacée par <racine> dans les sorties) ; données dans libs/contract
 ROOT=$(cd "$(dirname "$0")/../../.." && pwd)
 CHTI="$ROOT/apps/shell/chti"
-FIX="$ROOT/libs/contract/fixtures"
-EXPECTED="$ROOT/libs/contract/expected"
+CONTRACT="$ROOT/libs/contract"
+FIX="$CONTRACT/fixtures"
+EXPECTED="$CONTRACT/expected"
 WORK=$(mktemp -d "${TMPDIR:-/tmp}/chti-tests.XXXXXX")
 trap 'rm -rf "$WORK"' EXIT INT TERM
 
 update=0
 [ "${1:-}" = --update ] && update=1
 
-# Heures figées (epoch) : horodatage des instantanés du flux temps réel
-MIDI=1791629160   # 2026-10-10 12:46:00
-SOIR=1791669000   # 2026-10-10 23:50:00
-MINUIT=1791669618 # 2026-10-11 00:00:18
-
 export XDG_CACHE_HOME="$WORK/cache"
 export CHTI_GTFS_URL="file://$FIX/gtfs.zip"
 export CHTI_GBFS_URL="file://$FIX"
 export XDG_CONFIG_HOME="$FIX/config"
 
+# Epoch d'une heure figée de clocks.txt (MIDI, SOIR…)
+clock_epoch() {
+	epoch=$(awk -F'|' -v name="$1" '$1 !~ /^[[:space:]]*#/ {
+		k = $1; gsub(/[[:space:]]/, "", k)
+		if (k == name) { v = $2; gsub(/[[:space:]]/, "", v); print v }
+	}' "$CONTRACT/clocks.txt")
+	[ -n "$epoch" ] || {
+		echo "heure inconnue dans clocks.txt : $1" >&2
+		exit 2
+	}
+	printf '%s\n' "$epoch"
+}
+
 # Index GTFS construit une fois pour tous les cas
 "$CHTI" update >/dev/null 2>&1
-
-# nom | heure | flux temps réel (fichier de fixtures, ou « aucun ») | arguments
-# (heredoc plutôt qu'une chaîne entre apostrophes : les phrases peuvent en contenir)
-CASES=$(
-	cat <<'LIST'
-bus-liste-arrets        | MIDI   | rt-midi.pb   | bus 10
-bus-liste-direction     | MIDI   | rt-midi.pb   | bus 10 -d hegel
-bus-temps-reel          | MIDI   | rt-midi.pb   | bus 10 marais
-bus-direction-nombre    | MIDI   | rt-midi.pb   | bus 10 marais -d flandres -n 5
-bus-options-avant-arret | MIDI   | rt-midi.pb   | bus 10 --nombre=2 --vers=chu marais
-tram-temps-reel         | MIDI   | rt-midi.pb   | tram croise laroche -d roubaix
-metro-theorique         | MIDI   | rt-midi.pb   | metro 1 republique -n 2
-bus-minuit-lendemain    | MINUIT | rt-minuit.pb | bus 10 marais -d flandres -n 4
-bus-sans-temps-reel     | SOIR   | aucun        | bus 10 gambetta -n 3
-metro-fin-de-service    | SOIR   | aucun        | metro 1 republique --vers chu -n 4
-erreur-direction        | MIDI   | rt-midi.pb   | bus 10 marais -d zzz
-erreur-arret-autre-sens | MIDI   | rt-midi.pb   | bus 10 esplanade -d flandres
-erreur-ligne            | MIDI   | rt-midi.pb   | bus 999
-erreur-arret            | MIDI   | rt-midi.pb   | bus 10 zzz
-erreur-nombre-zero      | MIDI   | rt-midi.pb   | bus 10 marais -n 0
-erreur-nombre-texte     | MIDI   | rt-midi.pb   | tram -n abc
-erreur-metro            | MIDI   | rt-midi.pb   | metro 3
-velo-station            | MINUIT | aucun        | velo rihour
-velo-plusieurs          | MINUIT | aucun        | velo gare
-velo-accents            | MINUIT | aucun        | velo SAINTE HELENE
-velo-hors-service       | MINUIT | aucun        | velo port de lille
-erreur-velo             | MINUIT | aucun        | velo zzz
-velo-prendre            | MINUIT | aucun        | velo --prendre rihour
-velo-deposer            | MINUIT | aucun        | velo sainte helene --déposer
-velo-prendre-hs         | MINUIT | aucun        | velo port de lille --prendre
-bus-vers-sans-tiret     | MIDI   | rt-midi.pb   | bus 10 marais vers lille flandres -n 1
-favoris-liste           | MIDI   | aucun        | favoris
-favori-tram             | MIDI   | rt-midi.pb   | travail
-favori-velo-casse       | MINUIT | aucun        | RENTRER-VELO
-favori-en-erreur        | MIDI   | rt-midi.pb   | casse
-erreur-favori-inconnu   | MIDI   | aucun        | inconnu
-voix-bus                | MIDI   | rt-midi.pb   | --voix bus 10 marais
-voix-option-a-la-fin    | MIDI   | rt-midi.pb   | bus 10 marais vers flandres --voix -n 3
-voix-metro-theorique    | MIDI   | rt-midi.pb   | --voix metro 1 republique
-voix-minuit-prevu       | MINUIT | rt-minuit.pb | --voix bus 10 marais -d flandres -n 3
-voix-velo               | MINUIT | aucun        | --voix velo rihour
-voix-velo-prendre       | MINUIT | aucun        | --voix velo gare --prendre
-voix-velo-hors-service  | MINUIT | aucun        | --voix velo port de lille
-voix-favori             | MINUIT | aucun        | --voix rentrer-velo
-voix-sans-arret         | MIDI   | aucun        | --voix bus 10
-voix-erreur-ligne       | MIDI   | aucun        | --voix bus 999
-voix-erreur-inconnu     | MIDI   | aucun        | --voix inconnu
-voix-erreur-direction   | MIDI   | aucun        | --voix bus 10 marais -d zzz
-voix-arret-autre-sens   | MIDI   | aucun        | --voix bus 10 esplanade -d flandres
-vocal-phrase-longue     | MIDI   | rt-midi.pb   | vocal Quand passe le prochain bus dix à l'arrêt Marais direction Lille Flandres
-vocal-metro-en-lettres  | MIDI   | rt-midi.pb   | vocal métro un république vers CHU
-vocal-tram              | MIDI   | rt-midi.pb   | vocal le prochain tram à Croisé Laroche vers Roubaix
-vocal-velo-deposer      | MINUIT | aucun        | vocal V'Lille Sainte Hélène pour déposer
-vocal-velo-prendre      | MINUIT | aucun        | vocal vélo gare lille europe pour prendre un vélo
-vocal-favori            | MIDI   | rt-midi.pb   | vocal travail
-vocal-favori-liaison    | MINUIT | aucun        | vocal Rentrer à vélo
-vocal-incompris         | MIDI   | aucun        | vocal bonjour
-vocal-ligne-manquante   | MIDI   | aucun        | vocal bus
-vocal-metro-inconnu     | MIDI   | aucun        | vocal métro 3 république
-vocal-vide              | MIDI   | aucun        | vocal
-LIST
-)
 
 pass=0
 fail=0
@@ -101,11 +49,7 @@ while IFS='|' read -r name clock rt args; do
 	[ -n "$name" ] || continue
 	clock=$(echo "$clock" | tr -d ' ')
 	rt=$(echo "$rt" | tr -d ' ')
-	case "$clock" in
-	MIDI) now=$MIDI ;;
-	SOIR) now=$SOIR ;;
-	MINUIT) now=$MINUIT ;;
-	esac
+	now=$(clock_epoch "$clock")
 	if [ "$rt" = aucun ]; then rt_url="file://$FIX/absent.pb"; else rt_url="file://$FIX/$rt"; fi
 
 	# shellcheck disable=SC2086 # découpage volontaire des arguments
@@ -131,7 +75,7 @@ while IFS='|' read -r name clock rt args; do
 		sed 's/^/      /' "$WORK/$name.diff"
 	fi
 done <<EOF
-$CASES
+$(sed -e '/^[[:space:]]*#/d' "$CONTRACT/cases.txt")
 EOF
 
 [ "$update" = 1 ] && exit 0
