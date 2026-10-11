@@ -57,6 +57,7 @@ ln -s "$PWD/chti" ~/.local/bin/chti   # optionnel, pour l'avoir dans le PATH
 | `chti <favori>` | Lance la ou les commandes enregistrées sous ce nom (voir [Favoris](#favoris)) |
 | `chti favoris` | Liste les favoris |
 | `chti --voix <commande>` | Même réponse, en phrases à lire à voix haute (voir [Sortie parlée](#sortie-parlée)) |
+| `chti vocal "<phrase>"` | Comprend une phrase libre et répond en mode voix (voir [Phrases comprises](#phrases-comprises)) |
 | `chti update` | Force le re-téléchargement du référentiel GTFS |
 | `chti help` | Affiche l'aide |
 
@@ -146,6 +147,33 @@ La Madeleine Gare : 13 places libres.
 - Au-delà d'une heure, l'heure est donnée (« à 7 h 42 »). Un horaire sans temps réel est suivi de
   « (prévu) », ou la phrase se termine par « Horaires théoriques. » s'ils le sont tous.
 - Les erreurs sont aussi des phrases, sur stderr, sans le préfixe `chti :`.
+
+### Phrases comprises
+
+`chti vocal "<phrase>"` transforme une phrase dite naturellement (telle que la renvoie la
+reconnaissance vocale) en commande `chti`, puis répond en [sortie parlée](#sortie-parlée) :
+
+| Phrase | Commande lancée |
+|---|---|
+| « Prochain bus 10 à Gambetta vers Lille Flandres » | `bus 10 gambetta -d lille flandres` |
+| « Quand passe le bus dix à l'arrêt Marais direction Lille Flandres » | `bus 10 marais -d lille flandres` |
+| « Métro un République vers CHU » | `metro 1 republique -d chu` |
+| « Le prochain tram à Croisé Laroche vers Roubaix » | `tram croise laroche -d roubaix` |
+| « Liane 1 République » | `bus L1 republique` |
+| « V'Lille Gare Lille Flandres pour déposer » | `velo gare lille flandres --deposer` |
+| « Vélo gare Lille Europe pour prendre un vélo » | `velo gare lille europe --prendre` |
+| « Travail », « Rentrer à vélo » | le favori `travail`, `rentrer-velo` |
+
+Règles :
+
+- **Mode** : `bus` / `ligne` / `liane`, `métro`, `tram` / `tramway`, `vélo` / `V'Lille`, ou un nom de favori
+  (les petits mots comme « à » sont ignorés : « rentrer à vélo » trouve `rentrer-velo`).
+- **Ligne** : en chiffres ou en lettres jusqu'à vingt (« dix » → `10`) ; « liane 1 » → `L1`.
+- **Direction** : tout ce qui suit « vers », « direction » ou « en direction de ».
+- **V'Lille** : « prendre » / « emprunter » → `--prendre` ; « déposer » / « rendre » / « poser » → `--deposer`.
+- Les mots d'introduction (« quand passe le prochain… », « à l'arrêt ») sont ignorés en début de
+  phrase et en début de nom d'arrêt, mais jamais au milieu d'un nom (« Pont de Bois » reste intact).
+- Si la phrase n'est pas comprise, la réponse le dit et donne un exemple (code retour `1`).
 
 ## Sources de données (open data, sans clé d'API)
 
@@ -264,8 +292,9 @@ Les chemins absolus sont remplacés par `<racine>` pour que les références soi
 Cas couverts : temps réel avec propagation du retard, passage de minuit, service du lendemain,
 flux temps réel indisponible, fin de service du métro, filtres `-d` et `-n` (y compris placés avant
 l'arrêt), le mot `vers`, V'Lille (accents, plusieurs résultats, station hors service, `--prendre` / `--deposer`), les favoris
-(liste, enchaînement, casse du nom, commande en échec, favori inconnu), la sortie parlée `--voix`
-et les messages d'erreur.
+(liste, enchaînement, casse du nom, commande en échec, favori inconnu), la sortie parlée `--voix`,
+la compréhension des phrases (`vocal` : chiffres en lettres, « à l'arrêt », « en direction de »,
+favoris, phrases incomprises) et les messages d'erreur.
 
 #### Lire un échec
 
@@ -290,7 +319,7 @@ Deux situations possibles :
 
 #### Ajouter un cas
 
-1. Ajouter une ligne dans la variable `CASES` de `tests/run.sh` :
+1. Ajouter une ligne dans la liste `CASES` de `tests/run.sh` (apostrophes autorisées) :
    ```
    nom-du-cas | MIDI | rt-midi.pb | bus 10 gambetta -d flandres
    ```

@@ -1,0 +1,3 @@
+Bus 10, arrêt Eglise Du Marais, vers Lille Gare Lille Flandres : dans 5 minutes, puis dans 28 minutes.
+Bus 10, arrêt Marais, vers Lille Gare Lille Flandres : dans 7 minutes, puis dans 30 minutes.
+[exit 0]

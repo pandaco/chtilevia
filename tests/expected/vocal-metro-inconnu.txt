@@ -1,0 +1,2 @@
+Quel métro ? Dis par exemple : métro 1 république.
+[exit 1]

@@ -23,6 +23,7 @@ Usage :
   chti favoris                                          liste les favoris
   chti update                                           re-télécharge le référentiel GTFS
   chti --voix <commande>                                réponse en phrases, pour la synthèse vocale
+  chti vocal "<phrase>"                                 ex : chti vocal "prochain tram à croisé laroche vers roubaix"
 
 Sans arrêt, la liste des arrêts de la ligne est affichée.
 -d / --direction / --vers : ne garde que les courses dont la destination contient ce texte.
@@ -524,11 +525,111 @@ def list_stops(route, trips, sched, area, area_name):
                 print(f"    • {name}")
 
 
+# --- Phrase libre (reconnaissance vocale) -> arguments de chti ---
+
+NUMBERS = {"un": "1", "une": "1", "deux": "2", "trois": "3", "quatre": "4", "cinq": "5", "six": "6",
+           "sept": "7", "huit": "8", "neuf": "9", "dix": "10", "onze": "11", "douze": "12",
+           "treize": "13", "quatorze": "14", "quinze": "15", "seize": "16", "dix sept": "17",
+           "dix huit": "18", "dix neuf": "19", "vingt": "20"}
+# Mots ignorés en tête de phrase et en tête du nom d'arrêt (jamais au milieu : « Pont de Bois »)
+FILLERS = {"quand", "passe", "est", "ce", "que", "qu", "il", "y", "a", "le", "la", "les", "l", "au",
+           "aux", "de", "du", "des", "d", "prochain", "prochains", "prochaine", "prochaines",
+           "passage", "passages", "arret", "station", "horaire", "horaires", "je", "veux", "pour",
+           "moi", "donne", "dis", "quel", "quels", "c", "le", "un"}
+STOP_FILLERS = {"a", "au", "l", "arret", "station", "de", "du", "d"}
+EXAMPLE = "Dis par exemple : métro 1 république vers chu, ou : vélo rihour."
+
+
+def favorite_names(path):
+    names = {}
+    try:
+        with open(path, encoding="utf-8") as f:
+            for ln in f:
+                key = ln.split("#", 1)[0].split(":", 1)[0].strip()
+                if key and ":" in ln.split("#", 1)[0]:
+                    names[spoken_key(key)] = key
+    except OSError:
+        pass
+    return names
+
+
+def spoken_key(text):
+    # « Rentrer à vélo » et « rentrer-velo » donnent la même clé
+    return " ".join(w for w in fold(text).split() if w not in FILLERS)
+
+
+def strip_leading(words, fillers):
+    while words and words[0] in fillers:
+        words = words[1:]
+    return words
+
+
+def parse_phrase(fav_path, phrase):
+    words = fold(phrase).split()
+    if not words:
+        die("Je n'ai rien entendu.")
+    favorites = favorite_names(fav_path)
+    # « vers » / « direction » / « en direction de » : le reste de la phrase est la direction
+    direction = []
+    for i, w in enumerate(words):
+        if w in ("vers", "direction"):
+            words, direction = words[:i], strip_leading(words[i + 1:], {"de", "d", "du", "la", "l"})
+            if words and words[-1] == "en":
+                words = words[:-1]
+            break
+    body = strip_leading(words, FILLERS)
+    if not body:
+        die(f"Je n'ai pas compris « {phrase} ». {EXAMPLE}")
+    if not direction and spoken_key(" ".join(body)) in favorites:
+        return [favorites[spoken_key(" ".join(body))]]
+
+    head, rest = body[0], body[1:]
+    if head in ("bus", "ligne", "liane"):
+        if not rest:
+            die(f"Quelle ligne ? {EXAMPLE}")
+        line = NUMBERS.get(" ".join(rest[:2]), None)
+        if line:
+            rest = rest[2:]
+        else:
+            line, rest = NUMBERS.get(rest[0], rest[0]), rest[1:]
+        if head == "liane" and line.isdigit():
+            line = "L" + line
+        args = ["bus", line.upper()]
+    elif head in ("metro", "metros"):
+        if not rest or NUMBERS.get(rest[0], rest[0]).lstrip("m") not in ("1", "2"):
+            die("Quel métro ? Dis par exemple : métro 1 république.")
+        args, rest = ["metro", NUMBERS.get(rest[0], rest[0]).lstrip("m")], rest[1:]
+    elif head in ("tram", "tramway"):
+        args = ["tram"]
+    elif head in ("velo", "velos", "vlille") or body[:2] == ["v", "lille"]:
+        rest = body[2:] if head == "v" else rest
+        mode = []
+        for verb, flag in (("prendre", "--prendre"), ("emprunter", "--prendre"),
+                           ("deposer", "--deposer"), ("rendre", "--deposer"), ("poser", "--deposer")):
+            if verb in rest:
+                rest = [w for w in rest if w != verb]
+                mode = [flag]
+        rest = [w for w in rest if w not in ("pour", "un", "mon", "velo", "velos")]
+        rest = strip_leading(rest, STOP_FILLERS)
+        if not rest:
+            die("Quelle station ? Dis par exemple : vélo rihour.")
+        return ["velo", *rest, *mode]
+    else:
+        die(f"Je n'ai pas compris « {phrase} ». {EXAMPLE}")
+
+    stop = strip_leading(rest, STOP_FILLERS)
+    if not stop:
+        die(f"Quel arrêt ? Dis par exemple : {' '.join(args)} gambetta.")
+    return [*args, *stop, *(["-d", " ".join(direction)] if direction else [])]
+
+
 mode = sys.argv[1]
 if mode == "index":
     build_index(sys.argv[2])
 elif mode == "departures":
     departures(*sys.argv[2:8])
+elif mode == "parse":
+    print("\n".join(parse_phrase(sys.argv[2], sys.argv[3])))
 PY
 }
 
@@ -622,6 +723,22 @@ update)
 	printf 'Référentiel GTFS à jour dans %s\n' "$CACHE/gtfs"
 	;;
 favoris) favorites_list ;;
+vocal)
+	# Phrase reconnue à la voix -> commande chti, réponse en mode voix
+	CHTI_VOIX=1
+	export CHTI_VOIX
+	need python3
+	parsed=$(run_py parse "$FAVORITES" "$*") || exit 1
+	set -f
+	set --
+	while IFS= read -r arg; do
+		set -- "$@" "$arg"
+	done <<PARSED
+$parsed
+PARSED
+	set +f
+	exec sh "$0" "$@"
+	;;
 -h | --help | help) usage ;;
 *)
 	if [ $# -eq 0 ]; then

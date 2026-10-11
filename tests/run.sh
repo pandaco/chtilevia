@@ -29,7 +29,9 @@ export XDG_CONFIG_HOME="$FIX/config"
 "$ROOT/chti" update >/dev/null 2>&1
 
 # nom | heure | flux temps réel (fichier de fixtures, ou « aucun ») | arguments
-CASES='
+# (heredoc plutôt qu'une chaîne entre apostrophes : les phrases peuvent en contenir)
+CASES=$(
+	cat <<'LIST'
 bus-liste-arrets        | MIDI   | rt-midi.pb   | bus 10
 bus-liste-direction     | MIDI   | rt-midi.pb   | bus 10 -d hegel
 bus-temps-reel          | MIDI   | rt-midi.pb   | bus 10 marais
@@ -71,7 +73,19 @@ voix-favori             | MINUIT | aucun        | --voix rentrer-velo
 voix-sans-arret         | MIDI   | aucun        | --voix bus 10
 voix-erreur-ligne       | MIDI   | aucun        | --voix bus 999
 voix-erreur-inconnu     | MIDI   | aucun        | --voix inconnu
-'
+vocal-phrase-longue     | MIDI   | rt-midi.pb   | vocal Quand passe le prochain bus dix à l'arrêt Marais direction Lille Flandres
+vocal-metro-en-lettres  | MIDI   | rt-midi.pb   | vocal métro un république vers CHU
+vocal-tram              | MIDI   | rt-midi.pb   | vocal le prochain tram à Croisé Laroche vers Roubaix
+vocal-velo-deposer      | MINUIT | aucun        | vocal V'Lille Sainte Hélène pour déposer
+vocal-velo-prendre      | MINUIT | aucun        | vocal vélo gare lille europe pour prendre un vélo
+vocal-favori            | MIDI   | rt-midi.pb   | vocal travail
+vocal-favori-liaison    | MINUIT | aucun        | vocal Rentrer à vélo
+vocal-incompris         | MIDI   | aucun        | vocal bonjour
+vocal-ligne-manquante   | MIDI   | aucun        | vocal bus
+vocal-metro-inconnu     | MIDI   | aucun        | vocal métro 3 république
+vocal-vide              | MIDI   | aucun        | vocal
+LIST
+)
 
 pass=0
 fail=0

@@ -1,0 +1,3 @@
+Gare Lille Europe : 14 vélos disponibles.
+La Madeleine Gare : 13 places libres.
+[exit 0]

@@ -1,0 +1,2 @@
+Je n'ai pas compris « bonjour ». Dis par exemple : métro 1 république vers chu, ou : vélo rihour.
+[exit 1]
