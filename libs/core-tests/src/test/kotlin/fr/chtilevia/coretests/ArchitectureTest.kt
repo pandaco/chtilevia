@@ -6,7 +6,8 @@ import org.junit.jupiter.api.Test
 
 /**
  * Règle de dépendance de l'architecture hexagonale, vérifiée sur les imports du code de production :
- * domain ← application ← presentation, et le domaine n'importe que la bibliothèque standard.
+ * domain ← application ← presentation. Le cœur n'importe que la bibliothèque standard et les dates
+ * (kotlinx-datetime).
  */
 class ArchitectureTest {
     private val core = Konsist.scopeFromProduction().files.filter { it.path.contains("/libs/") }
@@ -16,7 +17,7 @@ class ArchitectureTest {
     @Test
     fun `le domaine ne dépend que de la bibliothèque standard`() {
         // java.text : décomposition Unicode côté JVM/Android, équivalent de String.normalize en JS
-        val allowed = listOf("kotlin.", "java.text.", "fr.chtilevia.domain")
+        val allowed = listOf("kotlin.", "kotlinx.datetime.", "java.text.", "fr.chtilevia.domain")
         layer("domain").assertTrue(testName = "domain") { file ->
             file.imports.all { import -> allowed.any { import.name.startsWith(it) } }
         }
@@ -24,7 +25,7 @@ class ArchitectureTest {
 
     @Test
     fun `application ne dépend que du domaine`() {
-        val allowed = listOf("kotlin.", "fr.chtilevia.domain", "fr.chtilevia.application")
+        val allowed = listOf("kotlin.", "kotlinx.datetime.", "fr.chtilevia.domain", "fr.chtilevia.application")
         layer("application").assertTrue(testName = "application") { file ->
             file.imports.all { import -> allowed.any { import.name.startsWith(it) } }
         }
@@ -32,7 +33,9 @@ class ArchitectureTest {
 
     @Test
     fun `presentation ne dépend que du domaine et de l'application`() {
-        val allowed = listOf("kotlin.", "fr.chtilevia.domain", "fr.chtilevia.application", "fr.chtilevia.presentation")
+        val allowed = listOf(
+            "kotlin.", "kotlinx.datetime.", "fr.chtilevia.domain", "fr.chtilevia.application", "fr.chtilevia.presentation",
+        )
         layer("presentation").assertTrue(testName = "presentation") { file ->
             file.imports.all { import -> allowed.any { import.name.startsWith(it) } }
         }
