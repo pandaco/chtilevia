@@ -245,6 +245,21 @@ sh ~/chtilevia/apps/shell/termux/install.sh   # outils, commandes, boutons du wi
 nano ~/.config/chtilevia/favoris       # tes trajets (fichier local, jamais publié)
 ```
 
+## Avec un assistant IA (MCP)
+
+Un serveur [MCP](https://modelcontextprotocol.io) local donne les mêmes informations à Claude Code,
+Claude Desktop, Gemini CLI ou tout client MCP : on pose la question en langage naturel, l'assistant
+appelle `prochains_passages`, `station_velo`, `favori`… Il s'appuie sur `chti --json` et tourne en
+stdio, sans serveur à héberger.
+
+```sh
+npm install
+claude mcp add --scope user chtilevia -- node "$PWD/apps/mcp/src/main.ts"           # Claude Code
+gemini mcp add -s user chtilevia node "$PWD/apps/mcp/src/main.ts"                   # Gemini CLI
+```
+
+Outils, configuration de Claude Desktop et architecture : [`apps/mcp/README.md`](apps/mcp/README.md).
+
 ## Sources de données (open data, sans clé d'API)
 
 | Donnée | URL | Format |
