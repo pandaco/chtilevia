@@ -1,0 +1,27 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "shell",
+  "projectType": "application",
+  "tags": ["scope:shell", "layer:app"],
+  "implicitDependencies": ["contract"],
+  "targets": {
+    "lint": {
+      "command": "shellcheck chti tests/*.sh termux/*.sh termux/shortcuts/*",
+      "options": { "cwd": "{projectRoot}" }
+    },
+    "test": {
+      "dependsOn": ["test-contract", "test-termux"],
+      "command": "echo 'Tests shell : contrat et Termux verts'"
+    },
+    "test-contract": {
+      "command": "sh {projectRoot}/tests/contract.sh",
+      "cache": true,
+      "inputs": ["default", "^default"]
+    },
+    "test-termux": {
+      "command": "sh {projectRoot}/tests/termux.sh",
+      "cache": true,
+      "inputs": ["default", "^default"]
+    }
+  }
+}

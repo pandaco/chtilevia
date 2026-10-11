@@ -1,0 +1,12 @@
+{
+  "name": "chtilevia",
+  "private": true,
+  "description": "Prochains passages Ilévia et disponibilité V'Lille : shell, Android, assistants IA",
+  "scripts": {
+    "lint": "nx run-many -t lint",
+    "test": "nx run-many -t test"
+  },
+  "devDependencies": {
+    "nx": "23.2.1"
+  }
+}

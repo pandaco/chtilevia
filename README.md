@@ -316,6 +316,18 @@ shellcheck apps/shell/chti apps/shell/tests/*.sh apps/shell/termux/*.sh apps/she
 **Avant chaque commit**, tout doit passer : les deux scripts de test doivent afficher `0 échec(s)`,
 et `shellcheck` ne doit rien afficher.
 
+Le dépôt est un monorepo [Nx](https://nx.dev) : la même vérification se lance en une commande pour
+tous les projets, avec un cache qui saute ce qui n'a pas changé (Node requis) :
+
+```sh
+npm install                          # une fois : installe Nx dans node_modules/
+npx nx run-many -t lint test         # shellcheck + tests de tous les projets
+npx nx graph                         # graphe des projets (apps/shell dépend de libs/contract)
+```
+
+`libs/contract` ne contient que des données : fixtures et sorties de référence, partagées par toutes
+les implémentations de chti à venir.
+
 #### Pourquoi des tests « figés » ?
 
 Les horaires changent chaque minute : en lançant `chti bus 10 marais` à la main, impossible de
