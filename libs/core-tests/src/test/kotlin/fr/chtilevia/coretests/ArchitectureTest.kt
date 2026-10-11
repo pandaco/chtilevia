@@ -6,8 +6,8 @@ import org.junit.jupiter.api.Test
 
 /**
  * Règle de dépendance de l'architecture hexagonale, vérifiée sur les imports du code de production :
- * domain ← application ← presentation. Le cœur n'importe que la bibliothèque standard et les dates
- * (kotlinx-datetime).
+ * domain ← application ← presentation, domain ← application ← adapters. Le cœur n'importe que la
+ * bibliothèque standard et les dates (kotlinx-datetime) ; seuls les adaptateurs touchent aux I/O.
  */
 class ArchitectureTest {
     private val core = Konsist.scopeFromProduction().files.filter { it.path.contains("/libs/") }
@@ -37,6 +37,16 @@ class ArchitectureTest {
             "kotlin.", "kotlinx.datetime.", "fr.chtilevia.domain", "fr.chtilevia.application", "fr.chtilevia.presentation",
         )
         layer("presentation").assertTrue(testName = "presentation") { file ->
+            file.imports.all { import -> allowed.any { import.name.startsWith(it) } }
+        }
+    }
+
+    @Test
+    fun `les adaptateurs ne dépendent ni de la présentation ni des applis`() {
+        val allowed = listOf(
+            "kotlin.", "kotlinx.", "java.", "fr.chtilevia.domain", "fr.chtilevia.application", "fr.chtilevia.adapters",
+        )
+        layer("adapters").assertTrue(testName = "adapters") { file ->
             file.imports.all { import -> allowed.any { import.name.startsWith(it) } }
         }
     }
