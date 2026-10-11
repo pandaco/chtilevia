@@ -217,6 +217,13 @@ except Exception:  # pas de base tz : heure locale de la machine
 VOICE = os.environ.get("CHTI_VOIX") == "1"
 
 
+def bullet_list(title, items):
+    # À l'écran : une puce par ligne ; à l'oral : une phrase
+    if VOICE:
+        return f". {title[:1].upper()}{title[1:]} : {', '.join(items)}."
+    return f"\n{title} :\n" + "\n".join(f"  • {i}" for i in items)
+
+
 def die(msg):
     print(msg[:1].upper() + msg[1:] if VOICE else f"chti : {msg}", file=sys.stderr)
     sys.exit(1)
@@ -369,14 +376,15 @@ def departures(gtfs, rt_path, line, query, direction, count):
     rid = route["route_id"]
 
     trips = {r["trip_id"]: r for r in rows(f"{gtfs}/trips.txt") if r["route_id"] == rid}
+    all_trips = trips
     if direction:
         # Filtre sur la destination affichée (headsign) des courses
         wanted_dir = fold(direction)
         kept = {tid: t for tid, t in trips.items() if wanted_dir in fold(t["trip_headsign"])}
         if not kept:
             heads = sorted({t["trip_headsign"] for t in trips.values() if t["trip_headsign"]})
-            die(f"aucune direction de la ligne {route['route_short_name']} ne correspond à « {direction} »\n"
-                + "directions possibles :\n" + "\n".join(f"  • {h}" for h in heads))
+            die(f"aucune direction de la ligne {route['route_short_name']} ne correspond à « {direction} »"
+                + bullet_list("directions possibles", heads))
         trips = kept
     stops = {r["stop_id"]: r for r in rows(f"{gtfs}/stops.txt")}
     sched = defaultdict(list)  # trip_id -> [(seq, stop_id, secondes)]
@@ -399,12 +407,27 @@ def departures(gtfs, rt_path, line, query, direction, count):
         return
 
     needle = fold(query)
-    matched = defaultdict(set)  # zone d'arrêt -> stop_ids desservis par la ligne
-    for tid in trips:  # seulement les courses retenues (filtre de direction)
-        for _, sid, _ in sched.get(tid, []):
-            aid = area(sid)
-            if needle in fold(area_name(aid)) or needle in fold(stops.get(sid, {}).get("stop_name", "")):
-                matched[aid].add(sid)
+
+    def match_stops(trip_ids):
+        found = defaultdict(set)  # zone d'arrêt -> stop_ids desservis par ces courses
+        for tid in trip_ids:
+            for _, sid, _ in sched.get(tid, []):
+                aid = area(sid)
+                if needle in fold(area_name(aid)) or needle in fold(stops.get(sid, {}).get("stop_name", "")):
+                    found[aid].add(sid)
+        return found
+
+    matched = match_stops(trips)  # seulement les courses retenues (filtre de direction)
+    if not matched and direction:
+        # L'arrêt existe peut-être, mais pas dans cette direction : le dire plutôt que « introuvable »
+        elsewhere = match_stops(all_trips)
+        if elsewhere:
+            names = ", ".join(sorted({area_name(a) for a in elsewhere}))
+            heads = sorted({t["trip_headsign"] for t in all_trips.values()
+                            if t["trip_headsign"] and any(s in elsewhere for s in
+                                                          {area(sid) for _, sid, _ in sched.get(t["trip_id"], [])})})
+            die(f"l'arrêt {names} n'est pas desservi par la ligne {route['route_short_name']} "
+                f"en direction de « {direction} »" + bullet_list("directions qui le desservent", heads))
     if not matched:
         die(f"aucun arrêt de la ligne {route['route_short_name']} ne correspond à « {query} » "
             "(relance sans arrêt pour voir la liste)")

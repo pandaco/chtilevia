@@ -1,0 +1,2 @@
+Aucune direction de la ligne 10 ne correspond à « zzz ». Directions possibles : Lille Chu - Centre O. Lambret, Lille Gare Lille Flandres, Lomme Lomme Hegel.
+[exit 1]

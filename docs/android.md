@@ -187,7 +187,8 @@ Toutes les commandes du [README](../README.md#appels-possibles) marchent aussi d
 | Le widget est vide | Touche l'icône de rafraîchissement du widget. Vérifie que `ls ~/.shortcuts/tasks` liste bien les boutons, sinon relance l'installeur. |
 | La réponse est lue en anglais | Installe la voix française : Paramètres Android → Synthèse vocale → moteur Google → Installer les données vocales → Français. |
 | « Je n'ai pas compris » | Commence par le mode : « bus 10… », « métro 1… », « tram… », « vélo… », ou un nom de favori. |
-| « Aucune direction ne correspond » | Lance `chti bus <ligne> -d x` dans Termux : la liste des directions possibles s'affiche. |
+| « Aucune direction ne correspond » | La réponse donne les directions possibles : reformule avec l'une d'elles. |
+| « L'arrêt … n'est pas desservi … en direction de … » | L'arrêt existe, mais la ligne n'y passe que dans d'autres directions (souvent une ligne à sens unique à cet endroit) : la réponse les cite. |
 | Le premier usage de la journée est lent | Normal : les horaires sont retéléchargés et préparés une fois par jour (quelques secondes). |
 | Les heures sont décalées | Vérifie le fuseau horaire du téléphone (Paramètres → Date et heure). |
 | `chti : commande requise introuvable` | Un outil manque : relance `sh ~/chtilevia/android/install.sh`. |

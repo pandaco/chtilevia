@@ -43,6 +43,7 @@ bus-minuit-lendemain    | MINUIT | rt-minuit.pb | bus 10 marais -d flandres -n 4
 bus-sans-temps-reel     | SOIR   | aucun        | bus 10 gambetta -n 3
 metro-fin-de-service    | SOIR   | aucun        | metro 1 republique --vers chu -n 4
 erreur-direction        | MIDI   | rt-midi.pb   | bus 10 marais -d zzz
+erreur-arret-autre-sens | MIDI   | rt-midi.pb   | bus 10 esplanade -d flandres
 erreur-ligne            | MIDI   | rt-midi.pb   | bus 999
 erreur-arret            | MIDI   | rt-midi.pb   | bus 10 zzz
 erreur-nombre-zero      | MIDI   | rt-midi.pb   | bus 10 marais -n 0
@@ -73,6 +74,8 @@ voix-favori             | MINUIT | aucun        | --voix rentrer-velo
 voix-sans-arret         | MIDI   | aucun        | --voix bus 10
 voix-erreur-ligne       | MIDI   | aucun        | --voix bus 999
 voix-erreur-inconnu     | MIDI   | aucun        | --voix inconnu
+voix-erreur-direction   | MIDI   | aucun        | --voix bus 10 marais -d zzz
+voix-arret-autre-sens   | MIDI   | aucun        | --voix bus 10 esplanade -d flandres
 vocal-phrase-longue     | MIDI   | rt-midi.pb   | vocal Quand passe le prochain bus dix à l'arrêt Marais direction Lille Flandres
 vocal-metro-en-lettres  | MIDI   | rt-midi.pb   | vocal métro un république vers CHU
 vocal-tram              | MIDI   | rt-midi.pb   | vocal le prochain tram à Croisé Laroche vers Roubaix

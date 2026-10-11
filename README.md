@@ -69,7 +69,8 @@ ln -s "$PWD/chti" ~/.local/bin/chti   # optionnel, pour l'avoir dans le PATH
   existe dans plusieurs communes), chacun est affiché avec sa commune.
 - **`-d <direction>`** (alias `--direction`, `--vers`, ou `--vers=<direction>`) : ne garde que les
   courses dont la destination contient ce texte. Placée n'importe où après la ligne.
-  Une direction inconnue affiche la liste des directions possibles.
+  Une direction inconnue affiche la liste des directions possibles ; un arrêt qui existe mais n'est
+  pas desservi dans cette direction le dit, avec les directions qui le desservent.
   Le mot **`vers`** sans tiret marche aussi : tous les mots qui le suivent forment la direction
   (`chti bus 10 gambetta vers lille flandres`).
 - **`-n <nombre>`** (alias `--nombre`, ou `--nombre=<nombre>`) : nombre de prochains passages affichés
@@ -307,7 +308,7 @@ Deux outils vérifient le script. Ils ne servent pas à l'usage quotidien, seule
 chaque modification**, pour s'assurer qu'on n'a rien cassé.
 
 ```sh
-tests/run.sh          # tests de non-régression : 52 cas, hors ligne, ~5 s
+tests/run.sh          # tests de non-régression : 55 cas, hors ligne, ~5 s
 tests/android.sh      # partie Android, avec des commandes Termux simulées : 19 vérifications
 shellcheck chti tests/*.sh android/*.sh android/shortcuts/*   # analyse du shell (paquet shellcheck)
 ```
