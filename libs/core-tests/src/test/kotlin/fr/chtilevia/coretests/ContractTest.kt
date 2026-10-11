@@ -1,19 +1,42 @@
 package fr.chtilevia.coretests
 
+import fr.chtilevia.adapters.bikeshare.GbfsFeed
+import fr.chtilevia.adapters.favorites.FileFavoritesStore
+import fr.chtilevia.adapters.fetch
+import fr.chtilevia.adapters.gtfs.GtfsCache
+import fr.chtilevia.adapters.realtime.GtfsRealtimeFeed
+import fr.chtilevia.application.Clock
+import fr.chtilevia.application.FindFavorite
+import fr.chtilevia.application.GetBikeStations
+import fr.chtilevia.application.GetDepartures
+import fr.chtilevia.application.InterpretUtterance
+import fr.chtilevia.application.ListFavorites
+import fr.chtilevia.application.NetworkProfile
+import fr.chtilevia.application.Notices
+import fr.chtilevia.application.UpdateTimetable
+import fr.chtilevia.presentation.Chti
+import fr.chtilevia.presentation.ChtiServices
+import fr.chtilevia.presentation.Console
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Assumptions.abort
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
+import org.junit.jupiter.api.TestInstance
 import java.io.File
+import java.nio.file.Files
 
 /**
- * Harnais du contrat partagé (libs/contract, voir son README) pour le cœur Kotlin.
- * Un test par cas de cases.txt ; tant que le cœur ne sait pas jouer un cas, il est marqué
- * « ignoré » plutôt que réussi, pour que le compteur montre ce qu'il reste à porter.
+ * Contrat partagé (libs/contract, voir son README) joué par le cœur Kotlin : chaque cas de
+ * cases.txt lance la commande [Chti] sur les fixtures, à l'heure figée du cas, et sa sortie
+ * (sorties standard et d'erreur dans l'ordre, puis `[exit N]`) doit être identique à celle du shell.
  */
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ContractTest {
+    private val root = File(System.getProperty("chtilevia.root") ?: "../..")
     private val contract = File(System.getProperty("chtilevia.contract") ?: "../contract")
+    private val fixtures = File(contract, "fixtures")
 
     data class Case(val name: String, val clock: String, val realtime: String, val args: String)
 
@@ -25,6 +48,18 @@ class ContractTest {
     private val clocks = table("clocks.txt").associate { it[0] to it[1].toLong() }
     private val cases = table("cases.txt").map { Case(it[0], it[1], it[2], it[3]) }
 
+    // Référentiel construit une fois pour tous les cas, depuis le zip des fixtures (≡ chti update)
+    private val cache = Files.createTempDirectory("chti-kotlin-tests").toFile()
+    private val gtfs by lazy {
+        GtfsCache(File(cache, "chtilevia"), fixtures.resolve("gtfs.zip").toURI().toString())
+            .also { it.refresh(force = true, notices = Notices.NONE) }
+    }
+
+    @AfterAll
+    fun cleanUp() {
+        cache.deleteRecursively()
+    }
+
     @Test
     fun `le contrat est cohérent`() {
         assertTrue(cases.isNotEmpty(), "aucun cas dans cases.txt")
@@ -32,7 +67,7 @@ class ContractTest {
             assertTrue(case.clock in clocks, "${case.name} : heure inconnue ${case.clock}")
             assertTrue(File(contract, "expected/${case.name}.txt").isFile, "${case.name} : sortie attendue absente")
             assertTrue(
-                case.realtime == "aucun" || File(contract, "fixtures/${case.realtime}").isFile,
+                case.realtime == "aucun" || File(fixtures, case.realtime).isFile,
                 "${case.name} : flux temps réel absent ${case.realtime}",
             )
         }
@@ -42,7 +77,40 @@ class ContractTest {
     @TestFactory
     fun `cas du contrat`(): List<DynamicTest> = cases.map { case ->
         DynamicTest.dynamicTest("${case.name} : chti ${case.args}") {
-            abort<Unit>("à porter dans le cœur Kotlin (étape 5)")
+            val expected = File(contract, "expected/${case.name}.txt").readText()
+            assertEquals(expected, play(case))
         }
+    }
+
+    /** Sortie du cas, normalisée comme celle du shell (racine du dépôt remplacée par <racine>) */
+    private fun play(case: Case): String {
+        val profile = NetworkProfile.ILEVIA
+        val now = clocks.getValue(case.clock)
+        val clock = Clock { now }
+        // « aucun » : flux absent, comme une URL injoignable
+        val realtime = fixtures.resolve(if (case.realtime == "aucun") "absent.pb" else case.realtime).toURI().toString()
+        val favorites = FileFavoritesStore(File(fixtures, "config/chtilevia/favoris"))
+        val services = ChtiServices(
+            departures = GetDepartures(gtfs.timetable, gtfs, GtfsRealtimeFeed { fetch(realtime) }, clock, profile),
+            bikeStations = GetBikeStations(GbfsFeed { fetch(fixtures.resolve(it).toURI().toString()) }, clock),
+            listFavorites = ListFavorites(favorites),
+            findFavorite = FindFavorite(favorites),
+            interpretUtterance = InterpretUtterance(favorites),
+            updateTimetable = UpdateTimetable(gtfs),
+        )
+        val output = StringBuilder()
+        val console = object : Console {
+            override fun out(text: String) {
+                output.append(text)
+            }
+
+            override fun err(text: String) {
+                output.append(text)
+            }
+        }
+        // Arguments découpés sur les espaces, sans guillemets ni jokers (comme `set -- $args`)
+        val args = case.args.split(Regex("\\s+")).filter { it.isNotEmpty() }
+        val exit = Chti(services, profile.timeZone).run(args, console)
+        return output.toString().replace(root.path, "<racine>") + "[exit $exit]\n"
     }
 }

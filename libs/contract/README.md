@@ -1,11 +1,12 @@
 # Contrat de comportement de chti
 
-Données partagées par toutes les implémentations de chti (script shell aujourd'hui, cœur Kotlin et
-serveur MCP demain) : mêmes entrées figées, mêmes sorties attendues. Une implémentation est
+Données partagées par toutes les implémentations de chti (script shell, cœur Kotlin, serveur MCP) :
+mêmes entrées figées, mêmes sorties attendues. Une implémentation est
 conforme quand elle reproduit **exactement** chaque fichier de `expected/`.
 
-Ce dossier ne contient que des données. Chaque implémentation a son propre exécuteur, par exemple
-`apps/shell/tests/contract.sh` pour le shell.
+Ce dossier ne contient que des données. Chaque implémentation a son propre exécuteur :
+`apps/shell/tests/contract.sh` pour le shell, `libs/core-tests` (`ContractTest`) pour le cœur Kotlin,
+`apps/mcp/test/contract.test.ts` pour le serveur MCP (cas `json-*`).
 
 | Fichier | Rôle |
 |---|---|

@@ -16,6 +16,7 @@ java {
 
 dependencies {
     testImplementation(project(":presentation"))
+    testImplementation(project(":adapters"))
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.konsist)
