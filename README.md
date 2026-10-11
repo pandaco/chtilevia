@@ -370,12 +370,39 @@ tous les projets, avec un cache qui saute ce qui n'a pas changé (Node requis) :
 
 ```sh
 npm install                          # une fois : installe Nx dans node_modules/
-npx nx run-many -t lint test         # shellcheck + tests de tous les projets
-npx nx graph                         # graphe des projets (apps/shell dépend de libs/contract)
+npx nx run-many -t lint test build   # shellcheck, typage, tests et compilation de tous les projets
+npx nx graph                         # graphe des projets et de leurs dépendances
 ```
 
 `libs/contract` ne contient que des données : fixtures et sorties de référence, partagées par toutes
-les implémentations de chti à venir.
+les implémentations de chti (script shell, serveur MCP, cœur Kotlin).
+
+#### Cœur Kotlin (`libs/`)
+
+La logique de chti est en cours de portage en Kotlin Multiplatform, en architecture hexagonale, pour
+l'appli Android et le serveur MCP. Chaque module compile pour la JVM, Android et Node.js.
+
+| Module | Rôle | Dépend de |
+|---|---|---|
+| `libs/domain` | Modèles et règles métier purs (ex. `fold`, la recherche sans accents) | rien |
+| `libs/application` | Cas d'usage et ports (GTFS, temps réel, V'Lille, horloge…) | domain |
+| `libs/presentation` | Mise en forme : texte, phrases à lire, JSON du contrat | application |
+| `libs/core-tests` | Règles d'architecture (Konsist) et harnais du contrat | tout |
+
+Prérequis : un JDK 17 ou plus récent (`JAVA_HOME`) et le SDK Android (`ANDROID_HOME`, installé avec
+Android Studio). Gradle (wrapper `./gradlew`) est lancé par Nx ; on peut aussi l'appeler directement :
+
+```sh
+./gradlew test                       # tests de tous les modules, sur toutes les cibles
+./gradlew :domain:jvmTest            # une seule cible
+```
+
+- La configuration commune des modules est dans `buildSrc/` (plugin `chtilevia.kmp-library`) et les
+  versions dans `gradle/libs.versions.toml`.
+- `libs/core-tests` fait échouer le build si une couche importe ce qu'elle ne devrait pas (le domaine
+  n'importe que la bibliothèque standard, l'application que le domaine…).
+- Le harnais du contrat crée un test par cas de `libs/contract/cases.txt` ; tant qu'un cas n'est pas
+  porté en Kotlin, il est marqué « ignoré », pour voir ce qu'il reste à faire.
 
 #### Pourquoi des tests « figés » ?
 
