@@ -1,0 +1,26 @@
+{
+  "name": "@chtilevia/mcp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Serveur MCP chtilevia : passages Ilévia et V'Lille pour Claude, Gemini CLI et tout client MCP",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node src/main.ts",
+    "typecheck": "tsc --noEmit -p .",
+    "test": "node --test test/"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server": "2.1.0",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/client": "2.1.0",
+    "@types/node": "24.19.0",
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
+    "typescript": "7.0.2"
+  }
+}

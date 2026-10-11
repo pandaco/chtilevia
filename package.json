@@ -8,5 +8,8 @@
   },
   "devDependencies": {
     "nx": "23.2.1"
-  }
+  },
+  "workspaces": [
+    "apps/mcp"
+  ]
 }

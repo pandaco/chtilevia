@@ -1,0 +1,17 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "mcp",
+  "projectType": "application",
+  "tags": ["scope:mcp", "layer:app"],
+  "implicitDependencies": ["shell", "contract"],
+  "targets": {
+    "lint": {
+      "command": "tsc --noEmit -p .",
+      "options": { "cwd": "{projectRoot}" }
+    },
+    "test": {
+      "command": "node --test test/",
+      "options": { "cwd": "{projectRoot}" }
+    }
+  }
+}
