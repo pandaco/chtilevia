@@ -1,0 +1,12 @@
+
+10 — Gambetta  (GAMBETTA 59130 LAMBERSART)
+  → Lille Gare Lille Flandres
+     12:48  dans 2 min     🕒 théorique
+     13:02  dans 16 min    🕒 théorique
+  → Lille Chu - Centre O. Lambret
+     12:54  dans 8 min     ⏱  temps réel
+     13:25  dans 40 min    ⏱  temps réel
+  → Lomme Lomme Hegel
+     13:08  dans 23 min    ⏱  temps réel
+     13:39  dans 53 min    🕒 théorique
+[exit 0]

@@ -46,10 +46,13 @@ class LineSchedule(
     fun headsigns(of: List<Trip> = trips): List<String> =
         of.map { it.headsign }.filter { it.isNotEmpty() }.distinct().sorted()
 
-    /** Courses dont la destination contient [direction] */
+    /** Courses dont la destination contient [direction], sinon celles dont la destination lui ressemble le plus */
     fun tripsTowards(direction: String): List<Trip> {
         val wanted = fold(direction)
-        return trips.filter { wanted in fold(it.headsign) }
+        val containing = trips.filter { wanted in fold(it.headsign) }
+        if (containing.isNotEmpty()) return containing
+        val closest = headsigns().closestTo(direction) { listOf(it) }.toSet()
+        return trips.filter { it.headsign in closest }
     }
 
     /** Zones d'arrêt desservies par [of] dont le nom (ou celui d'un quai) contient [query], avec leurs quais */
@@ -65,6 +68,23 @@ class LineSchedule(
             }
         }
         return found
+    }
+
+    /**
+     * Zones d'arrêt desservies par [of] dont le nom (ou celui d'un quai) ressemble le plus à [query],
+     * toutes celles à égalité, avec leurs quais ; pour quand [matchStops] ne trouve rien
+     */
+    fun approximateStops(query: String, of: List<Trip>): Map<String, Set<String>> {
+        val names = LinkedHashMap<String, LinkedHashSet<String>>()
+        val served = LinkedHashMap<String, LinkedHashSet<String>>()
+        for (trip in of) {
+            for (stopTime in stopTimes[trip.id].orEmpty()) {
+                val area = area(stopTime.stopId)
+                names.getOrPut(area) { LinkedHashSet() }.addAll(listOf(areaName(area), stops[stopTime.stopId]?.name.orEmpty()))
+                served.getOrPut(area) { LinkedHashSet() }.add(stopTime.stopId)
+            }
+        }
+        return names.keys.closestTo(query) { names.getValue(it) }.associateWith { served.getValue(it) }
     }
 
     /** Destinations de [of] qui passent par l'une des zones [areas] */

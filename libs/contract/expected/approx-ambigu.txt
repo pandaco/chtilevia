@@ -1,0 +1,6 @@
+chti : plusieurs arrêts de la ligne 10 ressemblent à « marie »
+arrêts approchants :
+  • Eglise Du Marais
+  • Loos Mairie
+  • Marais
+[exit 1]

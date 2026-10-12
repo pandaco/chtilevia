@@ -1,0 +1,9 @@
+
+M1 — Cité Scientifique  (CITÉ SCIENTIFIQUE PR. GABILLARD STATION DU MÉTRO M1)
+  → Villeneuve D Ascq 4 Cantons Stade P. Mauroy
+     12:45  à l'approche   🕒 théorique
+     12:48  dans 3 min     🕒 théorique
+  → Lille Chu - Eurasanté
+     12:48  dans 2 min     🕒 théorique
+     12:51  dans 5 min     🕒 théorique
+[exit 0]

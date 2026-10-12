@@ -1,0 +1,9 @@
+
+TRAM — La Marque  (LA MARQUE 59170 CROIX)
+  → Roubaix Eurotéléport
+     12:46  à l'approche   ⏱  temps réel
+     12:56  dans 11 min    ⏱  temps réel
+  → Lille Gare Lille Flandres
+     12:46  à l'approche   ⏱  temps réel
+     12:58  dans 13 min    ⏱  temps réel
+[exit 0]

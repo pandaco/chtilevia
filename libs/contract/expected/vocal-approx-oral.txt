@@ -1,0 +1,2 @@
+Tram, arrêt Croise Laroche, vers Roubaix Eurotéléport : dans 1 minute, puis dans 13 minutes.
+[exit 0]

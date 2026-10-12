@@ -100,7 +100,8 @@ const PARITY: [string, string, Record<string, unknown>][] = [
     ['json-erreur-direction', 'prochains_passages', { mode: 'bus', ligne: '10', arret: 'marais', direction: 'zzz' }],
     ['json-erreur-arret', 'prochains_passages', { mode: 'bus', ligne: '10', arret: 'zzz' }],
     ['json-erreur-arret-autre-sens', 'prochains_passages', { mode: 'bus', ligne: '10', arret: 'esplanade', direction: 'flandres' }],
-    ['json-erreur-velo', 'station_velo', { station: 'zzz' }]
+    ['json-erreur-velo', 'station_velo', { station: 'zzz' }],
+    ['json-approx-ambigu', 'prochains_passages', { mode: 'bus', ligne: '10', arret: 'marie' }]
 ];
 
 describe('parité avec le contrat chti --json', () => {

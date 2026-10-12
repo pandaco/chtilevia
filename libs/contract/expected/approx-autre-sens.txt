@@ -1,0 +1,5 @@
+chti : l'arrêt Esplanade n'est pas desservi par la ligne 10 en direction de « flandres »
+directions qui le desservent :
+  • Lille Chu - Centre O. Lambret
+  • Lomme Lomme Hegel
+[exit 1]

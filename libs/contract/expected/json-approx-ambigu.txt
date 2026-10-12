@@ -1,0 +1,13 @@
+{
+  "type": "error",
+  "code": "ambiguous_stop",
+  "message": "plusieurs arrêts de la ligne 10 ressemblent à « marie »",
+  "details": {
+    "suggestions": [
+      "Eglise Du Marais",
+      "Loos Mairie",
+      "Marais"
+    ]
+  }
+}
+[exit 1]

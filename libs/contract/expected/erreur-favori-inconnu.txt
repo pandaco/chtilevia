@@ -17,5 +17,5 @@ Sans arrêt, la liste des arrêts de la ligne est affichée.
   « vers » s'écrit aussi sans tiret : chti tram croise laroche vers roubaix
 -n / --nombre : nombre de passages affichés par direction (3 par défaut).
 --prendre / --deposer : n'affiche que les vélos disponibles / que les places libres.
-La recherche ignore la casse et les accents.
+La recherche ignore la casse et les accents, et tolère les fautes (arrêts, directions).
 [exit 1]

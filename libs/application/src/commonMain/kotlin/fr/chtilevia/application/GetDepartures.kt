@@ -62,17 +62,27 @@ class GetDepartures(
         }
         if (query.stop.isEmpty()) return StopList(line, schedule.stopsByDirection(trips), schedule.exampleStopName())
 
-        val matched = schedule.matchStops(query.stop, trips)
-        if (matched.isEmpty() && query.direction.isNotEmpty()) {
-            // L'arrêt existe peut-être, mais pas dans cette direction : le dire plutôt que « introuvable »
-            val elsewhere = schedule.matchStops(query.stop, schedule.trips)
-            if (elsewhere.isNotEmpty()) {
-                throw ChtiError.StopNotInDirection(
-                    line = line.name,
-                    stops = elsewhere.keys.map(schedule::areaName).distinct().sorted(),
-                    direction = query.direction,
-                    headsigns = schedule.headsignsServing(elsewhere.keys),
-                )
+        fun notInDirection(elsewhere: Map<String, Set<String>>) {
+            // L'arrêt existe, mais pas dans cette direction : le dire plutôt que « introuvable »
+            if (elsewhere.isEmpty()) return
+            throw ChtiError.StopNotInDirection(
+                line = line.name,
+                stops = elsewhere.keys.map(schedule::areaName).distinct().sorted(),
+                direction = query.direction,
+                headsigns = schedule.headsignsServing(elsewhere.keys),
+            )
+        }
+
+        var matched = schedule.matchStops(query.stop, trips)
+        if (matched.isEmpty() && query.direction.isNotEmpty()) notInDirection(schedule.matchStops(query.stop, schedule.trips))
+        if (matched.isEmpty()) {
+            // Rien ne contient la demande : arrêts qui lui ressemblent (fautes, reconnaissance vocale)
+            matched = schedule.approximateStops(query.stop, trips)
+            if (matched.isEmpty() && query.direction.isNotEmpty()) {
+                notInDirection(schedule.approximateStops(query.stop, schedule.trips))
+            }
+            if (matched.size > 1) {
+                throw ChtiError.AmbiguousStop(line.name, query.stop, matched.keys.map(schedule::areaName).sorted())
             }
         }
         if (matched.isEmpty()) throw ChtiError.UnknownStop(line.name, query.stop)

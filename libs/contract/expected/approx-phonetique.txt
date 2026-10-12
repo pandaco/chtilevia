@@ -1,0 +1,12 @@
+
+TRAM — Saint Maur  (SAINT MAUR 59110 LA MADELEINE)
+  → Tourcoing Tourcoing Centre
+     12:47  dans 2 min     ⏱  temps réel
+     12:59  dans 14 min    ⏱  temps réel
+  → Lille Gare Lille Flandres
+     12:49  dans 3 min     ⏱  temps réel
+     12:55  dans 10 min    ⏱  temps réel
+  → Roubaix Eurotéléport
+     12:53  dans 8 min     ⏱  temps réel
+     13:05  dans 20 min    ⏱  temps réel
+[exit 0]

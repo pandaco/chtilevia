@@ -24,14 +24,22 @@ internal val USAGE = """
     |  « vers » s'écrit aussi sans tiret : chti tram croise laroche vers roubaix
     |-n / --nombre : nombre de passages affichés par direction (3 par défaut).
     |--prendre / --deposer : n'affiche que les vélos disponibles / que les places libres.
-    |La recherche ignore la casse et les accents.
+    |La recherche ignore la casse et les accents, et tolère les fautes (arrêts, directions).
     |
 """.trimMargin()
 
 private const val UTTERANCE_EXAMPLE = "Dis par exemple : métro 1 république vers chu, ou : vélo rihour."
 
-/** Message d'une erreur, et la liste de suggestions qui l'accompagne ([hintTitle] : [hint]) */
-internal data class ErrorMessage(val text: String, val hintTitle: String? = null, val hint: List<String> = emptyList())
+/**
+ * Message d'une erreur, et la liste de suggestions qui l'accompagne ([hintTitle] : [hint]) ;
+ * [hintKey] : clé de cette liste dans les `details` du JSON
+ */
+internal data class ErrorMessage(
+    val text: String,
+    val hintTitle: String? = null,
+    val hint: List<String> = emptyList(),
+    val hintKey: String = "directions",
+)
 
 /** Message en français d'une erreur, commun à l'écran, à la voix et au JSON (sauf mention contraire) */
 internal fun ChtiError.message(): ErrorMessage = when (this) {
@@ -49,6 +57,12 @@ internal fun ChtiError.message(): ErrorMessage = when (this) {
     )
     is ChtiError.UnknownStop ->
         ErrorMessage("aucun arrêt de la ligne $line ne correspond à « $query » (relance sans arrêt pour voir la liste)")
+    is ChtiError.AmbiguousStop -> ErrorMessage(
+        "plusieurs arrêts de la ligne $line ressemblent à « $query »",
+        "arrêts approchants",
+        suggestions,
+        hintKey = "suggestions",
+    )
     is ChtiError.MissingStop -> ErrorMessage("Précise un arrêt, par exemple : $example.")
     is ChtiError.MissingStation -> ErrorMessage("précise un nom de station, ex : chti velo rihour")
     is ChtiError.BikeServiceUnreachable -> ErrorMessage("V'Lille injoignable")

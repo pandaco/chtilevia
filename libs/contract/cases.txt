@@ -56,6 +56,19 @@ vocal-incompris         | MIDI   | aucun        | vocal bonjour
 vocal-ligne-manquante   | MIDI   | aucun        | vocal bus
 vocal-metro-inconnu     | MIDI   | aucun        | vocal métro 3 république
 vocal-vide              | MIDI   | aucun        | vocal
+# Rapprochement approximatif : rien ne contient la demande, on prend l'arrêt (ou la direction) qui
+# lui ressemble le plus, à l'écrit ou au son ; ex æquo → ambiguous_stop avec suggestions
+approx-faute-frappe     | MIDI   | rt-midi.pb   | bus 10 gambeta -n 2
+approx-mots-separes     | MIDI   | rt-midi.pb   | tram croise la roche -d roubaix
+approx-mot-manquant     | MIDI   | rt-midi.pb   | bus 10 eglise marais -d flandres -n 2
+approx-phonetique       | MIDI   | rt-midi.pb   | tram saint mort -n 2
+approx-phonetique-metro | MIDI   | rt-midi.pb   | metro 1 cite scientifik -n 2
+approx-meilleur-ecart   | MIDI   | rt-midi.pb   | tram la marc -n 2
+approx-direction        | MIDI   | rt-midi.pb   | tram croise laroche vers euro teleport -n 2
+approx-autre-sens       | MIDI   | rt-midi.pb   | bus 10 esplanate -d flandres
+approx-ambigu           | MIDI   | rt-midi.pb   | bus 10 marie
+voix-approx-ambigu      | MIDI   | aucun        | --voix bus 10 marie
+vocal-approx-oral       | MIDI   | rt-midi.pb   | vocal le prochain tram à Croix la Roche vers Roubaix
 # Sortie JSON (--json) : documents décrits par schema/response.schema.json
 json-bus-temps-reel        | MIDI   | rt-midi.pb   | --json bus 10 marais -d flandres -n 2
 json-bus-sans-temps-reel   | SOIR   | aucun        | bus 10 gambetta -n 2 --json
@@ -81,3 +94,4 @@ json-erreur-inconnu        | MIDI   | aucun        | --json inconnu
 json-erreur-avec-voix      | MIDI   | aucun        | --json --voix bus 10 marais
 json-erreur-vocal          | MIDI   | aucun        | --json vocal métro un république
 json-erreur-guillemets     | MIDI   | aucun        | --json "zz\z
+json-approx-ambigu         | MIDI   | aucun        | --json bus 10 marie

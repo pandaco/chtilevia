@@ -31,7 +31,7 @@ Sans arrêt, la liste des arrêts de la ligne est affichée.
   « vers » s'écrit aussi sans tiret : chti tram croise laroche vers roubaix
 -n / --nombre : nombre de passages affichés par direction (3 par défaut).
 --prendre / --deposer : n'affiche que les vélos disponibles / que les places libres.
-La recherche ignore la casse et les accents.
+La recherche ignore la casse et les accents, et tolère les fautes (arrêts, directions).
 EOF
 }
 
@@ -285,7 +285,7 @@ FAV
 
 run_py() {
 	python3 -I - "$@" <<'PY'
-import csv, json, os, sys, time, unicodedata
+import csv, json, os, re, sys, time, unicodedata
 from collections import defaultdict
 from datetime import datetime, timedelta
 
@@ -334,6 +334,69 @@ def fold(s):
     # Minuscules, sans accents ni ponctuation, pour une recherche tolérante
     s = unicodedata.normalize("NFKD", s.translate(LIGATURES)).encode("ascii", "ignore").decode().lower()
     return " ".join("".join(c if c.isalnum() else " " for c in s).split())
+
+
+# --- Rapprochement approximatif (fautes de frappe, reconnaissance vocale) ---
+# Règles appliquées dans l'ordre à chaque mot (forme fold) : phonétique française simple
+SOUND_RULES = [(re.compile(a), b) for a, b in [
+    ("eaux", "o"), ("eau", "o"), ("au", "o"), ("ph", "f"), ("ch", "sh"), ("qu", "k"), ("ck", "k"),
+    ("c(?=[eiy])", "s"), ("c", "k"), ("gu(?=[eiy])", "g"), ("ai", "e"), ("ei", "e"), ("y", "i"),
+    ("(?<![cs])h", ""), (r"(.)\1", r"\1"), ("(?<=.)er$", ""), ("(?<=.)[esxtdz]+$", ""),
+]]
+
+
+def sound(word):
+    for pattern, repl in SOUND_RULES:
+        word = pattern.sub(repl, word)
+    return word
+
+
+def edit_distance(a, b):
+    prev = list(range(len(b) + 1))
+    for i, ca in enumerate(a, 1):
+        cur = [i]
+        for j, cb in enumerate(b, 1):
+            cur.append(min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (ca != cb)))
+        prev = cur
+    return prev[-1]
+
+
+def tolerance(word):
+    return 0 if len(word) <= 3 else 1 if len(word) <= 7 else 2
+
+
+def word_gap(query, name):
+    # Écart entre deux suites de mots, ou None si trop éloignées :
+    # - demande collée comparée à des mots consécutifs du nom collés (« croise la roche » ≈ « laroche ») ;
+    # - mot à mot : chaque mot de plus de 2 lettres de la demande ressemble à un mot du nom.
+    gaps = []
+    joined = "".join(query)
+    best = min(edit_distance(joined, "".join(name[i:j]))
+               for i in range(len(name)) for j in range(i + 1, len(name) + 1))
+    if best <= tolerance(joined):
+        gaps.append(best)
+    words = [w for w in query if len(w) > 2]
+    if words:
+        per_word = [min(edit_distance(w, n) for n in name) for w in words]
+        if all(g <= tolerance(w) for g, w in zip(per_word, words)):
+            gaps.append(sum(per_word))
+    return min(gaps) if gaps else None
+
+
+def approx_gap(query, name):
+    # Écart entre une demande et un nom, à l'écrit (fold) ou au son ; None si sans rapport
+    q, n = fold(query).split(), fold(name).split()
+    if not q or not n:
+        return None
+    gaps = [g for g in (word_gap(q, n), word_gap([sound(w) for w in q], [sound(w) for w in n])) if g is not None]
+    return min(gaps) if gaps else None
+
+
+def closest(query, names):
+    # Noms les plus proches de la demande (tous ceux à égalité), liste vide si aucun ne ressemble
+    gaps = {n: approx_gap(query, n) for n in names}
+    gaps = {n: g for n, g in gaps.items() if g is not None}
+    return [n for n, g in gaps.items() if g == min(gaps.values())] if gaps else []
 
 
 def rows(path):
@@ -493,6 +556,10 @@ def departures(gtfs, rt_path, line, query, direction, count, warnings=""):
         wanted_dir = fold(direction)
         kept = {tid: t for tid, t in trips.items() if wanted_dir in fold(t["trip_headsign"])}
         if not kept:
+            # Sinon, les destinations qui ressemblent le plus à la demande
+            near = set(closest(direction, {t["trip_headsign"] for t in trips.values() if t["trip_headsign"]}))
+            kept = {tid: t for tid, t in trips.items() if t["trip_headsign"] in near}
+        if not kept:
             heads = sorted({t["trip_headsign"] for t in trips.values() if t["trip_headsign"]})
             die("unknown_direction",
                 f"aucune direction de la ligne {route['route_short_name']} ne correspond à « {direction} »",
@@ -529,10 +596,24 @@ def departures(gtfs, rt_path, line, query, direction, count, warnings=""):
                     found[aid].add(sid)
         return found
 
-    matched = match_stops(trips)  # seulement les courses retenues (filtre de direction)
-    if not matched and direction:
-        # L'arrêt existe peut-être, mais pas dans cette direction : le dire plutôt que « introuvable »
-        elsewhere = match_stops(all_trips)
+    def approx_stops(trip_ids):
+        # Zones d'arrêt au nom (ou nom de quai) le plus proche de la demande, à égalité
+        names = defaultdict(set)  # zone d'arrêt -> noms comparés
+        served = defaultdict(set)  # zone d'arrêt -> stop_ids desservis par ces courses
+        for tid in trip_ids:
+            for _, sid, _ in sched.get(tid, []):
+                aid = area(sid)
+                names[aid] |= {area_name(aid), stops.get(sid, {}).get("stop_name", "")}
+                served[aid].add(sid)
+        gaps = {}
+        for aid, ns in names.items():
+            found = [g for g in (approx_gap(query, n) for n in ns) if g is not None]
+            if found:
+                gaps[aid] = min(found)
+        return {aid: served[aid] for aid, g in gaps.items() if g == min(gaps.values())}
+
+    def not_in_direction(elsewhere):
+        # L'arrêt existe, mais pas dans cette direction : le dire plutôt que « introuvable »
         if elsewhere:
             names = ", ".join(sorted({area_name(a) for a in elsewhere}))
             heads = sorted({t["trip_headsign"] for t in all_trips.values()
@@ -541,6 +622,18 @@ def departures(gtfs, rt_path, line, query, direction, count, warnings=""):
             die("stop_not_in_direction",
                 f"l'arrêt {names} n'est pas desservi par la ligne {route['route_short_name']} "
                 f"en direction de « {direction} »", ("directions qui le desservent", "directions", heads))
+
+    matched = match_stops(trips)  # seulement les courses retenues (filtre de direction)
+    if not matched and direction:
+        not_in_direction(match_stops(all_trips))
+    if not matched:
+        # Rien ne contient la demande : arrêts qui lui ressemblent (fautes, reconnaissance vocale)
+        matched = approx_stops(trips)
+        if not matched and direction:
+            not_in_direction(approx_stops(all_trips))
+        if len(matched) > 1:
+            die("ambiguous_stop", f"plusieurs arrêts de la ligne {route['route_short_name']} ressemblent à « {query} »",
+                ("arrêts approchants", "suggestions", sorted(area_name(a) for a in matched)))
     if not matched:
         die("unknown_stop", f"aucun arrêt de la ligne {route['route_short_name']} ne correspond à « {query} » "
             "(relance sans arrêt pour voir la liste)")

@@ -14,6 +14,9 @@ sealed class ChtiError(val code: String) : Exception(code) {
         ChtiError("stop_not_in_direction")
     class UnknownStop(val line: String, val query: String) : ChtiError("unknown_stop")
 
+    /** Plusieurs arrêts ressemblent autant à [query] : [suggestions] à faire choisir */
+    class AmbiguousStop(val line: String, val query: String, val suggestions: List<String>) : ChtiError("ambiguous_stop")
+
     /** Demande à l'oral sans arrêt : [example] = « bus 10 gare lille flandres » */
     class MissingStop(val example: String) : ChtiError("missing_stop")
 

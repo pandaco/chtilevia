@@ -68,8 +68,13 @@ ln -s "$PWD/apps/shell/chti" ~/.local/bin/chti   # optionnel, pour l'avoir dans 
 - **`<arrêt>`** / **`<station>`** : tout ou partie du nom, sur un ou plusieurs mots, sans guillemets nécessaires.
   Casse, accents et ponctuation sont ignorés. Si plusieurs arrêts correspondent (ex. « gambetta »
   existe dans plusieurs communes), chacun est affiché avec sa commune.
+  Si aucun arrêt ne contient le texte, chti prend celui qui lui ressemble le plus, à l'écrit ou au
+  son : fautes de frappe ou de reconnaissance vocale (`gambeta`, `croix la roche`, `saint mort`),
+  mots collés ou séparés, mot manquant (`eglise marais`). Si plusieurs arrêts ressemblent autant à
+  la demande, chti n'en choisit aucun et les propose (code `ambiguous_stop`).
 - **`-d <direction>`** (alias `--direction`, `--vers`, ou `--vers=<direction>`) : ne garde que les
-  courses dont la destination contient ce texte. Placée n'importe où après la ligne.
+  courses dont la destination contient ce texte (à défaut, celles dont la destination lui ressemble
+  le plus). Placée n'importe où après la ligne.
   Une direction inconnue affiche la liste des directions possibles ; un arrêt qui existe mais n'est
   pas desservi dans cette direction le dit, avec les directions qui le desservent.
   Le mot **`vers`** sans tiret marche aussi : tous les mots qui le suivent forment la direction
@@ -385,7 +390,7 @@ du contrat (`libs/contract`), au caractère près. Chaque module compile pour la
 
 | Module | Rôle | Dépend de |
 |---|---|---|
-| `libs/domain` | Modèles et règles métier purs : recherche sans accents, jours de service, fusion théorique / temps réel | rien (sauf kotlinx-datetime) |
+| `libs/domain` | Modèles et règles métier purs : recherche sans accents et approximative, jours de service, fusion théorique / temps réel | rien (sauf kotlinx-datetime) |
 | `libs/application` | Cas d'usage, ports (GTFS, temps réel, V'Lille, favoris, horloge), grammaire des commandes, phrase libre | domain |
 | `libs/presentation` | Sorties texte, voix et JSON du contrat ; `Chti`, équivalent de la commande | application |
 | `libs/adapters` | GTFS statique (cache partagé avec le shell), GTFS-RT, V'Lille (GBFS), fichier des favoris | application |
@@ -444,7 +449,8 @@ Les chemins absolus sont remplacés par `<racine>` pour que les références soi
 
 Cas couverts : temps réel avec propagation du retard, passage de minuit, service du lendemain,
 flux temps réel indisponible, fin de service du métro, filtres `-d` et `-n` (y compris placés avant
-l'arrêt), le mot `vers`, V'Lille (accents, plusieurs résultats, station hors service, `--prendre` / `--deposer`), les favoris
+l'arrêt), le mot `vers`, le rapprochement approximatif des arrêts et directions (fautes, phonétique,
+ex æquo proposés), V'Lille (accents, plusieurs résultats, station hors service, `--prendre` / `--deposer`), les favoris
 (liste, enchaînement, casse du nom, commande en échec, favori inconnu), la sortie parlée `--voix`,
 la compréhension des phrases (`vocal` : chiffres en lettres, « à l'arrêt », « en direction de »,
 favoris, phrases incomprises), la sortie JSON `--json` (passages, arrêts, V'Lille, favoris,

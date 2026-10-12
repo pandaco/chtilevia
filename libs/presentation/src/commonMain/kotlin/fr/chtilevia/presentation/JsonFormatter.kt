@@ -122,7 +122,7 @@ internal class JsonFormatter(private val zone: TimeZone) {
             "type" to Json.Str("error"),
             "code" to Json.Str(error.code),
             "message" to Json.Str(message.text),
-            "details" to if (message.hintTitle != null) Json.obj("directions" to Json.arr(message.hint.map(Json::Str))) else Json.obj(),
+            "details" to if (message.hintTitle != null) Json.obj(message.hintKey to Json.arr(message.hint.map(Json::Str))) else Json.obj(),
         )
     }
 }

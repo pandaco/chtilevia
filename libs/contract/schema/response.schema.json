@@ -201,8 +201,8 @@
         "code": {
           "enum": [
             "missing_dependency", "gtfs_unavailable", "unknown_line", "missing_line", "unknown_metro",
-            "unknown_stop", "unknown_direction", "stop_not_in_direction", "missing_stop", "invalid_count",
-            "missing_option_value", "missing_station", "unknown_station", "bike_service_unreachable",
+            "unknown_stop", "ambiguous_stop", "unknown_direction", "stop_not_in_direction", "missing_stop",
+            "invalid_count", "missing_option_value", "missing_station", "unknown_station", "bike_service_unreachable",
             "unknown_command", "unsupported_combination"
           ]
         },
@@ -211,7 +211,8 @@
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "directions": { "type": "array", "items": { "type": "string" }, "description": "Directions possibles (unknown_direction, stop_not_in_direction)" }
+            "directions": { "type": "array", "items": { "type": "string" }, "description": "Directions possibles (unknown_direction, stop_not_in_direction)" },
+            "suggestions": { "type": "array", "items": { "type": "string" }, "description": "Arrêts qui ressemblent à la demande, à faire choisir (ambiguous_stop)" }
           }
         }
       }
