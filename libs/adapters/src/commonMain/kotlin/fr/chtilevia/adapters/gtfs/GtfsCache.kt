@@ -28,7 +28,10 @@ class GtfsCache(
     private val currentTimeMillis: () -> Long = { Clock.System.now().toEpochMilliseconds() },
 ) : TimetableUpdater {
     val directory = "$cacheDir/gtfs"
-    val timetable: TimetableRepository = GtfsTimetable(DirectoryGtfsFiles(directory))
+
+    /** Gardé en mémoire jusqu'à l'installation d'un nouveau GTFS */
+    val timetable: TimetableRepository =
+        CachedTimetable(GtfsTimetable(DirectoryGtfsFiles(directory))) { LocalFiles.lastModified("$directory/stamp") }
 
     override fun refresh(force: Boolean, notices: Notices): String {
         val stamp = "$directory/stamp"
