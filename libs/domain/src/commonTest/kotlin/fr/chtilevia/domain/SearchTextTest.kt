@@ -27,11 +27,13 @@ class SearchTextTest {
         "ﬁlle" to "fille",
         "Ｗide" to "wide",
         "²3" to "23",
-        // Lettres sans décomposition : retirées, comme dans chti (à améliorer des deux côtés)
-        "Cœur de Lille" to "cur de lille",
-        "Æsop" to "sop",
-        "Straße" to "strae",
-        "Øresund" to "resund",
+        // Lettres sans décomposition : écrites en lettres simples
+        "Cœur de Lille" to "coeur de lille",
+        "ŒUVRE" to "oeuvre",
+        "Æsop" to "aesop",
+        "Straße" to "strasse",
+        "GROẞ" to "gross",
+        "Øresund" to "oresund",
     )
 
     @Test

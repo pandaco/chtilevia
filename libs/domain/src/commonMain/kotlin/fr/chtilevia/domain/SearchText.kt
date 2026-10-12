@@ -6,10 +6,10 @@ package fr.chtilevia.domain
  * espace, espaces regroupés.
  *
  * « Croisé Laroche » et « croise-laroche » donnent tous deux « croise laroche ».
- * Comme chti, les lettres sans décomposition (œ, æ, ø, ß) disparaissent : « Cœur » → « cur ».
+ * Les lettres sans décomposition (œ, æ, ø, ß) sont d'abord écrites en lettres simples : « Cœur » → « coeur ».
  */
 fun fold(text: String): String =
-    decomposeCompatibility(text)
+    decomposeCompatibility(text.map { LIGATURES[it] ?: it.toString() }.joinToString(""))
         .filter { it.code < 128 }
         .lowercase()
         .map { if (it.isLetterOrDigit()) it else ' ' }
@@ -20,3 +20,8 @@ fun fold(text: String): String =
 
 /** Décomposition de compatibilité Unicode (NFKD), fournie par chaque plateforme */
 internal expect fun decomposeCompatibility(text: String): String
+
+/** Lettres sans décomposition Unicode et leur écriture en lettres simples, comme dans chti */
+private val LIGATURES = mapOf(
+    'œ' to "oe", 'Œ' to "OE", 'æ' to "ae", 'Æ' to "AE", 'ø' to "o", 'Ø' to "O", 'ß' to "ss", 'ẞ' to "SS",
+)

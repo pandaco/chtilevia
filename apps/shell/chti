@@ -326,9 +326,13 @@ def die(code, msg, hint=None):
     sys.exit(1)
 
 
+# Lettres sans décomposition Unicode, écrites en lettres simples avant de retirer les accents
+LIGATURES = str.maketrans({"œ": "oe", "Œ": "OE", "æ": "ae", "Æ": "AE", "ø": "o", "Ø": "O", "ß": "ss", "ẞ": "SS"})
+
+
 def fold(s):
     # Minuscules, sans accents ni ponctuation, pour une recherche tolérante
-    s = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode().lower()
+    s = unicodedata.normalize("NFKD", s.translate(LIGATURES)).encode("ascii", "ignore").decode().lower()
     return " ".join("".join(c if c.isalnum() else " " for c in s).split())
 
 
