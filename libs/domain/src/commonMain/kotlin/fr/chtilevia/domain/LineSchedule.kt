@@ -55,16 +55,22 @@ class LineSchedule(
         return trips.filter { it.headsign in closest }
     }
 
+    /** Quais desservis par [of], chacun une fois, dans l'ordre où les courses les rencontrent */
+    private fun servedStops(of: List<Trip>): Set<String> {
+        val served = LinkedHashSet<String>()
+        for (trip in of) for (stopTime in stopTimes[trip.id].orEmpty()) served += stopTime.stopId
+        return served
+    }
+
     /** Zones d'arrêt desservies par [of] dont le nom (ou celui d'un quai) contient [query], avec leurs quais */
     fun matchStops(query: String, of: List<Trip>): Map<String, Set<String>> {
         val needle = fold(query)
         val found = LinkedHashMap<String, LinkedHashSet<String>>()
-        for (trip in of) {
-            for (stopTime in stopTimes[trip.id].orEmpty()) {
-                val area = area(stopTime.stopId)
-                if (needle in fold(areaName(area)) || needle in fold(stops[stopTime.stopId]?.name.orEmpty())) {
-                    found.getOrPut(area) { LinkedHashSet() }.add(stopTime.stopId)
-                }
+        // Un calcul par quai, pas par passage : une ligne de métro compte des centaines de milliers de passages
+        for (stopId in servedStops(of)) {
+            val area = area(stopId)
+            if (needle in fold(areaName(area)) || needle in fold(stops[stopId]?.name.orEmpty())) {
+                found.getOrPut(area) { LinkedHashSet() }.add(stopId)
             }
         }
         return found
@@ -77,12 +83,10 @@ class LineSchedule(
     fun approximateStops(query: String, of: List<Trip>): Map<String, Set<String>> {
         val names = LinkedHashMap<String, LinkedHashSet<String>>()
         val served = LinkedHashMap<String, LinkedHashSet<String>>()
-        for (trip in of) {
-            for (stopTime in stopTimes[trip.id].orEmpty()) {
-                val area = area(stopTime.stopId)
-                names.getOrPut(area) { LinkedHashSet() }.addAll(listOf(areaName(area), stops[stopTime.stopId]?.name.orEmpty()))
-                served.getOrPut(area) { LinkedHashSet() }.add(stopTime.stopId)
-            }
+        for (stopId in servedStops(of)) {
+            val area = area(stopId)
+            names.getOrPut(area) { LinkedHashSet() }.addAll(listOf(areaName(area), stops[stopId]?.name.orEmpty()))
+            served.getOrPut(area) { LinkedHashSet() }.add(stopId)
         }
         return names.keys.closestTo(query) { names.getValue(it) }.associateWith { served.getValue(it) }
     }
