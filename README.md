@@ -225,17 +225,22 @@ Règles :
 
 ## Sur Android
 
-Sur un téléphone Android, `chti` tourne directement sur le téléphone, **sans serveur**. Un widget
-d'écran d'accueil propose deux façons de demander, et la réponse suit la façon de demander :
+Sur un téléphone Android, chti tourne directement sur le téléphone, **sans serveur**, de deux façons :
+
+- **l'appli chtilevia** (`apps/android`, cœur Kotlin) : un écran et un widget d'accueil, sans rien
+  d'autre à installer ;
+- **Termux** (`apps/shell/termux`) : le script `chti` et le widget Termux:Widget.
+
+Dans les deux cas, le widget propose deux façons de demander, et la réponse suit la façon de demander :
 
 - **à la voix** : le bouton *Parler* écoute ta question et **lit la réponse à voix haute** ;
-- **en un clic** : un bouton de favori **affiche la réponse**, sans voix (message à l'écran).
+- **en un clic** : un bouton de favori **affiche la réponse**, sans voix.
 
 | Bouton du widget | Ce qu'il fait | Réponse |
 |---|---|---|
-| **Parler** | Écoute une phrase (« métro 1 République vers CHU », « vélo Rihour pour déposer », « travail »…) | À voix haute + notification |
-| **Travail** | Favori `travail` | Écrite : message à l'écran + notification |
-| **Rentrer à vélo** | Favori `rentrer-velo` : vélos au départ, places à l'arrivée | Écrite : message à l'écran + notification |
+| **Parler** | Écoute une phrase (« métro 1 République vers CHU », « vélo à proximité », « travail »…) | À voix haute + notification |
+| **Travail** | Favori `travail` | Écrite + notification |
+| **Rentrer à vélo** | Favori `rentrer-velo` : vélos au départ, places à l'arrivée | Écrite + notification |
 
 Un favori dit à voix haute (« travail » via *Parler*) répond donc à la voix ; le même favori touché
 sur son bouton répond par écrit. Les phrases comprises sont décrites dans
@@ -244,6 +249,25 @@ sur son bouton répond par écrit. Les phrases comprises sont décrites dans
 > Pourquoi pas l'appli Gemini ? Elle ne peut appeler un outil personnel (« custom app ») que pour
 > les comptes aux États-Unis, en anglais, et seulement via un serveur. Le widget est la seule voie
 > vocale sans serveur depuis la France.
+
+### Appli chtilevia
+
+```sh
+npx nx run :android:assembleDebug                                          # construit l'appli
+adb install -r apps/android/build/outputs/apk/debug/android-debug.apk      # téléphone en débogage USB ou Wi-Fi
+```
+
+- **Écran** : gros bouton 🎤, question au clavier en secours, réponse affichée et lue, favoris en
+  boutons, éditeur de favoris (même format que le fichier du shell : `nom: commande`).
+- **Widget** : appui long sur l'accueil → *Widgets* → *chtilevia*. Ses boutons ouvrent une carte en
+  bas de l'écran, par-dessus l'accueil, qui reste jusqu'à ce qu'on la touche ; la dernière réponse
+  est aussi gardée en notification.
+- **À proximité** : « vélo à proximité » utilise la position du téléphone (autorisation demandée la
+  première fois) et répond comme `chti autour`.
+- **Horaires** : téléchargés au premier lancement (~8 s), puis toutes les 24 h, et gardés en mémoire
+  tant que l'appli tourne (réponse en moins d'un dixième de seconde ensuite). 44 Mo sur le téléphone.
+
+### Termux
 
 **👉 Installation et utilisation pas à pas : [docs/android.md](docs/android.md)**. Le guide couvre les
 applis à installer (Termux, Termux:API, Termux:Widget depuis F-Droid), la copie du projet sans le

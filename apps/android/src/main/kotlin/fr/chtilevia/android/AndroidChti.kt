@@ -6,6 +6,7 @@ import fr.chtilevia.adapters.favorites.FileFavoritesStore
 import fr.chtilevia.adapters.fetch
 import fr.chtilevia.adapters.gtfs.GtfsCache
 import fr.chtilevia.adapters.realtime.GtfsRealtimeFeed
+import fr.chtilevia.application.ChtiError
 import fr.chtilevia.application.Clock
 import fr.chtilevia.application.FindFavorite
 import fr.chtilevia.application.FindNearby
@@ -35,6 +36,7 @@ class AndroidChti(context: Context, private val profile: NetworkProfile = Networ
     private val favoritesFile = File("$root/favoris")
     private val favorites = FileFavoritesStore(favoritesFile.path)
     private val listFavorites = ListFavorites(favorites)
+    private val interpretUtterance = InterpretUtterance(favorites)
     private val bikeShare = GbfsFeed { fetch("${profile.bikeShareUrl}/$it") }
     private val chti = Chti(
         ChtiServices(
@@ -43,7 +45,7 @@ class AndroidChti(context: Context, private val profile: NetworkProfile = Networ
             nearby = FindNearby(gtfs.timetable, gtfs, bikeShare, clock),
             listFavorites = listFavorites,
             findFavorite = FindFavorite(favorites),
-            interpretUtterance = InterpretUtterance(favorites),
+            interpretUtterance = interpretUtterance,
             updateTimetable = UpdateTimetable(gtfs),
         ),
         profile.timeZone,
@@ -60,6 +62,14 @@ class AndroidChti(context: Context, private val profile: NetworkProfile = Networ
         gtfs.timetable.lines()
         gtfs.timetable.stops()
         gtfs.timetable.activeDates(serviceDates(clock.now(), profile.timeZone))
+    }
+
+    /** Commande comprise dans une phrase libre (comme `chti vocal`), ou null si elle n'est pas comprise */
+    @Synchronized
+    fun interpret(phrase: String): List<String>? = try {
+        interpretUtterance.execute(phrase)
+    } catch (_: ChtiError) {
+        null
     }
 
     /** Noms des favoris, dans l'ordre du fichier */

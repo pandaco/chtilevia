@@ -26,8 +26,4 @@ class Speaker(context: Context) : TextToSpeech.OnInitListener {
     fun stop() {
         tts.stop()
     }
-
-    fun shutdown() {
-        tts.shutdown()
-    }
 }

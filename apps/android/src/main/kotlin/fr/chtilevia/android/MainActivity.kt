@@ -1,13 +1,8 @@
 package fr.chtilevia.android
 
-import android.content.ActivityNotFoundException
-import android.content.Intent
 import android.os.Bundle
-import android.speech.RecognizerIntent
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -51,9 +46,10 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val flow = QuestionFlow(this, speak = true) { model.conversation = it }
         setContent {
             MaterialTheme(colorScheme = if (isSystemInDarkTheme()) darkColorScheme() else lightColorScheme()) {
-                Surface(Modifier.fillMaxSize()) { Screen(model) }
+                Surface(Modifier.fillMaxSize()) { Screen(model, flow) }
             }
         }
         // adb shell am start -n fr.chtilevia/.android.MainActivity --ez mesurer true : mesure du GTFS complet
@@ -67,10 +63,8 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun Screen(model: MainViewModel) {
-    val listen = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()?.let(model::ask)
-    }
+private fun Screen(model: MainViewModel, flow: QuestionFlow) {
+    val conversation = model.conversation
     var typed by rememberSaveable { mutableStateOf("") }
     var editing by rememberSaveable { mutableStateOf<String?>(null) }
     var noRecognizer by remember { mutableStateOf(false) }
@@ -82,18 +76,8 @@ private fun Screen(model: MainViewModel) {
         model.status?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
 
         Button(
-            onClick = {
-                val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
-                    .putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                    .putExtra(RecognizerIntent.EXTRA_LANGUAGE, "fr-FR")
-                    .putExtra(RecognizerIntent.EXTRA_PROMPT, "Ex. : prochain tram à Croisé Laroche vers Roubaix")
-                try {
-                    listen.launch(intent)
-                } catch (_: ActivityNotFoundException) {
-                    noRecognizer = true
-                }
-            },
-            enabled = !model.busy,
+            onClick = { noRecognizer = !flow.listen() },
+            enabled = !conversation.busy,
             shape = CircleShape,
             modifier = Modifier.size(160.dp).align(Alignment.CenterHorizontally),
         ) { Text("🎤", fontSize = 56.sp) }
@@ -107,20 +91,21 @@ private fun Screen(model: MainViewModel) {
                 singleLine = true,
                 modifier = Modifier.weight(1f),
             )
-            FilledTonalButton(onClick = { model.ask(typed) }, enabled = !model.busy && typed.isNotBlank()) { Text("OK") }
+            FilledTonalButton(onClick = { flow.ask(typed.trim()) }, enabled = !conversation.busy && typed.isNotBlank()) { Text("OK") }
         }
 
-        if (model.question.isNotEmpty()) Text("« ${model.question} »", style = MaterialTheme.typography.titleMedium)
-        if (model.busy) CircularProgressIndicator()
-        if (model.answer.isNotEmpty()) {
-            Text(model.answer, style = MaterialTheme.typography.bodyLarge, fontFamily = FontFamily.Default)
+        if (conversation.question.isNotEmpty()) Text("« ${conversation.question} »", style = MaterialTheme.typography.titleMedium)
+        conversation.status?.let {
+            Text(it, style = MaterialTheme.typography.bodyMedium)
+            CircularProgressIndicator()
         }
+        if (conversation.answer.isNotEmpty()) Text(conversation.answer, style = MaterialTheme.typography.bodyLarge)
 
         Text("Favoris", style = MaterialTheme.typography.titleMedium)
         if (model.favorites.isEmpty()) Text("Aucun favori pour l'instant.", style = MaterialTheme.typography.bodyMedium)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             for (name in model.favorites) {
-                FilledTonalButton(onClick = { model.runFavorite(name) }, enabled = !model.busy) { Text(name) }
+                FilledTonalButton(onClick = { flow.favorite(name) }, enabled = !conversation.busy) { Text(name) }
             }
         }
         val text = editing
