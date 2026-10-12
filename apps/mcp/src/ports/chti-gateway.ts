@@ -19,6 +19,14 @@ export interface StopsQuery {
     direction?: string;
 }
 
+export interface NearbyQuery {
+    /** Degrés décimaux (WGS 84) */
+    latitude: number;
+    longitude: number;
+    /** Arrêts et stations V'Lille à donner (3 par défaut) */
+    count?: number;
+}
+
 /** Document décrit par libs/contract/schema/response.schema.json (champ `type` discriminant) */
 export interface ChtiResponse {
     type: string;
@@ -29,6 +37,7 @@ export interface ChtiGateway {
     departures(query: DeparturesQuery): Promise<ChtiResponse>;
     stops(query: StopsQuery): Promise<ChtiResponse>;
     bikeStations(station: string, mode: BikeMode): Promise<ChtiResponse>;
+    nearby(query: NearbyQuery): Promise<ChtiResponse>;
     favorites(): Promise<ChtiResponse>;
     favorite(name: string): Promise<ChtiResponse>;
 }

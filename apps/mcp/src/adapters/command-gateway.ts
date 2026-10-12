@@ -1,6 +1,6 @@
 // Base des adaptateurs qui répondent au port ChtiGateway en lançant une commande chti --json :
 // traduction des requêtes en arguments, commune au script shell et au cœur Kotlin.
-import type { BikeMode, ChtiGateway, ChtiResponse, DeparturesQuery, StopsQuery, TransitMode } from '../ports/chti-gateway.ts';
+import type { BikeMode, ChtiGateway, ChtiResponse, DeparturesQuery, NearbyQuery, StopsQuery, TransitMode } from '../ports/chti-gateway.ts';
 import { errorResponse } from '../ports/chti-gateway.ts';
 
 const BIKE_FLAGS: Record<BikeMode, string[]> = { all: [], take: ['--prendre'], return: ['--deposer'] };
@@ -25,6 +25,13 @@ export abstract class CommandGateway implements ChtiGateway {
 
     bikeStations(station: string, mode: BikeMode): Promise<ChtiResponse> {
         return this.run(['velo', station, ...BIKE_FLAGS[mode]]);
+    }
+
+    nearby(query: NearbyQuery): Promise<ChtiResponse> {
+        // Notation décimale fixe : jamais d'exposant (1e-7), que chti refuserait
+        const args = ['autour', query.latitude.toFixed(6), query.longitude.toFixed(6)];
+        if (query.count !== undefined) args.push(`--nombre=${query.count}`);
+        return this.run(args);
     }
 
     favorites(): Promise<ChtiResponse> {

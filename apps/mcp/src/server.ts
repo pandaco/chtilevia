@@ -11,6 +11,7 @@ export const SERVER_INFO = { name: 'chtilevia', version: '0.1.0' };
 const INSTRUCTIONS = `Transports en commun de la métropole lilloise (réseau Ilévia : bus, tram, métro) et vélos V'Lille.
 Les noms d'arrêt et de station sont cherchés sans tenir compte de la casse ni des accents ; une partie du nom suffit.
 Pour les arrêts et les directions, les fautes d'orthographe ou de reconnaissance vocale sont tolérées (« gambeta », « croix la roche ») ; si plusieurs arrêts ressemblent autant à la demande, l'erreur ambiguous_stop les liste dans details.suggestions : faire choisir l'utilisateur.
+Pour une position (lat, lon), autour_de_moi donne les arrêts proches avec leurs lignes : enchaîner avec prochains_passages.
 Les horaires sont en temps réel quand le flux Ilévia le permet (realtime: true), sinon théoriques. Le métro n'a que des horaires théoriques.
 En cas d'erreur, la réponse a "type": "error", un code stable et un message en français ; details.directions liste les directions possibles quand la direction demandée n'existe pas.`;
 
@@ -91,6 +92,23 @@ export function createServer(gateway: ChtiGateway): McpServer {
             const bikeMode = mode === 'prendre' ? 'take' : mode === 'deposer' ? 'return' : 'all';
             return toResult(await gateway.bikeStations(station, bikeMode));
         }
+    );
+
+    server.registerTool(
+        'autour_de_moi',
+        {
+            title: 'Autour de moi',
+            description:
+                "Arrêts Ilévia les plus proches d'une position (avec les lignes qui les desservent) et stations V'Lille les plus proches (avec vélos et places), triés par distance à vol d'oiseau.",
+            inputSchema: z.object({
+                latitude: z.number().min(-90).max(90).describe('Latitude en degrés décimaux, ex. 50.6366'),
+                longitude: z.number().min(-180).max(180).describe('Longitude en degrés décimaux, ex. 3.0630'),
+                nombre: z.number().int().min(1).max(10).optional().describe("Arrêts et stations à donner (3 par défaut)")
+            }),
+            outputSchema: fromJsonSchema(outputSchemaFor('nearby')),
+            annotations: READ_ONLY
+        },
+        async ({ latitude, longitude, nombre }) => toResult(await gateway.nearby({ latitude, longitude, count: nombre }))
     );
 
     server.registerTool(

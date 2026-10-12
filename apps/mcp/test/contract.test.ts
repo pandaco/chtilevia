@@ -109,7 +109,8 @@ const PARITY: [string, string, Record<string, unknown>][] = [
     ['json-erreur-arret', 'prochains_passages', { mode: 'bus', ligne: '10', arret: 'zzz' }],
     ['json-erreur-arret-autre-sens', 'prochains_passages', { mode: 'bus', ligne: '10', arret: 'esplanade', direction: 'flandres' }],
     ['json-erreur-velo', 'station_velo', { station: 'zzz' }],
-    ['json-approx-ambigu', 'prochains_passages', { mode: 'bus', ligne: '10', arret: 'marie' }]
+    ['json-approx-ambigu', 'prochains_passages', { mode: 'bus', ligne: '10', arret: 'marie' }],
+    ['json-autour', 'autour_de_moi', { latitude: 50.6363, longitude: 3.064, nombre: 2 }]
 ];
 
 for (const gateway of Object.keys(GATEWAYS) as GatewayKind[]) {
@@ -131,7 +132,7 @@ for (const gateway of Object.keys(GATEWAYS) as GatewayKind[]) {
         test('liste des outils', async () => {
             const client = await connect('json-favoris-liste', gateway);
             const { tools } = await client.listTools();
-            assert.deepEqual(tools.map(t => t.name).sort(), ['favori', 'lister_arrets', 'lister_favoris', 'prochains_passages', 'station_velo']);
+            assert.deepEqual(tools.map(t => t.name).sort(), ['autour_de_moi', 'favori', 'lister_arrets', 'lister_favoris', 'prochains_passages', 'station_velo']);
             for (const t of tools) {
                 assert.ok(t.description, `${t.name} sans description`);
                 assert.equal(t.outputSchema?.type, 'object');

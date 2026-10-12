@@ -17,6 +17,7 @@ Il tourne en local, en stdio : aucun serveur à héberger.
 | `prochains_passages` | `mode` (bus, tram, metro), `ligne` (sauf tram), `arret`, `direction`?, `nombre`? | `departures` |
 | `lister_arrets` | `mode`, `ligne` (sauf tram), `direction`? | `stops` |
 | `station_velo` | `station`, `mode`? (tout, prendre, deposer) | `bike_stations` |
+| `autour_de_moi` | `latitude`, `longitude`, `nombre`? | `nearby` |
 | `lister_favoris` | — | `favorites` |
 | `favori` | `nom` | `favorite` |
 
