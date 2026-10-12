@@ -16,6 +16,7 @@
 
     <application
         android:name=".ChtiApplication"
+        android:icon="@mipmap/ic_launcher"
         android:label="chtilevia"
         android:theme="@android:style/Theme.Material.NoActionBar">
         <activity
