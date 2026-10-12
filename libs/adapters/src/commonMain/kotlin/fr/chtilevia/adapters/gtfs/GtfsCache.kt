@@ -19,13 +19,16 @@ class DirectoryGtfsFiles(private val directory: String) : GtfsFiles {
 /**
  * Référentiel GTFS en cache dans `<cacheDir>/gtfs`, même disposition et même politique que le
  * shell (qui peut partager ce cache) : téléchargé s'il a plus de 24 h ; en cas d'échec, l'ancien
- * reste utilisé et l'on ne retente pas avant une heure.
+ * reste utilisé et l'on ne retente pas avant une heure. [keepStopTimes] = false supprime
+ * `stop_times.txt` une fois l'index construit (plus de la moitié de la place) : à réserver aux caches
+ * que le shell ne partage pas, car il en a besoin pour reconstruire son index.
  */
 class GtfsCache(
     private val cacheDir: String,
     private val url: String,
     private val download: (String) -> ByteArray? = ::fetch,
     private val currentTimeMillis: () -> Long = { Clock.System.now().toEpochMilliseconds() },
+    private val keepStopTimes: Boolean = true,
 ) : TimetableUpdater {
     val directory = "$cacheDir/gtfs"
 
@@ -52,6 +55,7 @@ class GtfsCache(
                 return directory
             }
             index(work)
+            if (!keepStopTimes) LocalFiles.deleteRecursively("$work/stop_times.txt")
             val old = "$cacheDir/gtfs.old"
             LocalFiles.deleteRecursively(old)
             if (LocalFiles.exists(directory) && !LocalFiles.rename(directory, old)) error("impossible de remplacer $directory")

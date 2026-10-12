@@ -25,7 +25,8 @@ import fr.chtilevia.presentation.Console
  */
 class AndroidChti(context: Context, private val profile: NetworkProfile = NetworkProfile.ILEVIA) {
     private val root = context.filesDir.resolve("chtilevia").path
-    val gtfs = GtfsCache(root, profile.gtfsUrl)
+    // Cache propre à l'appli : stop_times.txt ne sert plus une fois l'index construit
+    val gtfs = GtfsCache(root, profile.gtfsUrl, keepStopTimes = false)
     private val clock = Clock { System.currentTimeMillis() / 1000 }
     private val favorites = FileFavoritesStore("$root/favoris")
     private val bikeShare = GbfsFeed { fetch("${profile.bikeShareUrl}/$it") }
@@ -45,7 +46,11 @@ class AndroidChti(context: Context, private val profile: NetworkProfile = Networ
     /** Résultat d'une commande : code retour et texte (sorties standard et d'erreur, dans l'ordre) */
     data class Reply(val exit: Int, val text: String)
 
-    /** Lance une commande chti (mêmes arguments que le shell) ; à appeler hors du fil principal */
+    /**
+     * Lance une commande chti (mêmes arguments que le shell) ; à appeler hors du fil principal.
+     * Une commande à la fois : le référentiel en mémoire n'est pas partagé entre fils.
+     */
+    @Synchronized
     fun run(args: List<String>): Reply {
         val output = StringBuilder()
         val console = object : Console {

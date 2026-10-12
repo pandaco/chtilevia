@@ -63,6 +63,14 @@ class GtfsCacheTest {
     }
 
     @Test
+    fun canDropStopTimesOnceIndexed() {
+        val light = GtfsCache("$dir/leger", "https://exemple/gtfs.zip", { archive }, { now }, keepStopTimes = false)
+        light.refresh(force = false, notices = Notices.NONE)
+        assertFalse(LocalFiles.exists("${light.directory}/stop_times.txt"))
+        assertEquals(listOf(8 * 3600, 8 * 3600 + 300), light.timetable.stopTimes("10").getValue("t1").map { it.time })
+    }
+
+    @Test
     fun failsWithoutAnyTimetable() {
         archive = null
         assertFailsWith<ChtiError.TimetableUnavailable> { refresh() }

@@ -37,7 +37,7 @@ class Benchmark(private val app: AndroidChti, private val filesDir: File, privat
 
         // Même cache que l'appli, reconstruit avec l'archive déjà téléchargée
         val root = filesDir.resolve("chtilevia")
-        val cache = GtfsCache(root.path, url, download = { zip })
+        val cache = GtfsCache(root.path, url, download = { zip }, keepStopTimes = false)
         timed("Décompression et index") { cache.refresh(force = true, notices = Notices.NONE) }
         line("Place occupée : ${root.resolve("gtfs").walk().filter { it.isFile }.sumOf { it.length() } / 1024} Ko")
 
