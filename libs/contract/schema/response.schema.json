@@ -130,12 +130,12 @@
               "name": { "type": "string" },
               "capacity": { "type": "integer" },
               "status": { "enum": ["ok", "out_of_service", "unknown"], "description": "out_of_service : non installée, ou ni location ni dépôt possibles ; unknown : pas de statut publié" },
-              "bikes": { "type": ["integer", "null"] },
-              "docks": { "type": ["integer", "null"] },
-              "renting": { "type": ["boolean", "null"], "description": "Location possible" },
-              "returning": { "type": ["boolean", "null"], "description": "Dépôt possible" },
-              "last_reported": { "type": ["string", "null"], "format": "date-time", "description": "UTC" },
-              "age_minutes": { "type": ["integer", "null"] }
+              "bikes": { "anyOf": [{ "type": "integer" }, { "type": "null" }] },
+              "docks": { "anyOf": [{ "type": "integer" }, { "type": "null" }] },
+              "renting": { "anyOf": [{ "type": "boolean" }, { "type": "null" }], "description": "Location possible" },
+              "returning": { "anyOf": [{ "type": "boolean" }, { "type": "null" }], "description": "Dépôt possible" },
+              "last_reported": { "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }], "description": "UTC" },
+              "age_minutes": { "anyOf": [{ "type": "integer" }, { "type": "null" }] }
             }
           }
         }

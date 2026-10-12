@@ -131,6 +131,27 @@ describe('garde-fous du serveur', () => {
         await client.close();
     });
 
+    test('schémas portables : un seul type par nœud (anyOf pour les valeurs nullables)', async () => {
+        // Certains clients (déclarations de fonctions Gemini…) refusent « type » sous forme de tableau
+        const client = await connect('json-favoris-liste');
+        const { tools } = await client.listTools();
+        await client.close();
+        const arrayTypes: string[] = [];
+        const visit = (node: unknown, path: string): void => {
+            if (Array.isArray(node)) return node.forEach((n, i) => visit(n, `${path}[${i}]`));
+            if (node === null || typeof node !== 'object') return;
+            for (const [key, value] of Object.entries(node)) {
+                if (key === 'type' && Array.isArray(value)) arrayTypes.push(path);
+                visit(value, `${path}.${key}`);
+            }
+        };
+        for (const t of tools) {
+            visit(t.inputSchema, `${t.name}.inputSchema`);
+            visit(t.outputSchema, `${t.name}.outputSchema`);
+        }
+        assert.deepEqual(arrayTypes, []);
+    });
+
     test('bus sans ligne : erreur missing_line, sans lancer chti', async () => {
         const client = await connect('json-bus-temps-reel');
         const result = await client.callTool({ name: 'prochains_passages', arguments: { mode: 'bus', arret: 'marais' } });
