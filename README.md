@@ -394,6 +394,7 @@ du contrat (`libs/contract`), au caractère près. Chaque module compile pour la
 | `libs/application` | Cas d'usage, ports (GTFS, temps réel, V'Lille, favoris, horloge), grammaire des commandes, phrase libre | domain |
 | `libs/presentation` | Sorties texte, voix et JSON du contrat ; `Chti`, équivalent de la commande | application |
 | `libs/adapters` | GTFS statique (cache partagé avec le shell), GTFS-RT, V'Lille (GBFS), fichier des favoris | application |
+| `libs/node` | Racine de composition pour Node : `runChti`, la commande exportée en module ES pour le serveur MCP | presentation, adapters |
 | `libs/core-tests` | Règles d'architecture (Konsist) et contrat joué par le cœur | tout |
 
 Les adaptateurs sont communs à toutes les cibles (décodage CSV, protobuf, JSON, zip ; cache GTFS).

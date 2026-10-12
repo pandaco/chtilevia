@@ -18,7 +18,7 @@ dependencyResolutionManagement {
 rootProject.name = "chtilevia"
 
 // Modules nommés à plat (:domain…) mais rangés dans libs/ : pas de projet intermédiaire « :libs »
-for (module in listOf("domain", "application", "presentation", "adapters", "core-tests")) {
+for (module in listOf("domain", "application", "presentation", "adapters", "node", "core-tests")) {
     include(":$module")
     project(":$module").projectDir = file("libs/$module")
 }
