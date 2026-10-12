@@ -1,0 +1,79 @@
+{
+  "type": "nearby",
+  "stops": [
+    {
+      "id": "942",
+      "name": "Rihour",
+      "description": "RIHOUR STATION DU MÉTRO M1",
+      "distance_m": 122,
+      "lines": [
+        {
+          "id": "ME1",
+          "name": "M1",
+          "mode": "metro",
+          "label": "Métro 1",
+          "description": "CHU EURASANTÉ <> 4 CANTONS STADE P MAUROY"
+        }
+      ]
+    },
+    {
+      "id": "920",
+      "name": "Gare Lille Flandres",
+      "description": "GARE LILLE FLANDRES 59000 LILLE",
+      "distance_m": 511,
+      "lines": [
+        {
+          "id": "10",
+          "name": "10",
+          "mode": "bus",
+          "label": "Bus 10",
+          "description": "LOMME HEGEL-CHU O LAMBRET/ LILLE FLANDRES"
+        },
+        {
+          "id": "71",
+          "name": "TRAM",
+          "mode": "tram",
+          "label": "Tram",
+          "description": "LILLE <> ROUBAIX / TOURCOING"
+        },
+        {
+          "id": "ME1",
+          "name": "M1",
+          "mode": "metro",
+          "label": "Métro 1",
+          "description": "CHU EURASANTÉ <> 4 CANTONS STADE P MAUROY"
+        }
+      ]
+    }
+  ],
+  "bike_stations": [
+    {
+      "id": "10",
+      "name": "Rihour",
+      "capacity": 32,
+      "status": "ok",
+      "bikes": 1,
+      "docks": 31,
+      "renting": true,
+      "returning": true,
+      "last_reported": "2026-10-10T21:56:12Z",
+      "age_minutes": 4,
+      "distance_m": 117
+    },
+    {
+      "id": "25",
+      "name": "Gare Lille Flandres",
+      "capacity": 32,
+      "status": "ok",
+      "bikes": 0,
+      "docks": 32,
+      "renting": true,
+      "returning": true,
+      "last_reported": "2026-10-10T21:57:48Z",
+      "age_minutes": 2,
+      "distance_m": 378
+    }
+  ],
+  "warnings": []
+}
+[exit 0]

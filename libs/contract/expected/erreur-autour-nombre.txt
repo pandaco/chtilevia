@@ -1,0 +1,2 @@
+chti : nombre de passages invalide : « 0 » (entier ≥ 1 attendu)
+[exit 1]

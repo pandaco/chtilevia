@@ -7,6 +7,7 @@
     { "$ref": "#/$defs/departures" },
     { "$ref": "#/$defs/stops" },
     { "$ref": "#/$defs/bike_stations" },
+    { "$ref": "#/$defs/nearby" },
     { "$ref": "#/$defs/favorites" },
     { "$ref": "#/$defs/favorite" },
     { "$ref": "#/$defs/update" },
@@ -141,6 +142,64 @@
         }
       }
     },
+    "nearby": {
+      "type": "object",
+      "description": "Arrêts desservis et stations V'Lille les plus proches d'une position, du plus proche au plus lointain (distance à vol d'oiseau).",
+      "required": ["type", "stops", "bike_stations", "warnings"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "nearby" },
+        "stops": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "name", "description", "distance_m", "lines"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string", "description": "Zone d'arrêt GTFS (parent_station, sinon stop_id)" },
+              "name": { "type": "string" },
+              "description": { "type": "string", "description": "Nom long et commune" },
+              "distance_m": { "type": "integer", "description": "Distance à vol d'oiseau, en mètres" },
+              "lines": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/line" }, "description": "Lignes qui desservent l'arrêt, dans l'ordre du référentiel" }
+            }
+          }
+        },
+        "bike_stations": {
+          "type": "array",
+          "description": "Vide si V'Lille est injoignable (voir warnings).",
+          "items": {
+            "type": "object",
+            "required": ["id", "name", "capacity", "status", "bikes", "docks", "renting", "returning", "last_reported", "age_minutes", "distance_m"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string" },
+              "name": { "type": "string" },
+              "capacity": { "type": "integer" },
+              "status": { "enum": ["ok", "out_of_service", "unknown"], "description": "Comme dans bike_stations" },
+              "bikes": { "anyOf": [{ "type": "integer" }, { "type": "null" }] },
+              "docks": { "anyOf": [{ "type": "integer" }, { "type": "null" }] },
+              "renting": { "anyOf": [{ "type": "boolean" }, { "type": "null" }] },
+              "returning": { "anyOf": [{ "type": "boolean" }, { "type": "null" }] },
+              "last_reported": { "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }], "description": "UTC" },
+              "age_minutes": { "anyOf": [{ "type": "integer" }, { "type": "null" }] },
+              "distance_m": { "type": "integer", "description": "Distance à vol d'oiseau, en mètres" }
+            }
+          }
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["code", "message"],
+            "additionalProperties": false,
+            "properties": {
+              "code": { "enum": ["bike_share_unavailable", "gtfs_stale"] },
+              "message": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
     "favorites": {
       "type": "object",
       "required": ["type", "path", "favorites"],
@@ -203,7 +262,7 @@
             "missing_dependency", "gtfs_unavailable", "unknown_line", "missing_line", "unknown_metro",
             "unknown_stop", "ambiguous_stop", "unknown_direction", "stop_not_in_direction", "missing_stop",
             "invalid_count", "missing_option_value", "missing_station", "unknown_station", "bike_service_unreachable",
-            "unknown_command", "unsupported_combination"
+            "unknown_command", "unsupported_combination", "missing_position", "invalid_position"
           ]
         },
         "message": { "type": "string", "description": "Message en français, à montrer tel quel" },

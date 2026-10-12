@@ -7,6 +7,7 @@ import fr.chtilevia.adapters.gtfs.GtfsCache
 import fr.chtilevia.adapters.realtime.GtfsRealtimeFeed
 import fr.chtilevia.application.Clock
 import fr.chtilevia.application.FindFavorite
+import fr.chtilevia.application.FindNearby
 import fr.chtilevia.application.GetBikeStations
 import fr.chtilevia.application.GetDepartures
 import fr.chtilevia.application.InterpretUtterance
@@ -90,9 +91,11 @@ class ContractTest {
         // « aucun » : flux absent, comme une URL injoignable
         val realtime = fixtures.resolve(if (case.realtime == "aucun") "absent.pb" else case.realtime).toURI().toString()
         val favorites = FileFavoritesStore(File(fixtures, "config/chtilevia/favoris").path)
+        val bikeShare = GbfsFeed { fetch(fixtures.resolve(it).toURI().toString()) }
         val services = ChtiServices(
             departures = GetDepartures(gtfs.timetable, gtfs, GtfsRealtimeFeed { fetch(realtime) }, clock, profile),
-            bikeStations = GetBikeStations(GbfsFeed { fetch(fixtures.resolve(it).toURI().toString()) }, clock),
+            bikeStations = GetBikeStations(bikeShare, clock),
+            nearby = FindNearby(gtfs.timetable, gtfs, bikeShare, clock),
             listFavorites = ListFavorites(favorites),
             findFavorite = FindFavorite(favorites),
             interpretUtterance = InterpretUtterance(favorites),

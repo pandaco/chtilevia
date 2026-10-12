@@ -1,6 +1,7 @@
 package fr.chtilevia.application
 
 import fr.chtilevia.domain.BikeMode
+import fr.chtilevia.domain.Position
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -35,5 +36,26 @@ class CommandLineTest {
         assertEquals("inconnu", assertFailsWith<ChtiError.UnknownCommand> { parse("inconnu foo") }.command)
         assertFailsWith<ChtiError.UnknownMetro> { parse("metro 3") }
         assertFailsWith<ChtiError.MissingLine> { parse("bus") }
+    }
+
+    @Test
+    fun positionInTheUsualNotations() {
+        val expected = Command.Nearby(Position(50.6366, 3.063), null)
+        assertEquals(expected, parse("autour 50.6366 3.063"))
+        assertEquals(expected, parse("autour 50.6366, 3.063"))
+        assertEquals(expected, parse("autour 50,6366 3,063"))
+        assertEquals(expected, parse("autour 50.6366,3.063"))
+        assertEquals(Command.Nearby(Position(-1.0, 2.0), 5), parse("autour -n 5 -1 2"))
+    }
+
+    @Test
+    fun positionIsValidated() {
+        assertFailsWith<ChtiError.MissingPosition> { parse("autour") }
+        assertEquals("91 3", assertFailsWith<ChtiError.InvalidPosition> { parse("autour 91 3") }.text)
+        assertFailsWith<ChtiError.InvalidPosition> { parse("autour 50,6366") }
+        assertFailsWith<ChtiError.InvalidPosition> { parse("autour 5e1 3") }
+        assertFailsWith<ChtiError.InvalidPosition> { parse("autour 50 3 4") }
+        // Le nombre est vérifié d'abord, comme dans le shell
+        assertFailsWith<ChtiError.InvalidCount> { parse("autour -n 0") }
     }
 }

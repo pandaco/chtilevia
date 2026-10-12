@@ -81,6 +81,9 @@ enum class Notice {
 
     /** Flux temps réel injoignable : horaires théoriques uniquement */
     REALTIME_UNAVAILABLE,
+
+    /** V'Lille injoignable : pas de stations autour d'une position */
+    BIKE_SHARE_UNAVAILABLE,
 }
 
 fun interface Notices {

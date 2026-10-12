@@ -1,0 +1,7 @@
+{
+  "type": "error",
+  "code": "invalid_position",
+  "message": "position invalide : « abc » (latitude et longitude en degrés décimaux, ex : 50.6366 3.0630)",
+  "details": {}
+}
+[exit 1]

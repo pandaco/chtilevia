@@ -4,6 +4,7 @@ import fr.chtilevia.application.BikeStations
 import fr.chtilevia.application.ChtiError
 import fr.chtilevia.application.Departures
 import fr.chtilevia.application.FavoritesListing
+import fr.chtilevia.application.Nearby
 import fr.chtilevia.application.StopList
 import fr.chtilevia.domain.BikeMode
 import fr.chtilevia.domain.BikeStation
@@ -76,27 +77,52 @@ internal class JsonFormatter(private val zone: TimeZone) {
                 BikeMode.RETURN -> "return"
             },
         ),
-        "stations" to Json.arr(
-            result.stations.map { station ->
-                val status = station.status
+        "stations" to Json.arr(result.stations.map { station(it, result.now) }),
+    )
+
+    /** Station V'Lille et son état ; [extra] : champs ajoutés à la fin (distance…) */
+    private fun station(station: BikeStation, now: Long, vararg extra: Pair<String, Json>): Json {
+        val status = station.status
+        return Json.obj(
+            "id" to Json.Str(station.id),
+            "name" to Json.Str(station.name),
+            "capacity" to Json.num(station.capacity),
+            "status" to Json.Str(
+                when (station.availability) {
+                    BikeStation.Availability.UNKNOWN -> "unknown"
+                    BikeStation.Availability.OUT_OF_SERVICE -> "out_of_service"
+                    BikeStation.Availability.OK -> "ok"
+                },
+            ),
+            "bikes" to Json.num(status?.bikes),
+            "docks" to Json.num(status?.docks),
+            "renting" to Json.bool(status?.renting),
+            "returning" to Json.bool(status?.returning),
+            "last_reported" to Json.str(status?.lastReported?.let(::isoUtc)),
+            "age_minutes" to Json.num(status?.lastReported?.let { (now - it).floorDiv(60L) }),
+            *extra,
+        )
+    }
+
+    fun nearby(result: Nearby) = Json.obj(
+        "type" to Json.Str("nearby"),
+        "stops" to Json.arr(
+            result.stops.map { near ->
                 Json.obj(
-                    "id" to Json.Str(station.id),
-                    "name" to Json.Str(station.name),
-                    "capacity" to Json.num(station.capacity),
-                    "status" to Json.Str(
-                        when (station.availability) {
-                            BikeStation.Availability.UNKNOWN -> "unknown"
-                            BikeStation.Availability.OUT_OF_SERVICE -> "out_of_service"
-                            BikeStation.Availability.OK -> "ok"
-                        },
-                    ),
-                    "bikes" to Json.num(status?.bikes),
-                    "docks" to Json.num(status?.docks),
-                    "renting" to Json.bool(status?.renting),
-                    "returning" to Json.bool(status?.returning),
-                    "last_reported" to Json.str(status?.lastReported?.let(::isoUtc)),
-                    "age_minutes" to Json.num(status?.lastReported?.let { (result.now - it).floorDiv(60L) }),
+                    "id" to Json.Str(near.stop.id),
+                    "name" to Json.Str(near.stop.name),
+                    "description" to Json.Str(near.stop.description.trim(' ', '-')),
+                    "distance_m" to Json.Num(near.distance.toLong()),
+                    "lines" to Json.arr(near.lines.map(::line)),
                 )
+            },
+        ),
+        "bike_stations" to Json.arr(
+            result.stations.orEmpty().map { station(it.station, result.now, "distance_m" to Json.Num(it.distance.toLong())) },
+        ),
+        "warnings" to Json.arr(
+            result.warnings.mapNotNull { notice ->
+                notice.warningCode()?.let { Json.obj("code" to Json.Str(it), "message" to Json.Str(notice.text())) }
             },
         ),
     )

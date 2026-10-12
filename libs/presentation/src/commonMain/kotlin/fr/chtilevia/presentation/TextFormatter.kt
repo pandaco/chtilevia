@@ -3,6 +3,7 @@ package fr.chtilevia.presentation
 import fr.chtilevia.application.BikeStations
 import fr.chtilevia.application.Departures
 import fr.chtilevia.application.FavoritesListing
+import fr.chtilevia.application.Nearby
 import fr.chtilevia.application.StopList
 import fr.chtilevia.domain.BikeMode
 import fr.chtilevia.domain.BikeStationStatus
@@ -56,6 +57,28 @@ internal class TextFormatter(private val zone: TimeZone) {
                 },
             )
             append("\n\n")
+        }
+    }
+
+    fun nearby(result: Nearby): String = buildString {
+        append("Arrêts proches :\n")
+        if (result.stops.isEmpty()) append("  aucun arrêt desservi à proximité\n")
+        for (near in result.stops) {
+            append("  ${near.stop.name}  (${near.stop.description.trim(' ', '-')}) — ${distance(near.distance, voice = false)}\n")
+            append("     ${near.lines.joinToString(", ") { it.label }}\n")
+        }
+        val stations = result.stations.orEmpty()
+        if (stations.isNotEmpty()) append("\nStations V'Lille proches :\n")
+        for (near in stations) {
+            val status = near.station.status
+            append("  ${near.station.name}  (${near.station.capacity} bornes) — ${distance(near.distance, voice = false)}\n")
+            val state = when {
+                status == null || status.isEmpty() -> "statut indisponible"
+                status.installed != true || status.renting != true -> "station hors service"
+                else -> "🚲 ${status.bikes} vélo(s) dispo   🅿️  ${status.docks} place(s) libre(s)" +
+                    if (status.returning == true) "" else "   ⚠️  dépôt impossible"
+            }
+            append("     $state\n")
         }
     }
 

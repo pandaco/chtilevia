@@ -1,12 +1,16 @@
 package fr.chtilevia.application
 
 import fr.chtilevia.domain.BikeMode
+import fr.chtilevia.domain.Position
 
 /** Commande chti, telle qu'on la tape ou qu'on l'enregistre dans un favori */
 sealed interface Command {
     /** [count] null : nombre par défaut, choisi par la présentation (moins de passages à l'oral) */
     data class NextDepartures(val line: String, val stop: String, val direction: String, val count: Int?) : Command
     data class BikeStations(val station: String, val mode: BikeMode) : Command
+
+    /** [count] null : nombre par défaut, choisi par la présentation */
+    data class Nearby(val position: Position, val count: Int?) : Command
     data object ListFavorites : Command
     data object Update : Command
     data object Help : Command
@@ -19,7 +23,8 @@ sealed interface Command {
 /**
  * Grammaire des commandes chti (sans les options globales `--voix` et `--json`, affaire de la
  * présentation) : `bus <ligne> [arrêt] [-d direction] [-n nombre]`, `tram …`, `metro <1|2> …`,
- * `velo <station> [--prendre|--deposer]`, `favoris`, `update`, `vocal <phrase>`, `<favori>`.
+ * `velo <station> [--prendre|--deposer]`, `autour <latitude> <longitude> [-n nombre]`, `favoris`,
+ * `update`, `vocal <phrase>`, `<favori>`.
  */
 object CommandLine {
     fun parse(words: List<String>): Command {
@@ -37,6 +42,7 @@ object CommandLine {
                 else -> throw ChtiError.UnknownMetro()
             }
             "velo", "vélo", "vlille" -> bike(args)
+            "autour" -> nearby(args)
             "update" -> Command.Update
             "favoris" -> Command.ListFavorites
             "vocal" -> Command.Utterance(args.joinToString(" "))
@@ -79,6 +85,42 @@ object CommandLine {
         if (value.isEmpty() || value.any { it !in '0'..'9' } || value == "0") throw ChtiError.InvalidCount(value)
         return value.trimStart('0').ifEmpty { "0" }.let { if (it.length > 9) Int.MAX_VALUE else it.toInt() }
     }
+
+    /**
+     * Position et option -n, dans n'importe quel ordre. Position : « 50.6366,3.0630 » (un mot),
+     * « 50.6366, 3.0630 » ou « 50,6366 3,0630 » (deux mots)
+     */
+    private fun nearby(args: List<String>): Command.Nearby {
+        val words = mutableListOf<String>()
+        var count: String? = null
+        var i = 0
+        while (i < args.size) {
+            val arg = args[i]
+            when {
+                arg == "-n" || arg == "--nombre" -> {
+                    count = args.getOrNull(++i)
+                        ?: throw ChtiError.MissingOptionValue(arg, ChtiError.MissingOptionValue.Expected.COUNT)
+                }
+                arg.startsWith("--nombre=") -> count = arg.substringAfter('=')
+                else -> words += arg
+            }
+            i++
+        }
+        val parsedCount = count?.let(::parseCount)
+        if (words.isEmpty()) throw ChtiError.MissingPosition()
+        val parts = when (words.size) {
+            1 -> words[0].split(',')
+            2 -> words.map { it.trimEnd(',').replace(',', '.') }
+            else -> emptyList()
+        }
+        val invalid = ChtiError.InvalidPosition(words.joinToString(" "))
+        if (parts.size != 2 || parts.any { !DECIMAL.matches(it) }) throw invalid
+        val position = Position(parts[0].toDouble(), parts[1].toDouble())
+        if (position.latitude !in -90.0..90.0 || position.longitude !in -180.0..180.0) throw invalid
+        return Command.Nearby(position, parsedCount)
+    }
+
+    private val DECIMAL = Regex("-?[0-9]+(\\.[0-9]+)?")
 
     private fun bike(args: List<String>): Command.BikeStations {
         var mode = BikeMode.ALL

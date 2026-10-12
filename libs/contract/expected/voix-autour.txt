@@ -1,0 +1,3 @@
+Arrêts les plus proches : Rihour, à 122 mètres, Métro 1 ; Gare Lille Flandres, à 511 mètres, Bus 10, Tram et Métro 1.
+Stations V'Lille les plus proches : Rihour, à 117 mètres, 1 vélo disponible et 31 places libres ; Gare Lille Flandres, à 378 mètres, aucun vélo disponible et 32 places libres.
+[exit 0]

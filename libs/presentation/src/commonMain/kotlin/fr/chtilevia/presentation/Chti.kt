@@ -7,6 +7,7 @@ import fr.chtilevia.application.Departures
 import fr.chtilevia.application.DeparturesQuery
 import fr.chtilevia.application.FavoritesFile
 import fr.chtilevia.application.FindFavorite
+import fr.chtilevia.application.FindNearby
 import fr.chtilevia.application.GetBikeStations
 import fr.chtilevia.application.GetDepartures
 import fr.chtilevia.application.InterpretUtterance
@@ -28,6 +29,7 @@ interface Console {
 class ChtiServices(
     val departures: GetDepartures,
     val bikeStations: GetBikeStations,
+    val nearby: FindNearby,
     val listFavorites: ListFavorites,
     val findFavorite: FindFavorite,
     val interpretUtterance: InterpretUtterance,
@@ -100,6 +102,11 @@ class Chti(private val services: ChtiServices, zone: TimeZone) {
             val result = services.bikeStations.execute(command.station, command.mode)
             output(mode, console, { text.bikeStations(result) }, { voice.bikeStations(result) }) { json.bikeStations(result) }
         }
+        is Command.Nearby -> {
+            val count = command.count ?: if (mode == Mode.VOICE) 2 else 3
+            val result = services.nearby.execute(command.position, count, notices(mode, console))
+            output(mode, console, { text.nearby(result) }, { voice.nearby(result) }) { json.nearby(result) }
+        }
         Command.ListFavorites -> {
             val listing = services.listFavorites.execute()
             output(mode, console, { text.favorites(listing) }, { text.favorites(listing) }) { json.favorites(listing) }
@@ -159,7 +166,7 @@ class Chti(private val services: ChtiServices, zone: TimeZone) {
         val shown = when (notice) {
             Notice.TIMETABLE_DOWNLOAD -> true
             Notice.TIMETABLE_STALE -> mode != Mode.JSON
-            Notice.REALTIME_UNAVAILABLE -> mode == Mode.TEXT
+            Notice.REALTIME_UNAVAILABLE, Notice.BIKE_SHARE_UNAVAILABLE -> mode == Mode.TEXT
         }
         if (shown) console.err(if (notice == Notice.TIMETABLE_DOWNLOAD) "${notice.text()}\n" else "chti : ${notice.text()}\n")
     }

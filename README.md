@@ -54,6 +54,7 @@ ln -s "$PWD/apps/shell/chti" ~/.local/bin/chti   # optionnel, pour l'avoir dans 
 | `chti velo <station>` | Vélos disponibles et places libres des stations V'Lille correspondantes |
 | `chti velo <station> --prendre` | Seulement les vélos disponibles (pour partir) |
 | `chti velo <station> --deposer` | Seulement les places libres (pour rendre le vélo) |
+| `chti autour <latitude> <longitude> [-n <nombre>]` | Arrêts les plus proches (avec leurs lignes) et stations V'Lille les plus proches, à vol d'oiseau |
 | `chti <favori>` | Lance la ou les commandes enregistrées sous ce nom (voir [Favoris](#favoris)) |
 | `chti favoris` | Liste les favoris |
 | `chti --voix <commande>` | Même réponse, en phrases à lire à voix haute (voir [Sortie parlée](#sortie-parlée)) |
@@ -82,6 +83,9 @@ ln -s "$PWD/apps/shell/chti" ~/.local/bin/chti   # optionnel, pour l'avoir dans 
 - **`-n <nombre>`** (alias `--nombre`, ou `--nombre=<nombre>`) : nombre de prochains passages affichés
   par direction, entier ≥ 1, **3 par défaut**. Si le service du jour ne suffit pas, les premiers
   départs du lendemain sont affichés. Combinable avec `-d`, dans n'importe quel ordre.
+- **`<latitude> <longitude>`** (pour `autour`) : en degrés décimaux, comme les donne une appli de
+  carte : `50.6366 3.0630`, `50.6366, 3.0630`, `50.6366,3.0630` ou `50,6366 3,0630`. Avec `-n`,
+  le nombre d'arrêts et de stations donnés (3 par défaut).
 - **`--prendre`** / **`--deposer`** (ou `--déposer`) : pour V'Lille, n'affiche que les vélos
   disponibles, ou que les places libres. Indique aussi « location / dépôt impossible » si la station
   le refuse.
@@ -454,7 +458,8 @@ Les chemins absolus sont remplacés par `<racine>` pour que les références soi
 Cas couverts : temps réel avec propagation du retard, passage de minuit, service du lendemain,
 flux temps réel indisponible, fin de service du métro, filtres `-d` et `-n` (y compris placés avant
 l'arrêt), le mot `vers`, le rapprochement approximatif des arrêts et directions (fautes, phonétique,
-ex æquo proposés), V'Lille (accents, plusieurs résultats, station hors service, `--prendre` / `--deposer`), les favoris
+ex æquo proposés), `autour` (notations de la position, distances en m et km, erreurs), V'Lille
+(accents, plusieurs résultats, station hors service, `--prendre` / `--deposer`), les favoris
 (liste, enchaînement, casse du nom, commande en échec, favori inconnu), la sortie parlée `--voix`,
 la compréhension des phrases (`vocal` : chiffres en lettres, « à l'arrêt », « en direction de »,
 favoris, phrases incomprises), la sortie JSON `--json` (passages, arrêts, V'Lille, favoris,

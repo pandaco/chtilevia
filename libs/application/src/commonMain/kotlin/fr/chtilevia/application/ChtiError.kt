@@ -25,6 +25,12 @@ sealed class ChtiError(val code: String) : Exception(code) {
     class BikeServiceUnreachable : ChtiError("bike_service_unreachable")
     class UnknownStation(val query: String) : ChtiError("unknown_station")
 
+    // Position (autour)
+    class MissingPosition : ChtiError("missing_position")
+
+    /** [text] : les mots reçus pour la position */
+    class InvalidPosition(val text: String) : ChtiError("invalid_position")
+
     // Grammaire des commandes (CommandLine)
     class MissingLine : ChtiError("missing_line")
     class UnknownMetro : ChtiError("unknown_metro")

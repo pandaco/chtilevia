@@ -1,0 +1,16 @@
+Arrêts proches :
+  Rihour  (RIHOUR STATION DU MÉTRO M1) — 122 m
+     Métro 1
+  Gare Lille Flandres  (GARE LILLE FLANDRES 59000 LILLE) — 511 m
+     Bus 10, Tram, Métro 1
+  République Beaux-Arts  (RÉPUBLIQUE BEAUX-ARTS 59000 LILLE) — 527 m
+     Métro 1
+
+Stations V'Lille proches :
+  Rihour  (32 bornes) — 117 m
+     🚲 1 vélo(s) dispo   🅿️  31 place(s) libre(s)
+  Gare Lille Flandres  (32 bornes) — 378 m
+     🚲 0 vélo(s) dispo   🅿️  32 place(s) libre(s)
+  Gare Lille Europe  (32 bornes) — 890 m
+     🚲 14 vélo(s) dispo   🅿️  18 place(s) libre(s)
+[exit 0]

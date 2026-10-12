@@ -69,6 +69,17 @@ approx-autre-sens       | MIDI   | rt-midi.pb   | bus 10 esplanate -d flandres
 approx-ambigu           | MIDI   | rt-midi.pb   | bus 10 marie
 voix-approx-ambigu      | MIDI   | aucun        | --voix bus 10 marie
 vocal-approx-oral       | MIDI   | rt-midi.pb   | vocal le prochain tram à Croix la Roche vers Roubaix
+# Autour d'une position : arrêts desservis (avec leurs lignes) et stations V'Lille les plus proches
+autour-position         | MINUIT | aucun        | autour 50.6363 3.0640
+autour-format-carte     | MINUIT | aucun        | autour 50.6363, 3.0640 -n 1
+autour-virgules         | MINUIT | aucun        | autour 50,6363 3,0640 -n 1
+autour-un-mot           | MINUIT | aucun        | autour 50.6363,3.0640 -n 1
+autour-loin             | MINUIT | aucun        | autour 50.6 3.2 -n 1
+voix-autour             | MINUIT | aucun        | --voix autour 50.6363 3.0640
+voix-autour-loin        | MINUIT | aucun        | --voix autour 50.73 3.18 -n 1
+erreur-autour-sans-position | MINUIT | aucun    | autour
+erreur-autour-position  | MINUIT | aucun        | autour 91 3
+erreur-autour-nombre    | MINUIT | aucun        | autour 50.6363 3.0640 -n 0
 # Sortie JSON (--json) : documents décrits par schema/response.schema.json
 json-bus-temps-reel        | MIDI   | rt-midi.pb   | --json bus 10 marais -d flandres -n 2
 json-bus-sans-temps-reel   | SOIR   | aucun        | bus 10 gambetta -n 2 --json
@@ -95,3 +106,5 @@ json-erreur-avec-voix      | MIDI   | aucun        | --json --voix bus 10 marais
 json-erreur-vocal          | MIDI   | aucun        | --json vocal métro un république
 json-erreur-guillemets     | MIDI   | aucun        | --json "zz\z
 json-approx-ambigu         | MIDI   | aucun        | --json bus 10 marie
+json-autour                | MINUIT | aucun        | --json autour 50.6363 3.0640 -n 2
+json-erreur-autour         | MINUIT | aucun        | --json autour abc

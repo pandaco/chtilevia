@@ -1,0 +1,3 @@
+Arrêt le plus proche : Tourcoing Centre, à 1,8 kilomètre, Tram.
+Station V'Lille la plus proche : Tourcoing gare, à 1,7 kilomètre, aucun vélo disponible et 18 places libres.
+[exit 0]

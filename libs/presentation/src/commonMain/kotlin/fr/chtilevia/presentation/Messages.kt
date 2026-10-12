@@ -12,6 +12,7 @@ internal val USAGE = """
     |  chti tram [arrêt] [-d direction] [-n nombre]          ex : chti tram croise laroche -d roubaix
     |  chti metro <1|2> [arrêt] [-d direction] [-n nombre]   ex : chti metro 1 republique -d chu   (théorique)
     |  chti velo <station> [--prendre|--deposer]             ex : chti velo rihour --prendre
+    |  chti autour <latitude> <longitude> [-n nombre]        ex : chti autour 50.6366 3.0630
     |  chti <favori>                                         ex : chti travail
     |  chti favoris                                          liste les favoris
     |  chti update                                           re-télécharge le référentiel GTFS
@@ -22,7 +23,8 @@ internal val USAGE = """
     |Sans arrêt, la liste des arrêts de la ligne est affichée.
     |-d / --direction / --vers : ne garde que les courses dont la destination contient ce texte.
     |  « vers » s'écrit aussi sans tiret : chti tram croise laroche vers roubaix
-    |-n / --nombre : nombre de passages affichés par direction (3 par défaut).
+    |-n / --nombre : nombre de passages affichés par direction (3 par défaut) ; avec autour, nombre
+    |  d'arrêts et de stations V'Lille.
     |--prendre / --deposer : n'affiche que les vélos disponibles / que les places libres.
     |La recherche ignore la casse et les accents, et tolère les fautes (arrêts, directions).
     |
@@ -67,6 +69,10 @@ internal fun ChtiError.message(): ErrorMessage = when (this) {
     is ChtiError.MissingStation -> ErrorMessage("précise un nom de station, ex : chti velo rihour")
     is ChtiError.BikeServiceUnreachable -> ErrorMessage("V'Lille injoignable")
     is ChtiError.UnknownStation -> ErrorMessage("Aucune station V'Lille ne correspond à « $query ».")
+    is ChtiError.MissingPosition ->
+        ErrorMessage("précise une position (latitude longitude), ex : chti autour 50.6366 3.0630")
+    is ChtiError.InvalidPosition ->
+        ErrorMessage("position invalide : « $text » (latitude et longitude en degrés décimaux, ex : 50.6366 3.0630)")
     is ChtiError.MissingLine -> ErrorMessage("précise une ligne, ex : chti bus 10")
     is ChtiError.UnknownMetro -> ErrorMessage("ligne de métro : 1 ou 2")
     is ChtiError.MissingOptionValue -> when (expected) {
@@ -92,6 +98,7 @@ internal fun ChtiError.message(): ErrorMessage = when (this) {
 internal fun Notice.warningCode(): String? = when (this) {
     Notice.REALTIME_UNAVAILABLE -> "realtime_unavailable"
     Notice.TIMETABLE_STALE -> "gtfs_stale"
+    Notice.BIKE_SHARE_UNAVAILABLE -> "bike_share_unavailable"
     Notice.TIMETABLE_DOWNLOAD -> null
 }
 
@@ -99,4 +106,5 @@ internal fun Notice.text(): String = when (this) {
     Notice.REALTIME_UNAVAILABLE -> "flux temps réel indisponible, horaires théoriques uniquement"
     Notice.TIMETABLE_STALE -> "GTFS non mis à jour, utilisation du cache existant"
     Notice.TIMETABLE_DOWNLOAD -> "Mise à jour du référentiel GTFS…"
+    Notice.BIKE_SHARE_UNAVAILABLE -> "V'Lille injoignable, stations non affichées"
 }

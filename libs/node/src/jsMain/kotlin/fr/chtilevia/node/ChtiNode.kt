@@ -9,6 +9,7 @@ import fr.chtilevia.adapters.gtfs.GtfsCache
 import fr.chtilevia.adapters.realtime.GtfsRealtimeFeed
 import fr.chtilevia.application.Clock
 import fr.chtilevia.application.FindFavorite
+import fr.chtilevia.application.FindNearby
 import fr.chtilevia.application.GetBikeStations
 import fr.chtilevia.application.GetDepartures
 import fr.chtilevia.application.InterpretUtterance
@@ -44,9 +45,11 @@ fun runChti(args: Array<String>, env: dynamic): ChtiRun {
     val clock = Clock { fixedNow ?: (Date.now() / 1000).toLong() }
     val gtfs = GtfsCache("${variable("XDG_CACHE_HOME") ?: "$home/.cache"}/chtilevia", profile.gtfsUrl)
     val favorites = FileFavoritesStore("${variable("XDG_CONFIG_HOME") ?: "$home/.config"}/chtilevia/favoris")
+    val bikeShare = GbfsFeed { fetch("${profile.bikeShareUrl}/$it") }
     val services = ChtiServices(
         departures = GetDepartures(gtfs.timetable, gtfs, GtfsRealtimeFeed { fetch(profile.realtimeUrl) }, clock, profile),
-        bikeStations = GetBikeStations(GbfsFeed { fetch("${profile.bikeShareUrl}/$it") }, clock),
+        bikeStations = GetBikeStations(bikeShare, clock),
+        nearby = FindNearby(gtfs.timetable, gtfs, bikeShare, clock),
         listFavorites = ListFavorites(favorites),
         findFavorite = FindFavorite(favorites),
         interpretUtterance = InterpretUtterance(favorites),

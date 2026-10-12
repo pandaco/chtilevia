@@ -1,0 +1,2 @@
+chti : position invalide : « 91 3 » (latitude et longitude en degrés décimaux, ex : 50.6366 3.0630)
+[exit 1]

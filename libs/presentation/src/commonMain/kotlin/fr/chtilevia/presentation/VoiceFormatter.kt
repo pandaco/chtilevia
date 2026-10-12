@@ -2,6 +2,7 @@ package fr.chtilevia.presentation
 
 import fr.chtilevia.application.BikeStations
 import fr.chtilevia.application.Departures
+import fr.chtilevia.application.Nearby
 import fr.chtilevia.domain.BikeMode
 import fr.chtilevia.domain.localDateTime
 import kotlinx.datetime.TimeZone
@@ -42,6 +43,34 @@ internal class VoiceFormatter(private val zone: TimeZone) {
                 else -> bikes(status.bikes) + " et " + docks(status.docks)
             }
             append("${station.name} : $state.\n")
+        }
+    }
+
+    fun nearby(result: Nearby): String = buildString {
+        if (result.stops.isEmpty()) {
+            append("Aucun arrêt desservi à proximité.\n")
+        } else {
+            val title = if (result.stops.size == 1) "Arrêt le plus proche" else "Arrêts les plus proches"
+            val parts = result.stops.map { near ->
+                "${near.stop.name}, à ${distance(near.distance, voice = true)}, ${spokenList(near.lines.map { it.label })}"
+            }
+            append("$title : ${parts.joinToString(" ; ")}.\n")
+        }
+        val stations = result.stations
+        if (stations == null) {
+            append("V'Lille injoignable.\n")
+        } else if (stations.isNotEmpty()) {
+            val title = if (stations.size == 1) "Station V'Lille la plus proche" else "Stations V'Lille les plus proches"
+            val parts = stations.map { near ->
+                val status = near.station.status
+                val state = when {
+                    status == null || status.isEmpty() -> "statut indisponible"
+                    status.installed != true || status.renting != true -> "station hors service"
+                    else -> bikes(status.bikes) + " et " + docks(status.docks)
+                }
+                "${near.station.name}, à ${distance(near.distance, voice = true)}, $state"
+            }
+            append("$title : ${parts.joinToString(" ; ")}.\n")
         }
     }
 
