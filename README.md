@@ -396,9 +396,10 @@ du contrat (`libs/contract`), au caractère près. Chaque module compile pour la
 | `libs/adapters` | GTFS statique (cache partagé avec le shell), GTFS-RT, V'Lille (GBFS), fichier des favoris | application |
 | `libs/core-tests` | Règles d'architecture (Konsist) et contrat joué par le cœur | tout |
 
-Le décodage des données (CSV, protobuf, JSON) est commun à toutes les cibles. L'accès aux fichiers et
-au réseau n'existe pour l'instant que sur la JVM et Android (source set `jvmShared`) ; Node viendra
-avec le serveur MCP v2.
+Les adaptateurs sont communs à toutes les cibles (décodage CSV, protobuf, JSON, zip ; cache GTFS).
+Seul l'accès au système est propre à chaque plateforme : `java.io` / `java.net` sur la JVM et Android
+(source set `jvmShared`), modules `node:*` sous Node (le téléchargement passe par un processus `node`
+enfant, pour garder des ports synchrones).
 
 Prérequis : un JDK 17 ou plus récent (`JAVA_HOME`) et le SDK Android (`ANDROID_HOME`, installé avec
 Android Studio). Gradle (wrapper `./gradlew`) est lancé par Nx ; on peut aussi l'appeler directement :

@@ -1,6 +1,6 @@
-// Adaptateurs sortants : GTFS statique, GTFS-RT, V'Lille (GBFS), favoris. Le décodage est commun
-// à toutes les cibles ; l'accès aux fichiers et au réseau (java.io, java.net, java.util.zip) est
-// partagé par la JVM et Android dans le source set jvmShared. Node viendra avec le MCP v2.
+// Adaptateurs sortants : GTFS statique, GTFS-RT, V'Lille (GBFS), favoris. Tout est commun aux
+// cibles sauf l'accès au système (Platform.kt) : java.io / java.net / java.util.zip pour la JVM et
+// Android dans le source set jvmShared, modules node:* pour Node (js).
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 
 plugins {

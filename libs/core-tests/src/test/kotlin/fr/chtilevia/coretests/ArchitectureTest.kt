@@ -43,8 +43,10 @@ class ArchitectureTest {
 
     @Test
     fun `les adaptateurs ne dépendent ni de la présentation ni des applis`() {
+        // org.khronos.webgl : tableaux typés de la bibliothèque standard Kotlin/JS (octets sous Node)
         val allowed = listOf(
-            "kotlin.", "kotlinx.", "java.", "fr.chtilevia.domain", "fr.chtilevia.application", "fr.chtilevia.adapters",
+            "kotlin.", "kotlinx.", "java.", "org.khronos.webgl.",
+            "fr.chtilevia.domain", "fr.chtilevia.application", "fr.chtilevia.adapters",
         )
         layer("adapters").assertTrue(testName = "adapters") { file ->
             file.imports.all { import -> allowed.any { import.name.startsWith(it) } }
