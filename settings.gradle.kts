@@ -1,4 +1,4 @@
-// Racine Gradle du monorepo : cœur Kotlin (libs/*) et, plus tard, appli Android (apps/android)
+// Racine Gradle du monorepo : cœur Kotlin (libs/*) et appli Android (apps/android)
 pluginManagement {
     repositories {
         google()
@@ -22,3 +22,7 @@ for (module in listOf("domain", "application", "presentation", "adapters", "node
     include(":$module")
     project(":$module").projectDir = file("libs/$module")
 }
+
+// Appli Android
+include(":android")
+project(":android").projectDir = file("apps/android")

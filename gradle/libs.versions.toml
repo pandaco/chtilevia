@@ -10,10 +10,17 @@ kotlinx-serialization = "1.11.0"
 # Fuseaux horaires pour kotlinx-datetime sous Node : dernière version compatible avec le
 # @js-joda/core 3.x qu'il embarque (les 2.24+ exigent core ≥ 5.7)
 js-joda-timezone = "2.23.0"
+# Appli Android (apps/android)
+compose-bom = "2026.09.00"
+activity-compose = "1.13.0"
 
 [libraries]
 kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 android-gradle-plugin = { module = "com.android.tools.build:gradle", version.ref = "agp" }
+compose-compiler-gradle-plugin = { module = "org.jetbrains.kotlin:compose-compiler-gradle-plugin", version.ref = "kotlin" }
+compose-bom = { module = "androidx.compose:compose-bom", version.ref = "compose-bom" }
+compose-material3 = { module = "androidx.compose.material3:material3" }
+activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activity-compose" }
 junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
