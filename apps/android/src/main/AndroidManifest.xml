@@ -4,7 +4,18 @@
     <!-- GTFS, temps réel et V'Lille : données ouvertes Ilévia -->
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- Reconnaissance vocale : le service de reconnaissance du système (Google) -->
+    <queries>
+        <intent>
+            <action android:name="android.speech.action.RECOGNIZE_SPEECH" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+    </queries>
+
     <application
+        android:name=".ChtiApplication"
         android:label="chtilevia"
         android:theme="@android:style/Theme.Material.NoActionBar">
         <activity

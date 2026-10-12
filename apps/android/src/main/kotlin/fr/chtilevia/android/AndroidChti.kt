@@ -14,10 +14,14 @@ import fr.chtilevia.application.GetDepartures
 import fr.chtilevia.application.InterpretUtterance
 import fr.chtilevia.application.ListFavorites
 import fr.chtilevia.application.NetworkProfile
+import fr.chtilevia.application.Notice
+import fr.chtilevia.application.Notices
 import fr.chtilevia.application.UpdateTimetable
+import fr.chtilevia.domain.serviceDates
 import fr.chtilevia.presentation.Chti
 import fr.chtilevia.presentation.ChtiServices
 import fr.chtilevia.presentation.Console
+import java.io.File
 
 /**
  * Racine de composition de l'appli : le cœur avec les adaptateurs JVM, le référentiel dans les
@@ -28,20 +32,49 @@ class AndroidChti(context: Context, private val profile: NetworkProfile = Networ
     // Cache propre à l'appli : stop_times.txt ne sert plus une fois l'index construit
     val gtfs = GtfsCache(root, profile.gtfsUrl, keepStopTimes = false)
     private val clock = Clock { System.currentTimeMillis() / 1000 }
-    private val favorites = FileFavoritesStore("$root/favoris")
+    private val favoritesFile = File("$root/favoris")
+    private val favorites = FileFavoritesStore(favoritesFile.path)
+    private val listFavorites = ListFavorites(favorites)
     private val bikeShare = GbfsFeed { fetch("${profile.bikeShareUrl}/$it") }
     private val chti = Chti(
         ChtiServices(
             departures = GetDepartures(gtfs.timetable, gtfs, GtfsRealtimeFeed { fetch(profile.realtimeUrl) }, clock, profile),
             bikeStations = GetBikeStations(bikeShare, clock),
             nearby = FindNearby(gtfs.timetable, gtfs, bikeShare, clock),
-            listFavorites = ListFavorites(favorites),
+            listFavorites = listFavorites,
             findFavorite = FindFavorite(favorites),
             interpretUtterance = InterpretUtterance(favorites),
             updateTimetable = UpdateTimetable(gtfs),
         ),
         profile.timeZone,
     )
+
+    /**
+     * Prépare le référentiel : téléchargé s'il manque ou date de plus de 24 h ([downloading] est
+     * alors appelé), puis lu en mémoire pour que la première question soit rapide. Lève
+     * [fr.chtilevia.application.ChtiError] si aucun référentiel n'est disponible.
+     */
+    @Synchronized
+    fun warmUp(downloading: () -> Unit = {}) {
+        gtfs.refresh(force = false, notices = Notices { if (it == Notice.TIMETABLE_DOWNLOAD) downloading() })
+        gtfs.timetable.lines()
+        gtfs.timetable.stops()
+        gtfs.timetable.activeDates(serviceDates(clock.now(), profile.timeZone))
+    }
+
+    /** Noms des favoris, dans l'ordre du fichier */
+    @Synchronized
+    fun favoriteNames(): List<String> = listFavorites.execute().favorites.map { it.name }
+
+    /** Fichier des favoris, au format du shell (`nom: commande`) ; vide s'il n'existe pas */
+    @Synchronized
+    fun favoritesText(): String = favoritesFile.takeIf { it.isFile }?.readText().orEmpty()
+
+    @Synchronized
+    fun saveFavorites(text: String) {
+        favoritesFile.parentFile?.mkdirs()
+        favoritesFile.writeText(text.trimEnd() + "\n")
+    }
 
     /** Résultat d'une commande : code retour et texte (sorties standard et d'erreur, dans l'ordre) */
     data class Reply(val exit: Int, val text: String)
