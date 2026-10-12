@@ -254,11 +254,13 @@ nano ~/.config/chtilevia/favoris       # tes trajets (fichier local, jamais publ
 
 Un serveur [MCP](https://modelcontextprotocol.io) local donne les mêmes informations à Claude Code,
 Claude Desktop, Gemini CLI ou tout client MCP : on pose la question en langage naturel, l'assistant
-appelle `prochains_passages`, `station_velo`, `favori`… Il s'appuie sur `chti --json` et tourne en
-stdio, sans serveur à héberger.
+appelle `prochains_passages`, `station_velo`, `favori`… Il s'appuie sur le cœur Kotlin compilé pour
+Node (mêmes réponses que `chti --json`, sans curl, jq ni python3) et tourne en stdio, sans serveur à
+héberger.
 
 ```sh
 npm install
+npx nx run :node:build                                                               # cœur Kotlin pour Node
 claude mcp add --scope user chtilevia -- node "$PWD/apps/mcp/src/main.ts"           # Claude Code
 gemini mcp add -s user chtilevia node "$PWD/apps/mcp/src/main.ts"                   # Gemini CLI
 ```

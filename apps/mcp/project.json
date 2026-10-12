@@ -3,7 +3,7 @@
   "name": "mcp",
   "projectType": "application",
   "tags": ["scope:mcp", "layer:app"],
-  "implicitDependencies": ["shell", "contract"],
+  "implicitDependencies": ["shell", "contract", ":node"],
   "targets": {
     "lint": {
       "command": "tsc --noEmit -p .",
@@ -11,7 +11,8 @@
     },
     "test": {
       "command": "node --test test/",
-      "options": { "cwd": "{projectRoot}" }
+      "options": { "cwd": "{projectRoot}" },
+      "dependsOn": [{ "projects": [":node"], "target": "build" }]
     }
   }
 }

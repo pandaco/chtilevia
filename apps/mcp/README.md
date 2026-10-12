@@ -27,13 +27,19 @@ français) est signalée par `isError: true`. Tous les outils sont en lecture se
 
 ## Installation
 
-Prérequis : Node 24 ou plus récent (il exécute le TypeScript directement, sans compilation), et les
-dépendances de `chti` (`curl`, `jq`, `unzip`, `python3`).
+Prérequis : Node 24 ou plus récent (il exécute le TypeScript directement, sans compilation), et
+de quoi compiler le cœur Kotlin (JDK 17+, SDK Android : voir le README principal).
 
 ```sh
 npm install                      # à la racine du dépôt
-apps/shell/chti update           # une fois : télécharge les horaires (~1 min), pour que le 1er appel ne fasse pas attendre l'assistant
+npx nx run :node:build           # compile le cœur Kotlin pour Node (à refaire après une mise à jour du dépôt)
 ```
+
+Le premier appel télécharge et indexe les horaires (quelques secondes) ; le cache est celui de `chti`
+(`~/.cache/chtilevia`), partagé avec le script.
+
+Sans JDK, le serveur peut s'appuyer sur le script shell : `CHTI_GATEWAY=shell`, avec les dépendances
+de `chti` (`curl`, `jq`, `unzip`, `python3`).
 
 Les favoris sont ceux de `chti` (`~/.config/chtilevia/favoris`).
 
@@ -88,22 +94,26 @@ ou, dans `~/.gemini/settings.json` :
 npx @modelcontextprotocol/inspector node apps/mcp/src/main.ts
 ```
 
-Variables d'environnement reconnues : `CHTI_PATH` (autre script `chti`), et toutes celles de `chti`
-(`CHTI_NOW`, `CHTI_*_URL`, `XDG_*`, voir le README principal).
+Variables d'environnement reconnues : `CHTI_GATEWAY` (`core` par défaut, ou `shell`),
+`CHTI_CORE_MODULE` (autre module `chtilevia-node.mjs`), `CHTI_PATH` (autre script `chti`), et toutes
+celles de `chti` (`CHTI_NOW`, `CHTI_*_URL`, `XDG_*`, voir le README principal).
 
 ## Architecture
 
 ```
 src/
 ├── ports/chti-gateway.ts      port : ce dont les outils ont besoin (passages, arrêts, vélos, favoris)
-├── adapters/shell-gateway.ts  adaptateur : lance `chti --json` (v1)
+├── adapters/command-gateway.ts  base commune : requête → arguments de `chti --json`
+├── adapters/core-gateway.ts   adaptateur v2 (défaut) : cœur Kotlin pour Node (libs/node, `runChti`)
+├── adapters/shell-gateway.ts  adaptateur v1 : lance le script `apps/shell/chti --json`
 ├── server.ts                  adaptateur d'entrée MCP : outils, validation des paramètres
 ├── contract-schema.ts         schémas de sortie tirés de libs/contract
 └── main.ts                    racine de composition, transport stdio
 ```
 
-Le serveur ne connaît que le port `ChtiGateway`. La v2 remplacera `ShellGateway` par le cœur
-Kotlin compilé pour Node, sans toucher aux outils ni aux tests.
+Le serveur ne connaît que le port `ChtiGateway`. Les deux passerelles rendent les mêmes documents ;
+la passerelle Kotlin est synchrone : pendant une commande (le téléchargement du GTFS compris), le
+serveur ne traite rien d'autre.
 
 Garde-fous : les textes reçus ne peuvent pas commencer par `-` (pas d'option de `chti` injectée),
 arrêt et direction sont passés d'un seul tenant, et `favori` n'accepte qu'un nom présent dans la
@@ -117,5 +127,5 @@ npx nx run-many -t lint test -p mcp      # typage (tsc) + tests
 
 `test/contract.test.ts` relie un client MCP au serveur en mémoire et vérifie que chaque appel
 d'outil rend **exactement** le document d'un cas `json-*` de `libs/contract` (mêmes fixtures, même
-heure figée). Il valide aussi toutes les sorties JSON du contrat avec le schéma (ajv), et les
+heure figée), avec chacune des deux passerelles (Nx compile d'abord le cœur Kotlin). Il valide aussi toutes les sorties JSON du contrat avec le schéma (ajv), et les
 garde-fous ci-dessus.

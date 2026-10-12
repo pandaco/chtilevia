@@ -12,6 +12,7 @@ import { Client, InMemoryTransport } from '@modelcontextprotocol/client';
 import { Ajv2020 } from 'ajv/dist/2020.js';
 import addFormatsModule from 'ajv-formats';
 
+import { CoreGateway } from '../src/adapters/core-gateway.ts';
 import { DEFAULT_CHTI_PATH, ShellGateway } from '../src/adapters/shell-gateway.ts';
 import { RESPONSE_SCHEMA_PATH } from '../src/contract-schema.ts';
 import { createServer } from '../src/server.ts';
@@ -68,11 +69,18 @@ function fixtureEnv(clock: string, rt: string): Record<string, string> {
     };
 }
 
+// Chaque passerelle doit rendre les mêmes documents : script shell (v1) et cœur Kotlin sous Node (v2)
+const GATEWAYS = {
+    shell: (env: Record<string, string>) => new ShellGateway({ env }),
+    core: (env: Record<string, string>) => new CoreGateway({ env })
+};
+type GatewayKind = keyof typeof GATEWAYS;
+
 /** Client MCP relié en mémoire à un serveur dont la passerelle tourne dans les conditions du cas */
-async function connect(caseName: string): Promise<Client> {
+async function connect(caseName: string, gateway: GatewayKind): Promise<Client> {
     const c = cases.get(caseName);
     assert.ok(c, `cas inconnu dans cases.txt : ${caseName}`);
-    const server = createServer(new ShellGateway({ env: fixtureEnv(c.clock, c.rt) }));
+    const server = createServer(GATEWAYS[gateway](fixtureEnv(c.clock, c.rt)));
     const client = new Client({ name: 'chti-tests', version: '0.0.0' });
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
     await server.connect(serverTransport);
@@ -104,81 +112,83 @@ const PARITY: [string, string, Record<string, unknown>][] = [
     ['json-approx-ambigu', 'prochains_passages', { mode: 'bus', ligne: '10', arret: 'marie' }]
 ];
 
-describe('parité avec le contrat chti --json', () => {
-    for (const [caseName, tool, args] of PARITY) {
-        test(`${tool} ${JSON.stringify(args)} ≡ ${caseName}`, async () => {
-            const client = await connect(caseName);
-            const result = await client.callTool({ name: tool, arguments: args });
-            const { doc } = expected(caseName);
-            assert.deepEqual(result.structuredContent, doc);
-            assert.equal(result.isError ?? false, (doc as { type: string }).type === 'error');
-            assert.deepEqual(JSON.parse((result.content as { text: string }[])[0].text), doc);
+for (const gateway of Object.keys(GATEWAYS) as GatewayKind[]) {
+    describe(`parité avec le contrat chti --json (${gateway})`, () => {
+        for (const [caseName, tool, args] of PARITY) {
+            test(`${tool} ${JSON.stringify(args)} ≡ ${caseName}`, async () => {
+                const client = await connect(caseName, gateway);
+                const result = await client.callTool({ name: tool, arguments: args });
+                const { doc } = expected(caseName);
+                assert.deepEqual(result.structuredContent, doc);
+                assert.equal(result.isError ?? false, (doc as { type: string }).type === 'error');
+                assert.deepEqual(JSON.parse((result.content as { text: string }[])[0].text), doc);
+                await client.close();
+            });
+        }
+    });
+
+    describe(`garde-fous du serveur (${gateway})`, () => {
+        test('liste des outils', async () => {
+            const client = await connect('json-favoris-liste', gateway);
+            const { tools } = await client.listTools();
+            assert.deepEqual(tools.map(t => t.name).sort(), ['favori', 'lister_arrets', 'lister_favoris', 'prochains_passages', 'station_velo']);
+            for (const t of tools) {
+                assert.ok(t.description, `${t.name} sans description`);
+                assert.equal(t.outputSchema?.type, 'object');
+                assert.equal(t.annotations?.readOnlyHint, true);
+            }
             await client.close();
         });
-    }
-});
 
-describe('garde-fous du serveur', () => {
-    test('liste des outils', async () => {
-        const client = await connect('json-favoris-liste');
-        const { tools } = await client.listTools();
-        assert.deepEqual(tools.map(t => t.name).sort(), ['favori', 'lister_arrets', 'lister_favoris', 'prochains_passages', 'station_velo']);
-        for (const t of tools) {
-            assert.ok(t.description, `${t.name} sans description`);
-            assert.equal(t.outputSchema?.type, 'object');
-            assert.equal(t.annotations?.readOnlyHint, true);
-        }
-        await client.close();
-    });
-
-    test('schémas portables : un seul type par nœud (anyOf pour les valeurs nullables)', async () => {
-        // Certains clients (déclarations de fonctions Gemini…) refusent « type » sous forme de tableau
-        const client = await connect('json-favoris-liste');
-        const { tools } = await client.listTools();
-        await client.close();
-        const arrayTypes: string[] = [];
-        const visit = (node: unknown, path: string): void => {
-            if (Array.isArray(node)) return node.forEach((n, i) => visit(n, `${path}[${i}]`));
-            if (node === null || typeof node !== 'object') return;
-            for (const [key, value] of Object.entries(node)) {
-                if (key === 'type' && Array.isArray(value)) arrayTypes.push(path);
-                visit(value, `${path}.${key}`);
+        test('schémas portables : un seul type par nœud (anyOf pour les valeurs nullables)', async () => {
+            // Certains clients (déclarations de fonctions Gemini…) refusent « type » sous forme de tableau
+            const client = await connect('json-favoris-liste', gateway);
+            const { tools } = await client.listTools();
+            await client.close();
+            const arrayTypes: string[] = [];
+            const visit = (node: unknown, path: string): void => {
+                if (Array.isArray(node)) return node.forEach((n, i) => visit(n, `${path}[${i}]`));
+                if (node === null || typeof node !== 'object') return;
+                for (const [key, value] of Object.entries(node)) {
+                    if (key === 'type' && Array.isArray(value)) arrayTypes.push(path);
+                    visit(value, `${path}.${key}`);
+                }
+            };
+            for (const t of tools) {
+                visit(t.inputSchema, `${t.name}.inputSchema`);
+                visit(t.outputSchema, `${t.name}.outputSchema`);
             }
-        };
-        for (const t of tools) {
-            visit(t.inputSchema, `${t.name}.inputSchema`);
-            visit(t.outputSchema, `${t.name}.outputSchema`);
-        }
-        assert.deepEqual(arrayTypes, []);
-    });
-
-    test('bus sans ligne : erreur missing_line, sans lancer chti', async () => {
-        const client = await connect('json-bus-temps-reel');
-        const result = await client.callTool({ name: 'prochains_passages', arguments: { mode: 'bus', arret: 'marais' } });
-        assert.equal(result.isError, true);
-        assert.equal((result.structuredContent as { code: string }).code, 'missing_line');
-        await client.close();
-    });
-
-    test("favori : une commande chti (update) n'est pas un favori", async () => {
-        const client = await connect('json-favoris-liste');
-        const result = await client.callTool({ name: 'favori', arguments: { nom: 'update' } });
-        assert.equal(result.isError, true);
-        assert.equal((result.structuredContent as { code: string }).code, 'unknown_command');
-        await client.close();
-    });
-
-    test('un texte qui ressemble à une option est refusé', async () => {
-        const client = await connect('json-bus-temps-reel');
-        const result = await client.callTool({
-            name: 'prochains_passages',
-            arguments: { mode: 'bus', ligne: '10', arret: '--voix' }
+            assert.deepEqual(arrayTypes, []);
         });
-        assert.equal(result.isError, true);
-        assert.match((result.content as { text: string }[])[0].text, /ne doit pas commencer par « - »/);
-        await client.close();
+
+        test('bus sans ligne : erreur missing_line, sans lancer chti', async () => {
+            const client = await connect('json-bus-temps-reel', gateway);
+            const result = await client.callTool({ name: 'prochains_passages', arguments: { mode: 'bus', arret: 'marais' } });
+            assert.equal(result.isError, true);
+            assert.equal((result.structuredContent as { code: string }).code, 'missing_line');
+            await client.close();
+        });
+
+        test("favori : une commande chti (update) n'est pas un favori", async () => {
+            const client = await connect('json-favoris-liste', gateway);
+            const result = await client.callTool({ name: 'favori', arguments: { nom: 'update' } });
+            assert.equal(result.isError, true);
+            assert.equal((result.structuredContent as { code: string }).code, 'unknown_command');
+            await client.close();
+        });
+
+        test('un texte qui ressemble à une option est refusé', async () => {
+            const client = await connect('json-bus-temps-reel', gateway);
+            const result = await client.callTool({
+                name: 'prochains_passages',
+                arguments: { mode: 'bus', ligne: '10', arret: '--voix' }
+            });
+            assert.equal(result.isError, true);
+            assert.match((result.content as { text: string }[])[0].text, /ne doit pas commencer par « - »/);
+            await client.close();
+        });
     });
-});
+}
 
 describe('schéma du contrat', () => {
     const files = readdirSync(join(CONTRACT, 'expected')).filter(f => f.startsWith('json-'));
