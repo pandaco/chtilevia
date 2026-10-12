@@ -2,6 +2,7 @@ package fr.chtilevia.adapters.gtfs
 
 import fr.chtilevia.application.TimetableRepository
 import fr.chtilevia.domain.Line
+import fr.chtilevia.domain.Position
 import fr.chtilevia.domain.Stop
 import fr.chtilevia.domain.StopTime
 import fr.chtilevia.domain.TransportMode
@@ -45,7 +46,10 @@ class GtfsTimetable(private val files: GtfsFiles) : TimetableRepository {
 
     override fun stops(): Map<String, Stop> = rows("stops.txt").associate {
         val id = it.getValue("stop_id")
-        id to Stop(id, it["stop_name"].orEmpty(), it["stop_desc"].orEmpty(), it["parent_station"]?.ifEmpty { null })
+        val latitude = it["stop_lat"]?.toDoubleOrNull()
+        val longitude = it["stop_lon"]?.toDoubleOrNull()
+        val position = if (latitude != null && longitude != null) Position(latitude, longitude) else null
+        id to Stop(id, it["stop_name"].orEmpty(), it["stop_desc"].orEmpty(), it["parent_station"]?.ifEmpty { null }, position)
     }
 
     override fun stopTimes(lineId: String): Map<String, List<StopTime>> {
@@ -57,6 +61,19 @@ class GtfsTimetable(private val files: GtfsFiles) : TimetableRepository {
             }
         }
         return byTrip
+    }
+
+    override fun linesServing(stopIds: Set<String>): Map<String, Set<String>> {
+        val found = LinkedHashMap<String, MutableSet<String>>()
+        for (line in lines()) {
+            files.read(indexFile(line.id)) { rows ->
+                for (row in rows) {
+                    val stop = row.substringAfter('\t').substringBefore('\t')
+                    if (stop in stopIds) found.getOrPut(stop) { LinkedHashSet() }.add(line.id)
+                }
+            }
+        }
+        return found
     }
 
     override fun activeDates(dates: Collection<LocalDate>): Map<String, Set<LocalDate>> {

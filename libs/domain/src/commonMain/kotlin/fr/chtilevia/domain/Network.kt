@@ -41,6 +41,8 @@ data class Stop(
     val description: String,
     /** Zone d'arrêt qui regroupe les quais ; null pour une zone ou un arrêt isolé */
     val parentStation: String?,
+    /** Position (degrés décimaux), si le référentiel la donne */
+    val position: Position? = null,
 )
 
 /** Course (`trips.txt`) */

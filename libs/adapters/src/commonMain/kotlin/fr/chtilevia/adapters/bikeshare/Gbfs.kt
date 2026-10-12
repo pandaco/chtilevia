@@ -3,6 +3,7 @@ package fr.chtilevia.adapters.bikeshare
 import fr.chtilevia.application.BikeShareFeed
 import fr.chtilevia.domain.BikeStation
 import fr.chtilevia.domain.BikeStationStatus
+import fr.chtilevia.domain.Position
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -35,6 +36,7 @@ object Gbfs {
                 id = id,
                 name = station["name"]?.text().orEmpty(),
                 capacity = station["capacity"]?.number()?.toInt(),
+                position = station["lat"]?.number()?.let { lat -> station["lon"]?.number()?.let { Position(lat, it) } },
                 status = statusById[id]?.let { s ->
                     BikeStationStatus(
                         installed = s["is_installed"]?.flag(),

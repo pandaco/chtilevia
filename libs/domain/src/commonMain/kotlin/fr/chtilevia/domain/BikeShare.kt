@@ -23,6 +23,7 @@ data class BikeStation(
     val name: String,
     val capacity: Int?,
     val status: BikeStationStatus?,
+    val position: Position? = null,
 ) {
     /** Disponibilité d'ensemble : inconnue, hors service (ni location ni dépôt), ou en service */
     val availability: Availability

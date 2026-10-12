@@ -23,6 +23,9 @@ interface TimetableRepository {
     /** Passages de chaque course de la ligne, dans l'ordre du référentiel */
     fun stopTimes(lineId: String): Map<String, List<StopTime>>
 
+    /** Lignes (identifiants) qui desservent chacun des quais [stopIds] ; un quai sans ligne est absent */
+    fun linesServing(stopIds: Set<String>): Map<String, Set<String>>
+
     /** Pour chaque service, celles des [dates] où il circule */
     fun activeDates(dates: Collection<LocalDate>): Map<String, Set<LocalDate>>
 }
