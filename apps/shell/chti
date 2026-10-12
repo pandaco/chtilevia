@@ -1016,11 +1016,23 @@ def strip_leading(words, fillers):
     return words
 
 
+def near_me(words):
+    if any(w in ("proximite", "proche", "proches") for w in words):
+        return True
+    return any(w in ("autour", "pres") and words[i + 1:i + 3] in (["de", "moi"], ["d", "ici"]) or
+               w in ("autour", "pres") and words[i + 1:i + 2] in (["moi"], ["ici"])
+               for i, w in enumerate(words))
+
+
 def parse_phrase(fav_path, phrase):
     words = fold(phrase).split()
     if not words:
         die("empty_phrase", "Je n'ai rien entendu.")
     favorites = favorite_names(fav_path)
+    # « à proximité », « autour de moi », « près d'ici », « le plus proche » : autour de la position,
+    # que l'appelant ajoute (le téléphone la connaît, pas le shell)
+    if near_me(words):
+        return ["autour"]
     # « vers » / « direction » / « en direction de » : le reste de la phrase est la direction
     direction = []
     for i, w in enumerate(words):

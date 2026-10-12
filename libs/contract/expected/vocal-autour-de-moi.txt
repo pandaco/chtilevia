@@ -1,0 +1,2 @@
+Précise une position (latitude longitude), ex : chti autour 50.6366 3.0630
+[exit 1]

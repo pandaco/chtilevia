@@ -10,6 +10,9 @@ class InterpretUtterance(private val favorites: FavoritesStore) {
     fun execute(utterance: String): List<String> {
         var words = fold(utterance).split(' ').filter { it.isNotEmpty() }
         if (words.isEmpty()) throw ChtiError.EmptyUtterance()
+        // « à proximité », « autour de moi », « près d'ici », « le plus proche » : autour de la
+        // position, que l'appelant ajoute (le téléphone la connaît, pas le shell)
+        if (nearMe(words)) return listOf("autour")
 
         // « vers » / « direction » / « en direction de » : le reste de la phrase est la direction
         var direction = emptyList<String>()
@@ -57,6 +60,12 @@ class InterpretUtterance(private val favorites: FavoritesStore) {
         return command + stop + (if (direction.isNotEmpty()) listOf("-d", direction.joinToString(" ")) else emptyList())
     }
 
+    private fun nearMe(words: List<String>): Boolean =
+        words.any { it in NEAR_WORDS } || words.indices.any { i ->
+            words[i] in AROUND && (words.subList(i + 1, minOf(i + 3, words.size)) in NEAR_TAILS ||
+                words.subList(i + 1, minOf(i + 2, words.size)) in NEAR_TAILS)
+        }
+
     private fun bike(words: List<String>): List<String> {
         var rest = words
         var mode = emptyList<String>()
@@ -92,6 +101,9 @@ class InterpretUtterance(private val favorites: FavoritesStore) {
         )
         val STOP_FILLERS = setOf("a", "au", "l", "arret", "station", "de", "du", "d")
         val DIRECTION_FILLERS = setOf("de", "d", "du", "la", "l")
+        val NEAR_WORDS = setOf("proximite", "proche", "proches")
+        val AROUND = setOf("autour", "pres")
+        val NEAR_TAILS = listOf(listOf("de", "moi"), listOf("d", "ici"), listOf("moi"), listOf("ici"))
         val BIKE_WORDS = setOf("velo", "velos", "vlille")
         val BIKE_VERBS = listOf(
             "prendre" to "--prendre", "emprunter" to "--prendre",

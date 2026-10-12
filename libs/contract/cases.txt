@@ -56,6 +56,9 @@ vocal-incompris         | MIDI   | aucun        | vocal bonjour
 vocal-ligne-manquante   | MIDI   | aucun        | vocal bus
 vocal-metro-inconnu     | MIDI   | aucun        | vocal métro 3 république
 vocal-vide              | MIDI   | aucun        | vocal
+vocal-proximite         | MIDI   | aucun        | vocal vélo à proximité
+vocal-autour-de-moi     | MIDI   | aucun        | vocal les arrêts autour de moi
+vocal-pres-d-ici        | MIDI   | aucun        | vocal le métro le plus près d'ici
 # Rapprochement approximatif : rien ne contient la demande, on prend l'arrêt (ou la direction) qui
 # lui ressemble le plus, à l'écrit ou au son ; ex æquo → ambiguous_stop avec suggestions
 approx-faute-frappe     | MIDI   | rt-midi.pb   | bus 10 gambeta -n 2

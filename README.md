@@ -207,6 +207,7 @@ reconnaissance vocale) en commande `chti`, puis répond en [sortie parlée](#sor
 | « V'Lille Gare Lille Flandres pour déposer » | `velo gare lille flandres --deposer` |
 | « Vélo gare Lille Europe pour prendre un vélo » | `velo gare lille europe --prendre` |
 | « Travail », « Rentrer à vélo » | le favori `travail`, `rentrer-velo` |
+| « Vélo à proximité », « les arrêts autour de moi », « le métro le plus près d'ici » | `autour`, complété de la position par l'appli Android |
 
 Règles :
 
@@ -215,6 +216,9 @@ Règles :
 - **Ligne** : en chiffres ou en lettres jusqu'à vingt (« dix » → `10`) ; « liane 1 » → `L1`.
 - **Direction** : tout ce qui suit « vers », « direction » ou « en direction de ».
 - **V'Lille** : « prendre » / « emprunter » → `--prendre` ; « déposer » / « rendre » / « poser » → `--deposer`.
+- **À proximité** : « proximité », « proche », « autour de moi », « près d'ici »… → `autour`. Le shell
+  ne connaît pas la position du téléphone et demande donc une position ; l'appli Android ajoute la
+  sienne (avec ton accord).
 - Les mots d'introduction (« quand passe le prochain… », « à l'arrêt ») sont ignorés en début de
   phrase et en début de nom d'arrêt, mais jamais au milieu d'un nom (« Pont de Bois » reste intact).
 - Si la phrase n'est pas comprise, la réponse le dit et donne un exemple (code retour `1`).
