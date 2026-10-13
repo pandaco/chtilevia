@@ -1,0 +1,8 @@
+Arrêts proches :
+  Gare Lille Flandres  (GARE LILLE FLANDRES 59000 LILLE) — 511 m
+     Bus 10
+  Lycee Pasteur  (LYCEE LOUIS PASTEUR LILLE) — 614 m
+     Bus 10
+  Pont Neuf  (PONT NEUF CLE_COMMUNE: 47) — 834 m
+     Bus 10
+[exit 0]

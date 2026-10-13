@@ -29,7 +29,7 @@ export abstract class CommandGateway implements ChtiGateway {
 
     nearby(query: NearbyQuery): Promise<ChtiResponse> {
         // Notation décimale fixe : jamais d'exposant (1e-7), que chti refuserait
-        const args = ['autour', query.latitude.toFixed(6), query.longitude.toFixed(6)];
+        const args = ['autour', ...(query.mode ? [query.mode] : []), query.latitude.toFixed(6), query.longitude.toFixed(6)];
         if (query.count !== undefined) args.push(`--nombre=${query.count}`);
         return this.run(args);
     }

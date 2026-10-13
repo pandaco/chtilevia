@@ -12,7 +12,7 @@ class InterpretUtterance(private val favorites: FavoritesStore) {
         if (words.isEmpty()) throw ChtiError.EmptyUtterance()
         // « à proximité », « autour de moi », « près d'ici », « le plus proche » : autour de la
         // position, que l'appelant ajoute (le téléphone la connaît, pas le shell)
-        if (nearMe(words)) return listOf("autour")
+        if (nearMe(words)) return listOfNotNull("autour", nearbyMode(words))
 
         // « vers » / « direction » / « en direction de » : le reste de la phrase est la direction
         var direction = emptyList<String>()
@@ -66,6 +66,13 @@ class InterpretUtterance(private val favorites: FavoritesStore) {
                 words.subList(i + 1, minOf(i + 2, words.size)) in NEAR_TAILS)
         }
 
+    /** « vélo à proximité » : seulement V'Lille ; « bus à proximité » : seulement les bus… ; null : tout */
+    private fun nearbyMode(words: List<String>): String? {
+        val said = words.map { NEARBY_SYNONYMS[it] ?: it }.toMutableSet()
+        if ("v" in words && "lille" in words) said += "velo"
+        return listOf("velo", "bus", "tram", "metro").firstOrNull { it in said }
+    }
+
     private fun bike(words: List<String>): List<String> {
         var rest = words
         var mode = emptyList<String>()
@@ -102,6 +109,7 @@ class InterpretUtterance(private val favorites: FavoritesStore) {
         val STOP_FILLERS = setOf("a", "au", "l", "arret", "station", "de", "du", "d")
         val DIRECTION_FILLERS = setOf("de", "d", "du", "la", "l")
         val NEAR_WORDS = setOf("proximite", "proche", "proches")
+        val NEARBY_SYNONYMS = mapOf("velos" to "velo", "vlille" to "velo", "tramway" to "tram", "metros" to "metro")
         val AROUND = setOf("autour", "pres")
         val NEAR_TAILS = listOf(listOf("de", "moi"), listOf("d", "ici"), listOf("moi"), listOf("ici"))
         val BIKE_WORDS = setOf("velo", "velos", "vlille")

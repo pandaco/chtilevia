@@ -61,14 +61,16 @@ internal class TextFormatter(private val zone: TimeZone) {
     }
 
     fun nearby(result: Nearby): String = buildString {
-        append("Arrêts proches :\n")
-        if (result.stops.isEmpty()) append("  aucun arrêt desservi à proximité\n")
+        if (result.mode.wantsStops) {
+            append("Arrêts proches :\n")
+            if (result.stops.isEmpty()) append("  aucun arrêt desservi à proximité\n")
+        }
         for (near in result.stops) {
             append("  ${near.stop.name}  (${near.stop.description.trim(' ', '-')}) — ${distance(near.distance, voice = false)}\n")
             append("     ${near.lines.joinToString(", ") { it.label }}\n")
         }
         val stations = result.stations.orEmpty()
-        if (stations.isNotEmpty()) append("\nStations V'Lille proches :\n")
+        if (stations.isNotEmpty()) append(if (result.mode.wantsStops) "\nStations V'Lille proches :\n" else "Stations V'Lille proches :\n")
         for (near in stations) {
             val status = near.station.status
             append("  ${near.station.name}  (${near.station.capacity} bornes) — ${distance(near.distance, voice = false)}\n")

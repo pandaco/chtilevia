@@ -19,7 +19,7 @@ Usage :
   chti tram [arrêt] [-d direction] [-n nombre]          ex : chti tram croise laroche -d roubaix
   chti metro <1|2> [arrêt] [-d direction] [-n nombre]   ex : chti metro 1 republique -d chu   (théorique)
   chti velo <station> [--prendre|--deposer]             ex : chti velo rihour --prendre
-  chti autour <latitude> <longitude> [-n nombre]        ex : chti autour 50.6366 3.0630
+  chti autour [mode] <latitude> <longitude> [-n nombre] ex : chti autour velo 50.6366 3.0630
   chti <favori>                                         ex : chti travail
   chti favoris                                          liste les favoris
   chti update                                           re-télécharge le référentiel GTFS
@@ -233,7 +233,7 @@ favorite_commands() {
 		key == tolower(name) && NF > 1 { sub(/^[^:]*:[ \t]*/, ""); sub(/[ \t]+$/, ""); if ($0 != "") print }'
 }
 
-# Autour d'une position : $@ = latitude longitude [-n nombre]
+# Autour d'une position : $@ = [bus|tram|metro|velo] latitude longitude [-n nombre]
 autour() {
 	need python3
 	# En JSON, l'erreur est écrite sur stdout : la rendre telle quelle
@@ -242,20 +242,24 @@ autour() {
 		exit 1
 	}
 	set -f
-	# shellcheck disable=SC2086 # « lat lon nombre », validés par parse_position
+	# shellcheck disable=SC2086 # « lat lon nombre mode », validés par parse_position
 	set -- $position
 	set +f
-	gtfs_refresh
+	# Seulement ce que le mode demande : pas d'horaires pour V'Lille, pas de V'Lille pour bus, tram, métro
+	[ "$4" = bike ] || gtfs_refresh
 	info="$TMP/info.json"
 	status="$TMP/status.json"
-	if ! fetch "$GBFS_URL/station_information.json" "$info" || ! fetch "$GBFS_URL/station_status.json" "$status"; then
+	if [ "$4" != all ] && [ "$4" != bike ]; then
+		info=""
+		status=""
+	elif ! fetch "$GBFS_URL/station_information.json" "$info" || ! fetch "$GBFS_URL/station_status.json" "$status"; then
 		info=""
 		status=""
 		WARNINGS="${WARNINGS:+$WARNINGS,}bike_share_unavailable"
 		[ "${CHTI_VOIX:-}" = 1 ] || [ "${CHTI_JSON:-}" = 1 ] ||
 			printf "chti : V'Lille injoignable, stations non affichées\n" >&2
 	fi
-	run_py nearby "$CACHE/gtfs" "$info" "$status" "$1" "$2" "$3" "${WARNINGS:-}"
+	run_py nearby "$CACHE/gtfs" "$info" "$status" "$1" "$2" "$3" "$4" "${WARNINGS:-}"
 }
 
 favorites_list() {
@@ -811,9 +815,15 @@ def list_stops(route, trips, sched, area, area_name):
 
 # --- Autour d'une position : arrêts desservis et stations V'Lille les plus proches ---
 
+# Mode d'« autour » : seulement ces arrêts (bus, tram, métro) ou seulement V'Lille ; sinon tout
+NEARBY_MODES = {"bus": "bus", "tram": "tram", "tramway": "tram", "metro": "metro",
+                "velo": "bike", "velos": "bike", "vlille": "bike"}
+
+
 def parse_position(args):
-    # Mots de la position et option -n, dans n'importe quel ordre ; écrit « lat lon nombre »
+    # Mode, mots de la position et option -n, dans n'importe quel ordre ; écrit « lat lon nombre mode »
     count = "2" if VOICE else "3"
+    mode = "all"
     words = []
     i = 0
     while i < len(args):
@@ -826,6 +836,8 @@ def parse_position(args):
             continue
         if arg.startswith("--nombre="):
             count = arg.split("=", 1)[1]
+        elif fold(arg) in NEARBY_MODES:
+            mode = NEARBY_MODES[fold(arg)]
         else:
             words.append(arg)
         i += 1
@@ -844,7 +856,7 @@ def parse_position(args):
     if not valid or not (-90 <= float(parts[0]) <= 90 and -180 <= float(parts[1]) <= 180):
         die("invalid_position", f"position invalide : « {' '.join(words)} » "
             "(latitude et longitude en degrés décimaux, ex : 50.6366 3.0630)")
-    print(parts[0], parts[1], int(count))
+    print(parts[0], parts[1], int(count), mode)
 
 
 def distance_m(lat1, lon1, lat2, lon2):
@@ -868,10 +880,13 @@ def spoken_list(items):
     return items[0] if len(items) == 1 else ", ".join(items[:-1]) + " et " + items[-1]
 
 
-def nearby(gtfs, info_path, status_path, lat, lon, count, warnings):
+def nearby(gtfs, info_path, status_path, lat, lon, count, mode, warnings):
     lat, lon, count = float(lat), float(lon), int(count)
-    routes = list(rows(f"{gtfs}/routes.txt"))
-    stops = {r["stop_id"]: r for r in rows(f"{gtfs}/stops.txt")}
+    want_stops, want_bikes = mode != "bike", mode in ("all", "bike")
+    # Seulement les lignes du mode demandé (route_type 0 tram, 1 métro, le reste bus)
+    routes = [r for r in rows(f"{gtfs}/routes.txt")
+              if mode == "all" or {"0": "tram", "1": "metro"}.get(r["route_type"], "bus") == mode] if want_stops else []
+    stops = {r["stop_id"]: r for r in rows(f"{gtfs}/stops.txt")} if want_stops else {}
     members = defaultdict(set)  # zone d'arrêt -> elle-même et ses quais
     for sid, s in stops.items():
         members[s.get("parent_station") or sid].add(sid)
@@ -940,7 +955,7 @@ def nearby(gtfs, info_path, status_path, lat, lon, count, warnings):
                     "renting": (s or {}).get("is_renting"), "returning": (s or {}).get("is_returning"),
                     "last_reported": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(last)) if last else None,
                     "age_minutes": math.floor((now - last) / 60) if last else None, "distance_m": dist}
-        emit({"type": "nearby",
+        emit({"type": "nearby", "mode": mode,
               "stops": [{"id": aid, "name": stops[aid]["stop_name"],
                          "description": stops[aid].get("stop_desc", "").strip(" -"), "distance_m": dist,
                          "lines": [line_info(r) for r in lines]} for dist, aid, lines in near],
@@ -953,9 +968,9 @@ def nearby(gtfs, info_path, status_path, lat, lon, count, warnings):
             parts = [f"{stops[aid]['stop_name']}, à {spoken_distance(dist, True)}, "
                      f"{spoken_list([spoken_line(r) for r in lines])}" for dist, aid, lines in near]
             print(f"{title} : {' ; '.join(parts)}.")
-        else:
+        elif want_stops:
             print("Aucun arrêt desservi à proximité.")
-        if not info_path:
+        if want_bikes and not info_path:
             print("V'Lille injoignable.")
         elif stations:
             title = "Station V'Lille la plus proche" if len(stations) == 1 else "Stations V'Lille les plus proches"
@@ -963,15 +978,18 @@ def nearby(gtfs, info_path, status_path, lat, lon, count, warnings):
                      for dist, _, _, st in stations]
             print(f"{title} : {' ; '.join(parts)}.")
         return
-    print("Arrêts proches :")
-    if not near:
-        print("  aucun arrêt desservi à proximité")
+    if want_stops:
+        print("Arrêts proches :")
+        if not near:
+            print("  aucun arrêt desservi à proximité")
     for dist, aid, lines in near:
         s = stops[aid]
         print(f"  {s['stop_name']}  ({s.get('stop_desc', '').strip(' -')}) — {spoken_distance(dist, False)}")
         print(f"     {', '.join(spoken_line(r) for r in lines)}")
     if stations:
-        print("\nStations V'Lille proches :")
+        if want_stops:
+            print()
+        print("Stations V'Lille proches :")
         for dist, _, _, st in stations:
             print(f"  {st['name']}  ({st.get('capacity')} bornes) — {spoken_distance(dist, False)}")
             print(f"     {station_state(st, False)}")
@@ -1032,7 +1050,12 @@ def parse_phrase(fav_path, phrase):
     # « à proximité », « autour de moi », « près d'ici », « le plus proche » : autour de la position,
     # que l'appelant ajoute (le téléphone la connaît, pas le shell)
     if near_me(words):
-        return ["autour"]
+        # « vélo à proximité » : seulement V'Lille ; « bus à proximité » : seulement les bus…
+        said = {{"velos": "velo", "vlille": "velo", "tramway": "tram", "metros": "metro"}.get(w, w) for w in words}
+        if "v" in words and "lille" in words:
+            said.add("velo")
+        mode = next((m for m in ("velo", "bus", "tram", "metro") if m in said), None)
+        return ["autour", mode] if mode else ["autour"]
     # « vers » / « direction » / « en direction de » : le reste de la phrase est la direction
     direction = []
     for i, w in enumerate(words):
@@ -1095,7 +1118,7 @@ elif mode == "departures":
 elif mode == "position":
     parse_position(sys.argv[2:])
 elif mode == "nearby":
-    nearby(*sys.argv[2:9])
+    nearby(*sys.argv[2:10])
 elif mode == "parse":
     print("\n".join(parse_phrase(sys.argv[2], sys.argv[3])))
 PY

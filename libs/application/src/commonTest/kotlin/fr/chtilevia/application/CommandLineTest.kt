@@ -58,4 +58,26 @@ class CommandLineTest {
         // Le nombre est vérifié d'abord, comme dans le shell
         assertFailsWith<ChtiError.InvalidCount> { parse("autour -n 0") }
     }
+
+    @Test
+    fun nearbyModeAnywhere() {
+        val here = Position(50.6366, 3.063)
+        assertEquals(Command.Nearby(here, null, NearbyMode.BIKE), parse("autour vélo 50.6366 3.063"))
+        assertEquals(Command.Nearby(here, 2, NearbyMode.METRO), parse("autour 50.6366 3.063 metro -n 2"))
+        assertEquals(Command.Nearby(here, null, NearbyMode.ALL), parse("autour 50.6366 3.063"))
+    }
+
+    @Test
+    fun nearbyPhrasesKeepTheMode() {
+        val utterances = InterpretUtterance(object : FavoritesStore {
+            override val location = "favoris"
+
+            override fun read(): String? = null
+        })
+        assertEquals(listOf("autour", "velo"), utterances.execute("vélo à proximité"))
+        assertEquals(listOf("autour", "velo"), utterances.execute("une V'Lille près d'ici"))
+        assertEquals(listOf("autour", "bus"), utterances.execute("les bus autour de moi"))
+        assertEquals(listOf("autour", "metro"), utterances.execute("le métro le plus proche"))
+        assertEquals(listOf("autour"), utterances.execute("qu'est-ce qu'il y a à proximité"))
+    }
 }

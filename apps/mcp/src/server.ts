@@ -103,12 +103,16 @@ export function createServer(gateway: ChtiGateway): McpServer {
             inputSchema: z.object({
                 latitude: z.number().min(-90).max(90).describe('Latitude en degrés décimaux, ex. 50.6366'),
                 longitude: z.number().min(-180).max(180).describe('Longitude en degrés décimaux, ex. 3.0630'),
-                nombre: z.number().int().min(1).max(10).optional().describe("Arrêts et stations à donner (3 par défaut)")
+                nombre: z.number().int().min(1).max(10).optional().describe("Arrêts et stations à donner (3 par défaut)"),
+                mode: z
+                    .enum(['bus', 'tram', 'metro', 'velo'])
+                    .optional()
+                    .describe("Seulement ces arrêts (bus, tram, metro) ou seulement les stations V'Lille (velo) ; tout par défaut")
             }),
             outputSchema: fromJsonSchema(outputSchemaFor('nearby')),
             annotations: READ_ONLY
         },
-        async ({ latitude, longitude, nombre }) => toResult(await gateway.nearby({ latitude, longitude, count: nombre }))
+        async ({ latitude, longitude, nombre, mode }) => toResult(await gateway.nearby({ latitude, longitude, count: nombre, mode }))
     );
 
     server.registerTool(

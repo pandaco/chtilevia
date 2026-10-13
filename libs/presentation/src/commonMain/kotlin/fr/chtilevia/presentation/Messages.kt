@@ -12,7 +12,7 @@ internal val USAGE = """
     |  chti tram [arrêt] [-d direction] [-n nombre]          ex : chti tram croise laroche -d roubaix
     |  chti metro <1|2> [arrêt] [-d direction] [-n nombre]   ex : chti metro 1 republique -d chu   (théorique)
     |  chti velo <station> [--prendre|--deposer]             ex : chti velo rihour --prendre
-    |  chti autour <latitude> <longitude> [-n nombre]        ex : chti autour 50.6366 3.0630
+    |  chti autour [mode] <latitude> <longitude> [-n nombre] ex : chti autour velo 50.6366 3.0630
     |  chti <favori>                                         ex : chti travail
     |  chti favoris                                          liste les favoris
     |  chti update                                           re-télécharge le référentiel GTFS

@@ -25,6 +25,8 @@ export interface NearbyQuery {
     longitude: number;
     /** Arrêts et stations V'Lille à donner (3 par défaut) */
     count?: number;
+    /** Seulement ces arrêts (bus, tram, metro) ou seulement V'Lille (velo) ; tout par défaut */
+    mode?: 'bus' | 'tram' | 'metro' | 'velo';
 }
 
 /** Document décrit par libs/contract/schema/response.schema.json (champ `type` discriminant) */

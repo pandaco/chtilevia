@@ -2,6 +2,7 @@ package fr.chtilevia.application
 
 import fr.chtilevia.domain.BikeMode
 import fr.chtilevia.domain.Position
+import fr.chtilevia.domain.fold
 
 /** Commande chti, telle qu'on la tape ou qu'on l'enregistre dans un favori */
 sealed interface Command {
@@ -10,7 +11,7 @@ sealed interface Command {
     data class BikeStations(val station: String, val mode: BikeMode) : Command
 
     /** [count] null : nombre par défaut, choisi par la présentation */
-    data class Nearby(val position: Position, val count: Int?) : Command
+    data class Nearby(val position: Position, val count: Int?, val mode: NearbyMode = NearbyMode.ALL) : Command
     data object ListFavorites : Command
     data object Update : Command
     data object Help : Command
@@ -23,7 +24,7 @@ sealed interface Command {
 /**
  * Grammaire des commandes chti (sans les options globales `--voix` et `--json`, affaire de la
  * présentation) : `bus <ligne> [arrêt] [-d direction] [-n nombre]`, `tram …`, `metro <1|2> …`,
- * `velo <station> [--prendre|--deposer]`, `autour <latitude> <longitude> [-n nombre]`, `favoris`,
+ * `velo <station> [--prendre|--deposer]`, `autour [bus|tram|metro|velo] <latitude> <longitude> [-n nombre]`, `favoris`,
  * `update`, `vocal <phrase>`, `<favori>`.
  */
 object CommandLine {
@@ -87,12 +88,13 @@ object CommandLine {
     }
 
     /**
-     * Position et option -n, dans n'importe quel ordre. Position : « 50.6366,3.0630 » (un mot),
+     * Mode, position et option -n, dans n'importe quel ordre. Position : « 50.6366,3.0630 » (un mot),
      * « 50.6366, 3.0630 » ou « 50,6366 3,0630 » (deux mots)
      */
     private fun nearby(args: List<String>): Command.Nearby {
         val words = mutableListOf<String>()
         var count: String? = null
+        var mode = NearbyMode.ALL
         var i = 0
         while (i < args.size) {
             val arg = args[i]
@@ -102,6 +104,7 @@ object CommandLine {
                         ?: throw ChtiError.MissingOptionValue(arg, ChtiError.MissingOptionValue.Expected.COUNT)
                 }
                 arg.startsWith("--nombre=") -> count = arg.substringAfter('=')
+                fold(arg) in NEARBY_MODES -> mode = NEARBY_MODES.getValue(fold(arg))
                 else -> words += arg
             }
             i++
@@ -117,8 +120,13 @@ object CommandLine {
         if (parts.size != 2 || parts.any { !DECIMAL.matches(it) }) throw invalid
         val position = Position(parts[0].toDouble(), parts[1].toDouble())
         if (position.latitude !in -90.0..90.0 || position.longitude !in -180.0..180.0) throw invalid
-        return Command.Nearby(position, parsedCount)
+        return Command.Nearby(position, parsedCount, mode)
     }
+
+    private val NEARBY_MODES = mapOf(
+        "bus" to NearbyMode.BUS, "tram" to NearbyMode.TRAM, "tramway" to NearbyMode.TRAM, "metro" to NearbyMode.METRO,
+        "velo" to NearbyMode.BIKE, "velos" to NearbyMode.BIKE, "vlille" to NearbyMode.BIKE,
+    )
 
     private val DECIMAL = Regex("-?[0-9]+(\\.[0-9]+)?")
 

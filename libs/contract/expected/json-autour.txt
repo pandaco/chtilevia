@@ -1,5 +1,6 @@
 {
   "type": "nearby",
+  "mode": "all",
   "stops": [
     {
       "id": "942",

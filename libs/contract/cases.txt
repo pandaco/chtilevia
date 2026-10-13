@@ -80,6 +80,10 @@ autour-un-mot           | MINUIT | aucun        | autour 50.6363,3.0640 -n 1
 autour-loin             | MINUIT | aucun        | autour 50.6 3.2 -n 1
 voix-autour             | MINUIT | aucun        | --voix autour 50.6363 3.0640
 voix-autour-loin        | MINUIT | aucun        | --voix autour 50.73 3.18 -n 1
+autour-velo             | MINUIT | aucun        | autour velo 50.6363 3.0640
+autour-bus              | MINUIT | aucun        | autour bus 50.6363 3.0640
+voix-autour-metro       | MINUIT | aucun        | --voix autour metro 50.6363 3.0640
+voix-autour-velo        | MINUIT | aucun        | --voix autour vélo 50.6363 3.0640 -n 1
 erreur-autour-sans-position | MINUIT | aucun    | autour
 erreur-autour-position  | MINUIT | aucun        | autour 91 3
 erreur-autour-nombre    | MINUIT | aucun        | autour 50.6363 3.0640 -n 0
@@ -111,3 +115,4 @@ json-erreur-guillemets     | MIDI   | aucun        | --json "zz\z
 json-approx-ambigu         | MIDI   | aucun        | --json bus 10 marie
 json-autour                | MINUIT | aucun        | --json autour 50.6363 3.0640 -n 2
 json-erreur-autour         | MINUIT | aucun        | --json autour abc
+json-autour-tram           | MINUIT | aucun        | --json autour tram 50.6363 3.0640 -n 1

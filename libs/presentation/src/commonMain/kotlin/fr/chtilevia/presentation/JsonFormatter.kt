@@ -106,6 +106,7 @@ internal class JsonFormatter(private val zone: TimeZone) {
 
     fun nearby(result: Nearby) = Json.obj(
         "type" to Json.Str("nearby"),
+        "mode" to Json.Str(result.mode.code),
         "stops" to Json.arr(
             result.stops.map { near ->
                 Json.obj(

@@ -104,7 +104,7 @@ class Chti(private val services: ChtiServices, zone: TimeZone) {
         }
         is Command.Nearby -> {
             val count = command.count ?: if (mode == Mode.VOICE) 2 else 3
-            val result = services.nearby.execute(command.position, count, notices(mode, console))
+            val result = services.nearby.execute(command.position, count, command.mode, notices(mode, console))
             output(mode, console, { text.nearby(result) }, { voice.nearby(result) }) { json.nearby(result) }
         }
         Command.ListFavorites -> {

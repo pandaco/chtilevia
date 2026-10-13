@@ -48,7 +48,7 @@ internal class VoiceFormatter(private val zone: TimeZone) {
 
     fun nearby(result: Nearby): String = buildString {
         if (result.stops.isEmpty()) {
-            append("Aucun arrêt desservi à proximité.\n")
+            if (result.mode.wantsStops) append("Aucun arrêt desservi à proximité.\n")
         } else {
             val title = if (result.stops.size == 1) "Arrêt le plus proche" else "Arrêts les plus proches"
             val parts = result.stops.map { near ->
@@ -58,7 +58,7 @@ internal class VoiceFormatter(private val zone: TimeZone) {
         }
         val stations = result.stations
         if (stations == null) {
-            append("V'Lille injoignable.\n")
+            if (result.mode.wantsBikes) append("V'Lille injoignable.\n")
         } else if (stations.isNotEmpty()) {
             val title = if (stations.size == 1) "Station V'Lille la plus proche" else "Stations V'Lille les plus proches"
             val parts = stations.map { near ->

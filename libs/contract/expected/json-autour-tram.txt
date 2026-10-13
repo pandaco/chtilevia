@@ -1,0 +1,24 @@
+{
+  "type": "nearby",
+  "mode": "tram",
+  "stops": [
+    {
+      "id": "920",
+      "name": "Gare Lille Flandres",
+      "description": "GARE LILLE FLANDRES 59000 LILLE",
+      "distance_m": 511,
+      "lines": [
+        {
+          "id": "71",
+          "name": "TRAM",
+          "mode": "tram",
+          "label": "Tram",
+          "description": "LILLE <> ROUBAIX / TOURCOING"
+        }
+      ]
+    }
+  ],
+  "bike_stations": [],
+  "warnings": []
+}
+[exit 0]

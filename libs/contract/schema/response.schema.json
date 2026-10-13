@@ -145,10 +145,11 @@
     "nearby": {
       "type": "object",
       "description": "Arrêts desservis et stations V'Lille les plus proches d'une position, du plus proche au plus lointain (distance à vol d'oiseau).",
-      "required": ["type", "stops", "bike_stations", "warnings"],
+      "required": ["type", "mode", "stops", "bike_stations", "warnings"],
       "additionalProperties": false,
       "properties": {
         "type": { "const": "nearby" },
+        "mode": { "enum": ["all", "bus", "tram", "metro", "bike"], "description": "all : arrêts et V'Lille ; bus, tram, metro : seulement ces arrêts et lignes ; bike : seulement V'Lille" },
         "stops": {
           "type": "array",
           "items": {

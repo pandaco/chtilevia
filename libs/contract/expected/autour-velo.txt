@@ -1,0 +1,8 @@
+Stations V'Lille proches :
+  Rihour  (32 bornes) — 117 m
+     🚲 1 vélo(s) dispo   🅿️  31 place(s) libre(s)
+  Gare Lille Flandres  (32 bornes) — 378 m
+     🚲 0 vélo(s) dispo   🅿️  32 place(s) libre(s)
+  Gare Lille Europe  (32 bornes) — 890 m
+     🚲 14 vélo(s) dispo   🅿️  18 place(s) libre(s)
+[exit 0]

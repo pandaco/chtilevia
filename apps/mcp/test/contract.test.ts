@@ -110,7 +110,8 @@ const PARITY: [string, string, Record<string, unknown>][] = [
     ['json-erreur-arret-autre-sens', 'prochains_passages', { mode: 'bus', ligne: '10', arret: 'esplanade', direction: 'flandres' }],
     ['json-erreur-velo', 'station_velo', { station: 'zzz' }],
     ['json-approx-ambigu', 'prochains_passages', { mode: 'bus', ligne: '10', arret: 'marie' }],
-    ['json-autour', 'autour_de_moi', { latitude: 50.6363, longitude: 3.064, nombre: 2 }]
+    ['json-autour', 'autour_de_moi', { latitude: 50.6363, longitude: 3.064, nombre: 2 }],
+    ['json-autour-tram', 'autour_de_moi', { latitude: 50.6363, longitude: 3.064, nombre: 1, mode: 'tram' }]
 ];
 
 for (const gateway of Object.keys(GATEWAYS) as GatewayKind[]) {
