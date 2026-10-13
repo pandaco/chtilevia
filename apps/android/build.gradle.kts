@@ -43,4 +43,5 @@ dependencies {
     implementation(libs.activity.compose)
     implementation(libs.lifecycle.viewmodel.compose)
     implementation(libs.glance.appwidget)
+    implementation(libs.work.runtime)
 }

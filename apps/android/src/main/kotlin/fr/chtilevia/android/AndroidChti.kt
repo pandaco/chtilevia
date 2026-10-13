@@ -64,6 +64,12 @@ class AndroidChti(context: Context, private val profile: NetworkProfile = Networ
         gtfs.timetable.activeDates(serviceDates(clock.now(), profile.timeZone))
     }
 
+    /** Télécharge le référentiel s'il date de plus de 24 h ; lève [ChtiError] s'il n'y en a aucun */
+    @Synchronized
+    fun refreshTimetable() {
+        gtfs.refresh(force = false, notices = Notices.NONE)
+    }
+
     /** Commande comprise dans une phrase libre (comme `chti vocal`), ou null si elle n'est pas comprise */
     @Synchronized
     fun interpret(phrase: String): List<String>? = try {

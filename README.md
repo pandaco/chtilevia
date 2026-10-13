@@ -264,8 +264,9 @@ adb install -r apps/android/build/outputs/apk/debug/android-debug.apk      # té
   est aussi gardée en notification.
 - **À proximité** : « vélo à proximité » utilise la position du téléphone (autorisation demandée la
   première fois) et répond comme `chti autour`.
-- **Horaires** : téléchargés au premier lancement (~8 s), puis toutes les 24 h, et gardés en mémoire
-  tant que l'appli tourne (réponse en moins d'un dixième de seconde ensuite). 44 Mo sur le téléphone.
+- **Horaires** : téléchargés au premier lancement (~8 s), puis mis à jour chaque jour en arrière-plan
+  (en Wi-Fi, batterie suffisante), et gardés en mémoire tant que l'appli tourne (réponse en moins
+  d'un dixième de seconde ensuite). 44 Mo sur le téléphone.
 
 ### Termux
 
