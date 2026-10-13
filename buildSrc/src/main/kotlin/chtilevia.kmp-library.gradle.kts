@@ -22,7 +22,11 @@ kotlin {
         compilerOptions { jvmTarget = JvmTarget.JVM_17 }
     }
     js {
-        nodejs()
+        nodejs {
+            // Le premier test qui touche une date charge la base des fuseaux (~0,2 s) : sur une machine
+            // chargée, les 2 s de Mocha par défaut ne suffisent pas toujours
+            testTask { useMocha { timeout = "10s" } }
+        }
     }
     sourceSets {
         commonTest.dependencies {
