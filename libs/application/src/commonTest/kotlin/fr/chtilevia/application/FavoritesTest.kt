@@ -60,6 +60,54 @@ class FavoritesTest {
     }
 
     @Test
+    fun updatingTheFileKeepsWhatWasWrittenByHand() {
+        val written = """
+            |# Mes favoris
+            |
+            |# Le matin
+            |travail:  tram croise laroche vers roubaix   # le plus rapide
+            |travail:  velo rihour --prendre
+            |
+            |# Le soir
+            |maison:   bus 10 marais
+            |# fin
+            |
+        """.trimMargin()
+        assertEquals(file, FavoritesFile.update(file, FavoritesFile.favorites(file)))
+        val favorites = FavoritesFile.favorites(written)
+        // Rien de changé : le fichier ne bouge pas
+        assertEquals(written, FavoritesFile.update(written, favorites))
+        // Ordre inversé, une question ajoutée, une retirée : chaque bloc suit son favori
+        val moved = listOf(
+            Favorite("maison", listOf("bus 10 marais", "metro 1 republique")),
+            Favorite("travail", listOf("tram croise laroche vers roubaix")),
+        )
+        assertEquals(
+            """
+            |# Mes favoris
+            |
+            |# Le soir
+            |maison:   bus 10 marais
+            |maison: metro 1 republique
+            |
+            |# Le matin
+            |travail:  tram croise laroche vers roubaix   # le plus rapide
+            |# fin
+            |
+            """.trimMargin(),
+            FavoritesFile.update(written, moved),
+        )
+        // Renommé : retrouvé par ses questions, commentaires gardés ; supprimé : son commentaire part avec lui
+        assertEquals(
+            "# Mes favoris\n\n# Le matin\nboulot: tram croise laroche vers roubaix   # le plus rapide\n# fin\n",
+            FavoritesFile.update(written, listOf(Favorite("boulot", listOf("tram croise laroche vers roubaix")))),
+        )
+        // Fichier sans favori (vide ou seulement des commentaires) : les favoris à la suite
+        assertEquals("a: bus 10 marais\n", FavoritesFile.update("", listOf(Favorite("a", listOf("bus 10 marais")))))
+        assertEquals("# vide\na: bus 10 marais\n", FavoritesFile.update("# vide", listOf(Favorite("a", listOf("bus 10 marais")))))
+    }
+
+    @Test
     fun understoodPhrasesBecomeFavoriteCommands() {
         val words = InterpretUtterance(store).execute("bus dix à Marais en direction de Lille Flandres")
         val command = FavoritesFile.command(words)

@@ -112,11 +112,12 @@ class AndroidChti(context: Context, private val profile: NetworkProfile = Networ
     @Synchronized
     fun favorites(): List<Favorite> = listFavorites.execute().favorites
 
-    /** Réécrit le fichier des favoris (même format que celui du shell : `nom: commande`) */
+    /** Réécrit le fichier des favoris (même format que celui du shell : `nom: commande`) pour contenir [list] */
     @Synchronized
-    fun saveFavorites(favorites: List<Favorite>) {
+    fun saveFavorites(list: List<Favorite>) {
         favoritesFile.parentFile?.mkdirs()
-        favoritesFile.writeText(FavoritesFile.format(favorites))
+        // Commentaires et lignes inchangées gardés : le fichier est aussi écrit à la main
+        favoritesFile.writeText(FavoritesFile.update(favorites.read().orEmpty(), list))
     }
 
     /** Étape et propositions pour une question de favori : celles de [suggest], sans « à proximité » */
