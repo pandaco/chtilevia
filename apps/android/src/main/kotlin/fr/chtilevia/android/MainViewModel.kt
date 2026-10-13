@@ -37,7 +37,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     var favorites by mutableStateOf(emptyList<String>())
         private set
 
-    /** Écran affiché : principal ou carte */
+    /** Écran affiché : principal, aide ou carte */
     var page by mutableStateOf(Page.MAIN)
 
     /** Réponses lues à voix haute (réglage gardé) */
@@ -79,7 +79,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     var map by mutableStateOf(MapState(NearbyMode.ALL))
         private set
 
-    enum class Page { MAIN, MAP }
+    enum class Page { MAIN, HELP, MAP }
 
     init {
         background {

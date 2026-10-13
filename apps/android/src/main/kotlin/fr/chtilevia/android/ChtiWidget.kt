@@ -36,6 +36,7 @@ import androidx.glance.layout.size
 import androidx.glance.layout.width
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
+import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
 
 /** Widget d'accueil, comme Termux:Widget : « Parler » en rouge, puis un bouton par favori, sur fond blanc (noir la nuit) */
@@ -76,6 +77,11 @@ class ChtiWidget : GlanceAppWidget() {
                     }
                 }
             }
+            Text(
+                "Que demander ?",
+                GlanceModifier.fillMaxWidth().padding(top = 6.dp).clickable(actionStartActivity<MainActivity>(actionParametersOf(HELP to true))),
+                TextStyle(color = ON_BACKGROUND, fontSize = 12.sp, textAlign = TextAlign.Center),
+            )
         }
     }
 
@@ -92,6 +98,9 @@ class ChtiWidget : GlanceAppWidget() {
     companion object {
         /** Passé à [AnswerActivity] : le favori à lancer */
         private val FAVORITE = ActionParameters.Key<String>(AnswerActivity.EXTRA_FAVORITE)
+
+        /** Passé à [MainActivity] : ouvrir la page d'aide */
+        private val HELP = ActionParameters.Key<Boolean>(MainActivity.EXTRA_HELP)
 
         // Couleurs de l'icône (voir Theme.kt), en clair et en sombre
         private val BACKGROUND = ColorProvider(day = Color.White, night = Brand.night)

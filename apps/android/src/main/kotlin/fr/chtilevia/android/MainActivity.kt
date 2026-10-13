@@ -109,8 +109,9 @@ class MainActivity : ComponentActivity() {
         openFrom(intent)
     }
 
-    /** Notification touchée : la même question */
+    /** Lien « Que demander ? » du widget : la page d'aide ; notification touchée : la même question */
     private fun openFrom(intent: Intent) {
+        if (intent.getBooleanExtra(EXTRA_HELP, false)) model.page = MainViewModel.Page.HELP
         val args = intent.getStringArrayListExtra(EXTRA_ARGS)
         if (args != null) {
             model.page = MainViewModel.Page.MAIN
@@ -119,6 +120,7 @@ class MainActivity : ComponentActivity() {
     }
 
     companion object {
+        const val EXTRA_HELP = "aide"
         private const val EXTRA_QUESTION = "question"
         private const val EXTRA_ARGS = "commande"
 
@@ -157,7 +159,7 @@ private fun Screen(model: MainViewModel, flow: QuestionFlow) {
         }
     }
     // Un seul gestionnaire de « précédent », qui défait la dernière chose ouverte : d'abord le clavier,
-    // puis la carte, l'éditeur de favoris, la barre de saisie, la réponse ; sur l'accueil, l'appli se ferme
+    // puis la carte ou l'aide, l'éditeur de favoris, la barre de saisie, la réponse ; sur l'accueil, l'appli se ferme
     val ime = WindowInsets.isImeVisible
     val keyboard = LocalSoftwareKeyboardController.current
     val focus = LocalFocusManager.current
@@ -182,8 +184,17 @@ private fun Screen(model: MainViewModel, flow: QuestionFlow) {
         }
     }
     when (model.page) {
+        MainViewModel.Page.HELP -> HelpScreen(
+            onTry = {
+                // L'exemple s'affiche en résultats, en plein écran : pas de barre de saisie ni de clavier
+                model.typing = false
+                model.page = MainViewModel.Page.MAIN
+                flow.ask(it)
+            },
+            onBack = { model.page = MainViewModel.Page.MAIN },
+        )
         MainViewModel.Page.MAP -> MapScreen(model.map, onMode = showMap, onSelect = model::selectPlace, onBack = { model.page = MainViewModel.Page.MAIN })
-        MainViewModel.Page.MAIN -> Home(model, flow, onMap = showMap, onPlace = model::openPlace)
+        MainViewModel.Page.MAIN -> Home(model, flow, onMap = showMap, onHelp = { model.page = MainViewModel.Page.HELP }, onPlace = model::openPlace)
     }
 }
 
@@ -192,6 +203,7 @@ private fun Home(
     model: MainViewModel,
     flow: QuestionFlow,
     onMap: (NearbyMode) -> Unit,
+    onHelp: () -> Unit,
     onPlace: (Place, String) -> Unit,
 ) {
     val conversation = model.conversation
@@ -246,6 +258,7 @@ private fun Home(
                 )
             }
             TextButton(onClick = { onMap(NearbyMode.ALL) }) { IconLabel(R.drawable.ic_map, "Carte") }
+            TextButton(onClick = onHelp) { Text("Aide") }
         }
         model.status?.let {
             Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 20.dp))
