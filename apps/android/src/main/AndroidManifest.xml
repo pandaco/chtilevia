@@ -3,13 +3,14 @@
 
     <!-- GTFS, temps réel et V'Lille : données ouvertes Ilévia -->
     <uses-permission android:name="android.permission.INTERNET" />
-    <!-- Dernière réponse gardée en notification -->
+    <!-- Réponses du widget en notification, calculées par un service court -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <!-- « à proximité » : arrêts et stations V'Lille autour du téléphone -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
-    <!-- Reconnaissance vocale : le service de reconnaissance du système (Google) -->
+    <!-- Reconnaissance vocale et synthèse : les services installés sur le téléphone -->
     <queries>
         <intent>
             <action android:name="android.speech.action.RECOGNIZE_SPEECH" />
@@ -36,7 +37,7 @@
                 android:resource="@xml/shortcuts" />
         </activity>
 
-        <!-- Boutons du widget : carte de réponse par-dessus l'écran d'accueil -->
+        <!-- Boutons du widget et raccourcis : écran invisible (écoute, autorisations), puis AnswerService -->
         <activity
             android:name=".AnswerActivity"
             android:excludeFromRecents="true"
@@ -44,6 +45,11 @@
             android:noHistory="true"
             android:taskAffinity=""
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
+        <service
+            android:name=".AnswerService"
+            android:exported="false"
+            android:foregroundServiceType="shortService" />
 
         <receiver
             android:name=".ChtiWidgetReceiver"

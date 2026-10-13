@@ -1,6 +1,7 @@
 package fr.chtilevia.android
 
 import android.app.Application
+import androidx.core.content.edit
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
@@ -16,6 +17,13 @@ class ChtiApplication : Application() {
 
     /** Voix partagée par l'écran et le widget : une réponse coupe la précédente */
     val speaker by lazy { Speaker(this) }
+
+    private val settings by lazy { getSharedPreferences("reglages", MODE_PRIVATE) }
+
+    /** Lire à voix haute les réponses aux questions dites (écran et « Parler » du widget) ; coupable, c'est bruyant */
+    var speakAnswers: Boolean
+        get() = settings.getBoolean("lire", true)
+        set(value) = settings.edit { putBoolean("lire", value) }
 
     /** Fil des commandes : réseau et fichiers hors du fil principal, une commande à la fois */
     val worker: ExecutorService = Executors.newSingleThreadExecutor { Thread(it, "chti") }

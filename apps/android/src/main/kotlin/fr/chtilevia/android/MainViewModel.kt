@@ -9,7 +9,12 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import fr.chtilevia.application.ChtiError
+import fr.chtilevia.application.QuerySuggestions
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** État de l'écran principal, gardé quand l'écran tourne ; les questions passent par [QuestionFlow] */
 class MainViewModel(application: Application) : AndroidViewModel(application) {
@@ -23,17 +28,55 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     var favorites by mutableStateOf(emptyList<String>())
         private set
 
+    /** Réponses lues à voix haute (réglage gardé) */
+    var speakAnswers by mutableStateOf(app.speakAnswers)
+        private set
+
+    fun toggleSpeech() {
+        speakAnswers = !speakAnswers
+        app.speakAnswers = speakAnswers
+        if (!speakAnswers) app.speaker.stop()
+    }
+
+    /** Saisie au clavier ouverte */
+    var typing by mutableStateOf(false)
+
+    /** Propositions pour la question en cours de frappe */
+    var suggestions by mutableStateOf(QuerySuggestions("", emptyList()))
+        private set
+    private var suggesting: Job? = null
+
+    /** Propositions pour [input], un court instant après la dernière lettre tapée */
+    fun suggest(input: String) {
+        suggesting?.cancel()
+        suggesting = viewModelScope.launch {
+            delay(120)
+            val found = withContext(Dispatchers.Default) { runCatching { app.chti.suggest(input) }.getOrNull() }
+            if (found != null) suggestions = found
+        }
+    }
+
+    /**
+     * Demande de clavier sur le champ de saisie (« Écrire », question touchée), consommée une fois :
+     * revenir sur l'écran (depuis l'aide, la carte) ne rouvre jamais le clavier
+     */
+    var focusField by mutableStateOf(false)
+
+    /** Texte du fichier des favoris en cours de modification, ou null */
+    var editing by mutableStateOf<String?>(null)
+
     init {
         background {
+            // Les favoris d'abord : instantanés, alors que la préparation des horaires prend quelques secondes
+            val names = app.chti.favoriteNames()
+            onMain { favorites = names }
+            Shortcuts.update(app, names)
             try {
                 app.chti.warmUp { onMain { status = "Téléchargement des horaires…" } }
                 onMain { status = null }
             } catch (_: ChtiError) {
                 onMain { status = "Horaires indisponibles : vérifie la connexion, ils seront téléchargés à la première question." }
             }
-            val names = app.chti.favoriteNames()
-            Shortcuts.update(app, names)
-            onMain { favorites = names }
         }
     }
 

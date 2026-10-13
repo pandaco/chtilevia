@@ -15,6 +15,8 @@ import fr.chtilevia.application.GetDepartures
 import fr.chtilevia.application.InterpretUtterance
 import fr.chtilevia.application.ListFavorites
 import fr.chtilevia.application.NetworkProfile
+import fr.chtilevia.application.QuerySuggestions
+import fr.chtilevia.application.SuggestQuery
 import fr.chtilevia.application.Notice
 import fr.chtilevia.application.Notices
 import fr.chtilevia.application.UpdateTimetable
@@ -38,6 +40,7 @@ class AndroidChti(context: Context, private val profile: NetworkProfile = Networ
     private val listFavorites = ListFavorites(favorites)
     private val interpretUtterance = InterpretUtterance(favorites)
     private val bikeShare = GbfsFeed { fetch("${profile.bikeShareUrl}/$it") }
+    private val suggestQuery = SuggestQuery(gtfs.timetable, bikeShare, favorites, clock)
     private val chti = Chti(
         ChtiServices(
             departures = GetDepartures(gtfs.timetable, gtfs, GtfsRealtimeFeed { fetch(profile.realtimeUrl) }, clock, profile),
@@ -69,6 +72,10 @@ class AndroidChti(context: Context, private val profile: NetworkProfile = Networ
     fun refreshTimetable() {
         gtfs.refresh(force = false, notices = Notices.NONE)
     }
+
+    /** Étape et propositions pour compléter une question en cours de frappe */
+    @Synchronized
+    fun suggest(input: String): QuerySuggestions = suggestQuery.execute(input)
 
     /** Commande comprise dans une phrase libre (comme `chti vocal`), ou null si elle n'est pas comprise */
     @Synchronized
