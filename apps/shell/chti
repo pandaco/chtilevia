@@ -1242,11 +1242,11 @@ PARSED
 	;;
 -h | --help | help) usage ;;
 *)
-	if [ $# -eq 0 ]; then
-		status=0
-		run_favorite "$cmd" || status=$?
-		[ "$status" -eq 2 ] || exit "$status"
-	fi
+	# Un nom de favori peut tenir en plusieurs mots : chti travail en vélo
+	[ $# -eq 0 ] || cmd="$cmd $*"
+	status=0
+	run_favorite "$cmd" || status=$?
+	[ "$status" -eq 2 ] || exit "$status"
 	[ "${CHTI_VOIX:-}" = 1 ] && die unknown_command "Je ne connais pas la commande ou le favori « $cmd »."
 	[ "${CHTI_JSON:-}" = 1 ] && die unknown_command "commande ou favori inconnu : $cmd (voir chti favoris)"
 	printf 'chti : commande ou favori inconnu : %s (voir chti favoris)\n\n' "$cmd" >&2

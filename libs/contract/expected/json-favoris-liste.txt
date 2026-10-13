@@ -20,6 +20,12 @@
       "commands": [
         "bus 999"
       ]
+    },
+    {
+      "name": "Travail en vélo",
+      "commands": [
+        "velo rihour --prendre"
+      ]
     }
   ]
 }

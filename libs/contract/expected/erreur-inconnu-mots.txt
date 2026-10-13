@@ -1,0 +1,23 @@
+chti : commande ou favori inconnu : pas un favori (voir chti favoris)
+
+Usage :
+  chti bus <ligne> [arrêt] [-d direction] [-n nombre]   ex : chti bus 10 gambetta -d flandres -n 5
+  chti tram [arrêt] [-d direction] [-n nombre]          ex : chti tram croise laroche -d roubaix
+  chti metro <1|2> [arrêt] [-d direction] [-n nombre]   ex : chti metro 1 republique -d chu   (théorique)
+  chti velo <station> [--prendre|--deposer]             ex : chti velo rihour --prendre
+  chti autour [mode] <latitude> <longitude> [-n nombre] ex : chti autour velo 50.6366 3.0630
+  chti <favori>                                         ex : chti travail
+  chti favoris                                          liste les favoris
+  chti update                                           re-télécharge le référentiel GTFS
+  chti --voix <commande>                                réponse en phrases, pour la synthèse vocale
+  chti --json <commande>                                réponse JSON, pour les programmes (schéma : libs/contract/schema)
+  chti vocal "<phrase>"                                 ex : chti vocal "prochain tram à croisé laroche vers roubaix"
+
+Sans arrêt, la liste des arrêts de la ligne est affichée.
+-d / --direction / --vers : ne garde que les courses dont la destination contient ce texte.
+  « vers » s'écrit aussi sans tiret : chti tram croise laroche vers roubaix
+-n / --nombre : nombre de passages affichés par direction (3 par défaut) ; avec autour, nombre
+  d'arrêts et de stations V'Lille.
+--prendre / --deposer : n'affiche que les vélos disponibles / que les places libres.
+La recherche ignore la casse et les accents, et tolère les fautes (arrêts, directions).
+[exit 1]

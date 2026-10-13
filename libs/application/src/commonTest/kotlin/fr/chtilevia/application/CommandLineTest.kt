@@ -33,7 +33,7 @@ class CommandLineTest {
         assertEquals(Command.BikeStations("", BikeMode.TAKE), parse("velo --prendre"))
         assertEquals(Command.Utterance("métro un république"), parse("vocal métro un république"))
         assertEquals(Command.FavoriteOrUnknown("travail"), parse("travail"))
-        assertEquals("inconnu", assertFailsWith<ChtiError.UnknownCommand> { parse("inconnu foo") }.command)
+        assertEquals(Command.FavoriteOrUnknown("travail en vélo"), parse("travail en vélo"))
         assertFailsWith<ChtiError.UnknownMetro> { parse("metro 3") }
         assertFailsWith<ChtiError.MissingLine> { parse("bus") }
     }

@@ -32,6 +32,8 @@ favori-tram             | MIDI   | rt-midi.pb   | travail
 favori-velo-casse       | MINUIT | aucun        | RENTRER-VELO
 favori-en-erreur        | MIDI   | rt-midi.pb   | casse
 erreur-favori-inconnu   | MIDI   | aucun        | inconnu
+favori-espaces          | MINUIT | aucun        | TRAVAIL en vélo
+erreur-inconnu-mots     | MIDI   | aucun        | pas un favori
 voix-bus                | MIDI   | rt-midi.pb   | --voix bus 10 marais
 voix-option-a-la-fin    | MIDI   | rt-midi.pb   | bus 10 marais vers flandres --voix -n 3
 voix-metro-theorique    | MIDI   | rt-midi.pb   | --voix metro 1 republique
@@ -109,6 +111,7 @@ json-erreur-arret-autre-sens | MIDI | rt-midi.pb   | --json bus 10 esplanade -d 
 json-erreur-nombre         | MIDI   | rt-midi.pb   | --json tram -n abc
 json-erreur-velo           | MINUIT | aucun        | --json velo zzz
 json-erreur-inconnu        | MIDI   | aucun        | --json inconnu
+json-favori-espaces        | MINUIT | aucun        | --json Travail en vélo
 json-erreur-avec-voix      | MIDI   | aucun        | --json --voix bus 10 marais
 json-erreur-vocal          | MIDI   | aucun        | --json vocal métro un république
 json-erreur-guillemets     | MIDI   | aucun        | --json "zz\z

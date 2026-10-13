@@ -17,7 +17,7 @@ sealed interface Command {
     data object Help : Command
     data class Utterance(val text: String) : Command
 
-    /** Un mot seul inconnu : peut-être un favori */
+    /** Commande inconnue : peut-être un favori, dont le nom tient en un ou plusieurs mots */
     data class FavoriteOrUnknown(val name: String) : Command
 }
 
@@ -48,7 +48,7 @@ object CommandLine {
             "favoris" -> Command.ListFavorites
             "vocal" -> Command.Utterance(args.joinToString(" "))
             "-h", "--help", "help" -> Command.Help
-            else -> if (args.isEmpty()) Command.FavoriteOrUnknown(words[0]) else throw ChtiError.UnknownCommand(words[0])
+            else -> Command.FavoriteOrUnknown(words.joinToString(" "))
         }
     }
 
