@@ -25,8 +25,14 @@ class SuggestQuery(
 ) {
     private var stations: List<BikeStation>? = null
     private var stationsAt = 0L
+    private var withNearby = true
 
-    fun execute(input: String): QuerySuggestions {
+    /**
+     * Étape et propositions pour [input] ; sans [nearby], pas de « à proximité » (une question de
+     * favori : la position n'est connue qu'au moment de la poser)
+     */
+    fun execute(input: String, nearby: Boolean = true): QuerySuggestions {
+        this.withNearby = nearby
         val words = input.trim().split(' ').filter { it.isNotEmpty() }
         val trailing = input.isEmpty() || input.endsWith(" ")
         // Mot en cours de frappe, et mots déjà écrits
@@ -46,7 +52,7 @@ class SuggestQuery(
     /** Premier mot : le mode, « à proximité », ou un favori */
     private fun start(partial: String): QuerySuggestions {
         val names = FavoritesFile.names(favorites.read().orEmpty()).distinct()
-        val items = MODES + names.map { Suggestion("⭐ $it", it) }
+        val items = MODES.filter { withNearby || "proximité" !in it.text } + names.map { Suggestion("⭐ $it", it) }
         val needle = fold(partial)
         return QuerySuggestions("Que cherches-tu ?", items.filter { needle.isEmpty() || fold(it.text).startsWith(needle) || needle in fold(it.text) })
     }
@@ -138,7 +144,7 @@ class SuggestQuery(
     /** « à… » tapé après le mode : « à proximité », pour ce mode seulement */
     private fun nearby(mode: String, partial: String): List<Suggestion> {
         val needle = fold(partial)
-        return if (needle.isNotEmpty() && "a proximite".startsWith(needle)) listOf(Suggestion("📍 $mode à proximité", "$mode à proximité")) else emptyList()
+        return if (withNearby && needle.isNotEmpty() && "a proximite".startsWith(needle)) listOf(Suggestion("📍 $mode à proximité", "$mode à proximité")) else emptyList()
     }
 
     private companion object {

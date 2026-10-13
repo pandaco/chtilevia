@@ -73,7 +73,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
@@ -159,14 +158,15 @@ private fun Screen(model: MainViewModel, flow: QuestionFlow) {
         }
     }
     // Un seul gestionnaire de « précédent », qui défait la dernière chose ouverte : d'abord le clavier,
-    // puis la carte ou l'aide, l'éditeur de favoris, la barre de saisie, la réponse ; sur l'accueil, l'appli se ferme
+    // puis la question de favori en cours, le favori en cours, la carte, l'aide ou les favoris, la barre
+    // de saisie, la réponse ; sur l'accueil, l'appli se ferme
     val ime = WindowInsets.isImeVisible
     val keyboard = LocalSoftwareKeyboardController.current
     val focus = LocalFocusManager.current
     val conversation = model.conversation
     val answering = conversation.question.isNotEmpty() || conversation.answered
     BackHandler(
-        enabled = ime || model.page != MainViewModel.Page.MAIN || model.editing != null || model.typing ||
+        enabled = ime || model.page != MainViewModel.Page.MAIN || model.typing ||
             (answering && !conversation.busy),
     ) {
         when {
@@ -174,8 +174,9 @@ private fun Screen(model: MainViewModel, flow: QuestionFlow) {
                 keyboard?.hide()
                 focus.clearFocus()
             }
+            model.page == MainViewModel.Page.FAVORITES && model.editedQuestion != null -> model.closeQuestion()
+            model.page == MainViewModel.Page.FAVORITES && model.draft != null -> model.draft = null
             model.page != MainViewModel.Page.MAIN -> model.page = MainViewModel.Page.MAIN
-            model.editing != null -> model.editing = null
             model.typing -> model.typing = false
             else -> {
                 model.stopSpeaking()
@@ -193,6 +194,7 @@ private fun Screen(model: MainViewModel, flow: QuestionFlow) {
             },
             onBack = { model.page = MainViewModel.Page.MAIN },
         )
+        MainViewModel.Page.FAVORITES -> FavoritesScreen(model)
         MainViewModel.Page.MAP -> MapScreen(model.map, onMode = showMap, onSelect = model::selectPlace, onBack = { model.page = MainViewModel.Page.MAIN })
         MainViewModel.Page.MAIN -> Home(model, flow, onMap = showMap, onHelp = { model.page = MainViewModel.Page.HELP }, onPlace = model::openPlace)
     }
@@ -210,7 +212,6 @@ private fun Home(
     // Texte de la barre de saisie, avec la position du curseur (pré-rempli quand on touche la question)
     var typed by rememberSaveable(stateSaver = TextFieldValue.Saver) { mutableStateOf(TextFieldValue("")) }
     val field = remember { FocusRequester() }
-    val editing = model.editing
     var noRecognizer by remember { mutableStateOf(false) }
     val listen = { noRecognizer = !flow.listen() }
     val send = {
@@ -235,15 +236,11 @@ private fun Home(
         model.focusField = true
     }
     // Au repos, le micro occupe le centre ; dès qu'il y a une question, il descend dans la barre du bas
-    val idle = conversation.question.isEmpty() && !conversation.answered && conversation.status == null && editing == null
-    // « ← Retour » : comme le geste « précédent » (voir Screen), on ferme la réponse ou l'éditeur
+    val idle = conversation.question.isEmpty() && !conversation.answered && conversation.status == null
+    // « ← Retour » : comme le geste « précédent » (voir Screen), on ferme la réponse
     val back = {
-        if (editing != null) {
-            model.editing = null
-        } else {
-            model.stopSpeaking()
-            model.conversation = Conversation()
-        }
+        model.stopSpeaking()
+        model.conversation = Conversation()
     }
 
     Column(Modifier.fillMaxSize().safeDrawingPadding().imePadding()) {
@@ -277,26 +274,14 @@ private fun Home(
                 enabled = !conversation.busy,
                 onSend = send,
                 onClose = { model.typing = false },
+                placeholder = "bus 10 gambetta, vélo à proximité…",
             )
         } else {
             Column(
                 Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                val text = editing
                 when {
-                    text != null -> {
-                        Spacer(Modifier.height(16.dp))
-                        FavoritesEditor(
-                            text = text,
-                            onChange = { model.editing = it },
-                            onSave = {
-                                model.saveFavorites(text)
-                                model.editing = null
-                            },
-                            onCancel = { model.editing = null },
-                        )
-                    }
                     idle -> {
                         Spacer(Modifier.height(56.dp))
                         MicButton(size = 168.dp, enabled = true, onClick = listen)
@@ -333,7 +318,7 @@ private fun Home(
                 names = model.favorites,
                 enabled = !conversation.busy,
                 onRun = flow::favorite,
-                onEdit = { model.favoritesText { model.editing = it } },
+                onEdit = { model.openFavorites(create = model.favorites.isEmpty()) },
             )
             HorizontalDivider(color = MaterialTheme.colorScheme.outline)
             Box(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp)) {
@@ -350,10 +335,11 @@ private fun Home(
 
 /**
  * Saisie d'une question : le champ en haut, puis l'étape de la requête (« Quelle ligne ? », « Quel
- * arrêt ? »…) et les propositions à toucher pour la compléter
+ * arrêt ? »…) et les propositions à toucher pour la compléter. Sert aussi aux questions des favoris
+ * ([sendIcon] : valider plutôt qu'envoyer ; [error] : pourquoi la question n'est pas acceptée).
  */
 @Composable
-private fun ColumnScope.TypingPanel(
+fun ColumnScope.TypingPanel(
     typed: TextFieldValue,
     onChange: (TextFieldValue) -> Unit,
     suggestions: QuerySuggestions,
@@ -361,12 +347,16 @@ private fun ColumnScope.TypingPanel(
     enabled: Boolean,
     onSend: () -> Unit,
     onClose: () -> Unit,
+    placeholder: String,
+    sendIcon: Int = R.drawable.ic_send,
+    sendLabel: String = "Demander",
+    error: String? = null,
 ) {
     Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         OutlinedTextField(
             value = typed,
             onValueChange = onChange,
-            placeholder = { Text("bus 10 gambetta, vélo à proximité…") },
+            placeholder = { Text(placeholder) },
             singleLine = true,
             shape = RoundedCornerShape(24.dp),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
@@ -379,13 +369,13 @@ private fun ColumnScope.TypingPanel(
             modifier = Modifier.weight(1f).focusRequester(field),
         )
         FilledIconButton(onClick = onSend, enabled = enabled && typed.text.isNotBlank(), modifier = Modifier.size(48.dp)) {
-            Icon(painterResource(R.drawable.ic_send), contentDescription = "Demander")
+            Icon(painterResource(sendIcon), contentDescription = sendLabel)
         }
     }
     Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(
-            suggestions.step,
-            style = MaterialTheme.typography.titleSmall,
+            error ?: suggestions.step,
+            style = if (error != null) MaterialTheme.typography.bodyMedium else MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.weight(1f),
@@ -586,33 +576,6 @@ private fun FavoritesBar(names: List<String>, enabled: Boolean, onRun: (String) 
             ) { Text(name, fontWeight = FontWeight.Medium) }
         }
         TextButton(onClick = onEdit) { Text(if (names.isEmpty()) "+ Ajouter un favori" else "Modifier") }
-    }
-}
-
-@Composable
-private fun FavoritesEditor(text: String, onChange: (String) -> Unit, onSave: () -> Unit, onCancel: () -> Unit) {
-    Surface(color = MaterialTheme.colorScheme.surfaceVariant, shape = RoundedCornerShape(16.dp)) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(
-                "Une ligne par favori : « nom: commande »\nex. travail: tram croise laroche vers roubaix",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            OutlinedTextField(
-                value = text,
-                onValueChange = onChange,
-                textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = MaterialTheme.colorScheme.surface,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                ),
-                modifier = Modifier.fillMaxWidth().height(180.dp),
-            )
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)) {
-                TextButton(onClick = onCancel) { Text("Annuler") }
-                Button(onClick = onSave) { Text("Enregistrer") }
-            }
-        }
     }
 }
 

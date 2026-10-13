@@ -8,6 +8,8 @@ import fr.chtilevia.adapters.gtfs.GtfsCache
 import fr.chtilevia.adapters.realtime.GtfsRealtimeFeed
 import fr.chtilevia.application.ChtiError
 import fr.chtilevia.application.Clock
+import fr.chtilevia.application.CommandLine
+import fr.chtilevia.application.FavoritesFile
 import fr.chtilevia.application.FindFavorite
 import fr.chtilevia.application.FindNearby
 import fr.chtilevia.application.GetBikeStations
@@ -22,6 +24,7 @@ import fr.chtilevia.application.SuggestQuery
 import fr.chtilevia.application.Notice
 import fr.chtilevia.application.Notices
 import fr.chtilevia.application.UpdateTimetable
+import fr.chtilevia.domain.Favorite
 import fr.chtilevia.domain.Position
 import fr.chtilevia.domain.serviceDates
 import fr.chtilevia.presentation.Chti
@@ -105,15 +108,49 @@ class AndroidChti(context: Context, private val profile: NetworkProfile = Networ
     @Synchronized
     fun favoriteNames(): List<String> = listFavorites.execute().favorites.map { it.name }
 
-    /** Fichier des favoris, au format du shell (`nom: commande`) ; vide s'il n'existe pas */
+    /** Favoris, dans l'ordre du fichier, avec leurs commandes */
     @Synchronized
-    fun favoritesText(): String = favoritesFile.takeIf { it.isFile }?.readText().orEmpty()
+    fun favorites(): List<Favorite> = listFavorites.execute().favorites
 
+    /** Réécrit le fichier des favoris (même format que celui du shell : `nom: commande`) */
     @Synchronized
-    fun saveFavorites(text: String) {
+    fun saveFavorites(favorites: List<Favorite>) {
         favoritesFile.parentFile?.mkdirs()
-        favoritesFile.writeText(text.trimEnd() + "\n")
+        favoritesFile.writeText(FavoritesFile.format(favorites))
     }
+
+    /** Étape et propositions pour une question de favori : celles de [suggest], sans « à proximité » */
+    @Synchronized
+    fun suggestFavorite(input: String): QuerySuggestions = suggestQuery.execute(input, nearby = false)
+
+    /**
+     * Commande à enregistrer dans un favori pour [text] : une phrase comprise (celles des
+     * propositions), ou une commande chti avec ses options (`velo rihour --prendre`) ; échoue avec
+     * un message à montrer sinon
+     */
+    @Synchronized
+    fun favoriteCommand(text: String): Result<String> {
+        val typed = FavoritesFile.words(text)
+        val words = when {
+            typed.isEmpty() -> return failure("Écris une question.")
+            typed.any { it.startsWith("-") } -> typed
+            else -> try {
+                interpretUtterance.execute(text)
+            } catch (_: ChtiError) {
+                return failure("Je ne comprends pas cette question : choisis parmi les propositions.")
+            }
+        }
+        if (words.first() == "autour") return failure("« À proximité » dépend de l'endroit où tu es : pose la question au moment voulu.")
+        val command = FavoritesFile.command(words)
+        return try {
+            CommandLine.parse(FavoritesFile.words(command))
+            Result.success(command)
+        } catch (_: ChtiError) {
+            failure("Question incomplète : choisis parmi les propositions.")
+        }
+    }
+
+    private fun failure(message: String) = Result.failure<String>(IllegalArgumentException(message))
 
     /** Résultat d'une commande : code retour et texte (sorties standard et d'erreur, dans l'ordre) */
     data class Reply(val exit: Int, val text: String)

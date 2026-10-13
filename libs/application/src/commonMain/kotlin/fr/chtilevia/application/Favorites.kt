@@ -47,6 +47,37 @@ object FavoritesFile {
     /** Mots d'une commande de favori, découpés comme le ferait le shell */
     fun words(command: String): List<String> = command.split(' ', '\t', '\n').filter { it.isNotEmpty() }
 
+    /** Fichier qui contient [favorites], dans l'ordre : une ligne `nom: commande` par commande */
+    fun format(favorites: List<Favorite>): String =
+        favorites.flatMap { favorite -> favorite.commands.map { "${favorite.name}: $it\n" } }.joinToString("")
+
+    /**
+     * Commande à enregistrer pour les mots [words] d'une phrase comprise ([InterpretUtterance]) :
+     * `-d` devient « vers », qui garde une direction en plusieurs mots une fois la ligne découpée
+     */
+    fun command(words: List<String>): String = words.joinToString(" ") { if (it == "-d") "vers" else it }
+
+    /**
+     * Commande de favori réécrite comme les propositions de saisie ([SuggestQuery]), pour la
+     * modifier avec elles : `--prendre` → « pour prendre », `-d` → « vers »
+     */
+    fun phrase(command: String): String = words(command).joinToString(" ") {
+        when (it) {
+            "--prendre" -> "pour prendre"
+            "--deposer", "--déposer" -> "pour déposer"
+            "-d", "--direction", "--vers" -> "vers"
+            else -> it
+        }
+    }
+
+    /** Raison pour laquelle [name] ne peut pas nommer un favori parmi [others], ou null s'il convient */
+    fun invalidName(name: String, others: List<String>): String? = when {
+        name.isBlank() -> "Donne un nom au favori."
+        ':' in name || '#' in name -> "Le nom ne peut contenir ni « : » ni « # »."
+        others.any { it.asciiLowercase() == name.trim().asciiLowercase() } -> "Un autre favori porte déjà ce nom."
+        else -> null
+    }
+
     private fun String.asciiLowercase(): String = map { if (it in 'A'..'Z') it + 32 else it }.joinToString("")
 }
 

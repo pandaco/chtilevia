@@ -53,6 +53,33 @@ class FavoritesTest {
     }
 
     @Test
+    fun favoritesAreWrittenBackLineByLine() {
+        val favorites = FavoritesFile.favorites(file)
+        assertEquals(favorites, FavoritesFile.favorites(FavoritesFile.format(favorites)))
+        assertEquals("a: bus 10 marais\nb: velo rihour\nb: velo gare\n", FavoritesFile.format(listOf(Favorite("a", listOf("bus 10 marais")), Favorite("b", listOf("velo rihour", "velo gare")))))
+    }
+
+    @Test
+    fun understoodPhrasesBecomeFavoriteCommands() {
+        val words = InterpretUtterance(store).execute("bus dix à Marais en direction de Lille Flandres")
+        val command = FavoritesFile.command(words)
+        assertEquals("bus 10 marais vers lille flandres", command)
+        assertEquals(Command.NextDepartures("10", "marais", "lille flandres", null), CommandLine.parse(FavoritesFile.words(command)))
+        // Et dans l'autre sens, pour la modifier avec les propositions
+        assertEquals("velo rihour pour prendre", FavoritesFile.phrase("velo  rihour --prendre"))
+        assertEquals(listOf("velo", "rihour", "--prendre"), InterpretUtterance(store).execute(FavoritesFile.phrase("velo rihour --prendre")))
+        assertEquals("bus 10 marais vers lille flandres", FavoritesFile.phrase("bus 10 marais -d lille flandres"))
+    }
+
+    @Test
+    fun favoriteNamesMustBeUsableInTheFile() {
+        assertEquals(null, FavoritesFile.invalidName("Travail en vélo", listOf("travail")))
+        assertEquals("Donne un nom au favori.", FavoritesFile.invalidName(" ", emptyList()))
+        assertEquals("Le nom ne peut contenir ni « : » ni « # ».", FavoritesFile.invalidName("a:b", emptyList()))
+        assertEquals("Un autre favori porte déjà ce nom.", FavoritesFile.invalidName("TRAVAIL ", listOf("travail")))
+    }
+
+    @Test
     fun utterancesBecomeCommands() {
         val interpret = InterpretUtterance(store)
         assertEquals(listOf("rentrer-velo"), interpret.execute("Rentrer à vélo"))

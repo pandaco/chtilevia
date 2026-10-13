@@ -12,7 +12,9 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import fr.chtilevia.application.ChtiError
+import fr.chtilevia.application.FavoritesFile
 import fr.chtilevia.application.NearbyMode
+import fr.chtilevia.domain.Favorite
 import fr.chtilevia.domain.Line
 import fr.chtilevia.domain.Position
 import fr.chtilevia.domain.TransportMode
@@ -58,12 +60,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         private set
     private var suggesting: Job? = null
 
-    /** Propositions pour [input], un court instant après la dernière lettre tapée */
-    fun suggest(input: String) {
+    /**
+     * Propositions pour [input], un court instant après la dernière lettre tapée ; [favorite] : pour
+     * une question de favori (sans « à proximité »)
+     */
+    fun suggest(input: String, favorite: Boolean = false) {
         suggesting?.cancel()
         suggesting = viewModelScope.launch {
             delay(120)
-            val found = withContext(Dispatchers.Default) { runCatching { app.chti.suggest(input) }.getOrNull() }
+            val found = withContext(Dispatchers.Default) {
+                runCatching { if (favorite) app.chti.suggestFavorite(input) else app.chti.suggest(input) }.getOrNull()
+            }
             if (found != null) suggestions = found
         }
     }
@@ -74,12 +81,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      */
     var focusField by mutableStateOf(false)
 
-    /** Texte du fichier des favoris en cours de modification, ou null */
-    var editing by mutableStateOf<String?>(null)
+    /** Favoris, avec leurs commandes (écran des favoris) */
+    var favoriteList by mutableStateOf(emptyList<Favorite>())
+        private set
+
+    /** Favori en cours de modification ou de création, ou null */
+    var draft by mutableStateOf<FavoriteDraft?>(null)
+
+    /** Question du brouillon en cours de saisie : son rang, [NEW_QUESTION] pour une nouvelle, ou null */
+    var editedQuestion by mutableStateOf<Int?>(null)
+        private set
+    var questionError by mutableStateOf<String?>(null)
     var map by mutableStateOf(MapState(NearbyMode.ALL))
         private set
 
-    enum class Page { MAIN, HELP, MAP }
+    enum class Page { MAIN, HELP, MAP, FAVORITES }
 
     init {
         background {
@@ -96,19 +112,90 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun favoritesText(onLoaded: (String) -> Unit) = background {
-        val text = app.chti.favoritesText()
-        onMain { onLoaded(text) }
+    /** Écran des favoris ; [create] : directement sur un nouveau favori */
+    fun openFavorites(create: Boolean) {
+        page = Page.FAVORITES
+        draft = if (create) FavoriteDraft(null, "", emptyList()) else null
+        editedQuestion = null
+        background {
+            val list = app.chti.favorites()
+            onMain { favoriteList = list }
+        }
     }
 
-    fun saveFavorites(text: String) = background {
-        app.chti.saveFavorites(text)
-        val names = app.chti.favoriteNames()
-        Shortcuts.update(app, names)
-        onMain {
-            favorites = names
+    fun editFavorite(index: Int) {
+        val favorite = favoriteList[index]
+        draft = FavoriteDraft(index, favorite.name, favorite.commands)
+    }
+
+    /** Saisie de la question [index] du brouillon ([NEW_QUESTION] : une de plus), propositions comprises */
+    fun editQuestion(index: Int) {
+        editedQuestion = index
+        questionError = null
+        focusField = true
+        suggest(draft?.commands?.getOrNull(index)?.let { FavoritesFile.phrase(it) + " " }.orEmpty(), favorite = true)
+    }
+
+    fun closeQuestion() {
+        editedQuestion = null
+    }
+
+    /** Question tapée [text] : comprise, elle prend sa place dans le brouillon ; sinon, pourquoi */
+    fun confirmQuestion(text: String) {
+        val index = editedQuestion ?: return
+        background {
+            val result = app.chti.favoriteCommand(text)
+            onMain {
+                val current = draft ?: return@onMain
+                result.onSuccess { command ->
+                    val commands = if (index == NEW_QUESTION) current.commands + command else current.commands.toMutableList().also { it[index] = command }
+                    draft = current.copy(commands = commands, error = null)
+                    editedQuestion = null
+                }.onFailure { questionError = it.message }
+            }
+        }
+    }
+
+    fun removeQuestion(index: Int) {
+        val current = draft ?: return
+        draft = current.copy(commands = current.commands.filterIndexed { i, _ -> i != index })
+    }
+
+    /** Enregistre le brouillon s'il est complet (nom libre, au moins une question) ; sinon dit ce qui manque */
+    fun saveDraft() {
+        val current = draft ?: return
+        val others = favoriteList.filterIndexed { i, _ -> i != current.index }.map { it.name }
+        val error = FavoritesFile.invalidName(current.name, others)
+            ?: if (current.commands.isEmpty()) "Ajoute au moins une question." else null
+        if (error != null) {
+            draft = current.copy(error = error)
+            return
+        }
+        val favorite = Favorite(current.name.trim(), current.commands)
+        persist(if (current.index == null) favoriteList + favorite else favoriteList.toMutableList().also { it[current.index] = favorite })
+        draft = null
+    }
+
+    fun deleteDraft() {
+        val index = draft?.index
+        if (index != null) persist(favoriteList.filterIndexed { i, _ -> i != index })
+        draft = null
+    }
+
+    /** Monte le favori [index] d'un rang : l'ordre est celui des boutons de l'écran et du widget */
+    fun moveUp(index: Int) {
+        if (index <= 0) return
+        persist(favoriteList.toMutableList().also { it.add(index - 1, it.removeAt(index)) })
+    }
+
+    private fun persist(list: List<Favorite>) {
+        favoriteList = list
+        favorites = list.map { it.name }
+        background {
+            app.chti.saveFavorites(list)
+            Shortcuts.update(app, list.map { it.name })
             // Les boutons du widget suivent les favoris
-            viewModelScope.launch { ChtiWidget.refresh(app) }
+            onMain { viewModelScope.launch { ChtiWidget.refresh(app) } }
         }
     }
 
@@ -199,7 +286,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         main.post(block)
     }
 
-    private companion object {
-        const val MAP_COUNT = 8
+    companion object {
+        const val NEW_QUESTION = -1
+        private const val MAP_COUNT = 8
     }
 }
+
+/** Favori en cours de modification : [index] son rang (null : nouveau), et ce qui empêche de l'enregistrer */
+data class FavoriteDraft(val index: Int?, val name: String, val commands: List<String>, val error: String? = null)

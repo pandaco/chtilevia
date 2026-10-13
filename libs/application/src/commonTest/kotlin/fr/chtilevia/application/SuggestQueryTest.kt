@@ -71,6 +71,12 @@ class SuggestQueryTest {
     }
 
     @Test
+    fun favoritesQuestionsLeaveOutNearby() {
+        assertEquals(listOf("vélo "), suggest.execute("vél", nearby = false).items.map { it.text })
+        assertEquals(emptyList(), suggest.execute("bus à", nearby = false).items.map { it.text }.filter { "proximité" in it })
+    }
+
+    @Test
     fun tramGoesStraightToStops() {
         assertEquals(listOf("tram Gambetta "), texts("tram gamb"))
     }
