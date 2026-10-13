@@ -1,14 +1,23 @@
 package fr.chtilevia.android
 
+import android.Manifest
 import android.app.Application
+import android.content.pm.PackageManager
 import android.os.Handler
 import android.os.Looper
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import fr.chtilevia.application.ChtiError
+import fr.chtilevia.application.NearbyMode
+import fr.chtilevia.domain.Line
+import fr.chtilevia.domain.Position
+import fr.chtilevia.domain.TransportMode
+import fr.chtilevia.domain.distanceMeters
+import fr.chtilevia.presentation.briefState
 import fr.chtilevia.application.QuerySuggestions
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -27,6 +36,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     var conversation by mutableStateOf(Conversation())
     var favorites by mutableStateOf(emptyList<String>())
         private set
+
+    /** Écran affiché : principal ou carte */
+    var page by mutableStateOf(Page.MAIN)
 
     /** Réponses lues à voix haute (réglage gardé) */
     var speakAnswers by mutableStateOf(app.speakAnswers)
@@ -64,6 +76,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     /** Texte du fichier des favoris en cours de modification, ou null */
     var editing by mutableStateOf<String?>(null)
+    var map by mutableStateOf(MapState(NearbyMode.ALL))
+        private set
+
+    enum class Page { MAIN, MAP }
 
     init {
         background {
@@ -105,6 +121,74 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /** Carte des arrêts et stations proches pour [mode] ; l'autorisation de localisation est déjà accordée */
+    fun openMap(mode: NearbyMode) {
+        page = Page.MAP
+        map = MapState(mode, me = map.me)
+        background {
+            val location = DeviceLocation.current(app)
+            if (location == null) {
+                onMain { map = map.copy(message = "Je ne trouve pas ta position : active la localisation et réessaie.") }
+                return@background
+            }
+            val me = Position(location.latitude, location.longitude)
+            onMain { map = map.copy(me = me, message = "Je cherche…") }
+            val nearby = app.chti.nearby(me, MAP_COUNT, mode)
+            // Du plus proche au plus lointain, arrêts et stations mêlés
+            val points = (
+                nearby.stops.mapNotNull { near ->
+                    near.stop.position?.let {
+                        MapPoint("arret:${near.stop.id}", it, near.stop.name, kindOf(near.lines), near.lines.joinToString(", ") { l -> l.label }, near.distance)
+                    }
+                } + nearby.stations.orEmpty().mapNotNull { near ->
+                    near.station.position?.let {
+                        MapPoint("velo:${near.station.id}", it, near.station.name, MapPoint.Kind.BIKE, near.station.briefState(), near.distance)
+                    }
+                }
+                ).sortedBy { it.distance }
+            val message = when {
+                nearby.stations == null && points.isEmpty() -> "V'Lille injoignable."
+                points.isEmpty() -> "Rien à proximité."
+                else -> null
+            }
+            onMain { if (map.mode == mode) map = map.copy(points = points, message = message) }
+        }
+    }
+
+    /**
+     * Carte centrée sur l'emplacement d'une carte de réponse ([detail] : ce que la réponse en dit),
+     * avec ta position si elle est autorisée
+     */
+    fun openPlace(place: Place, detail: String) {
+        page = Page.MAP
+        map = MapState(NearbyMode.ALL, me = map.me, message = "Je cherche l'emplacement…")
+        background {
+            val position = if (place.isStation) app.chti.stationPosition(place.id) else app.chti.stopPosition(place.id)
+            if (position == null) {
+                onMain { map = map.copy(message = "Emplacement introuvable.") }
+                return@background
+            }
+            val allowed = listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
+                .any { ContextCompat.checkSelfPermission(app, it) == PackageManager.PERMISSION_GRANTED }
+            val me = if (allowed) DeviceLocation.current(app, timeoutSeconds = 5)?.let { Position(it.latitude, it.longitude) } else null
+            val id = (if (place.isStation) "velo:" else "arret:") + place.id
+            val point = MapPoint(id, position, place.name, place.kind, detail, me?.let { distanceMeters(it, position) })
+            onMain { map = MapState(NearbyMode.ALL, me = me, points = listOf(point), selected = id, message = null) }
+        }
+    }
+
+    /** Emplacement touché (liste ou carte) : mis en avant ; null : plus rien de sélectionné */
+    fun selectPlace(id: String?) {
+        map = map.copy(selected = id)
+    }
+
+    /** Couleur d'un arrêt : son mode le plus « lourd » (métro, puis tram, puis bus) */
+    private fun kindOf(lines: List<Line>): MapPoint.Kind = when {
+        lines.any { it.mode == TransportMode.METRO } -> MapPoint.Kind.METRO
+        lines.any { it.mode == TransportMode.TRAM } -> MapPoint.Kind.TRAM
+        else -> MapPoint.Kind.BUS
+    }
+
     fun stopSpeaking() = app.speaker.stop()
 
     private fun background(block: () -> Unit) {
@@ -113,5 +197,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun onMain(block: () -> Unit) {
         main.post(block)
+    }
+
+    private companion object {
+        const val MAP_COUNT = 8
     }
 }

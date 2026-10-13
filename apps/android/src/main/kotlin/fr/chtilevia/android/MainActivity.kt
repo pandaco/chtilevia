@@ -1,13 +1,17 @@
 package fr.chtilevia.android
 
+import android.Manifest
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
@@ -65,6 +69,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
@@ -76,6 +81,8 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
+import fr.chtilevia.application.NearbyMode
 import fr.chtilevia.application.QuerySuggestions
 
 /** Écran principal : poser une question à la voix (ou au clavier), entendre et lire la réponse, lancer un favori */
@@ -106,6 +113,7 @@ class MainActivity : ComponentActivity() {
     private fun openFrom(intent: Intent) {
         val args = intent.getStringArrayListExtra(EXTRA_ARGS)
         if (args != null) {
+            model.page = MainViewModel.Page.MAIN
             flow.replay(intent.getStringExtra(EXTRA_QUESTION).orEmpty(), args)
         }
     }
@@ -131,15 +139,32 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun Screen(model: MainViewModel, flow: QuestionFlow) {
+    val context = LocalContext.current
+    var pendingMap by remember { mutableStateOf<NearbyMode?>(null) }
+    val locationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { granted ->
+        val mode = pendingMap ?: return@rememberLauncherForActivityResult
+        pendingMap = null
+        if (granted.values.any { it }) model.openMap(mode)
+    }
+    val showMap = { mode: NearbyMode ->
+        val allowed = listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
+            .any { ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED }
+        if (allowed) {
+            model.openMap(mode)
+        } else {
+            pendingMap = mode
+            locationPermission.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
+        }
+    }
     // Un seul gestionnaire de « précédent », qui défait la dernière chose ouverte : d'abord le clavier,
-    // puis l'éditeur de favoris, la barre de saisie, la réponse ; sur l'accueil, l'appli se ferme
+    // puis la carte, l'éditeur de favoris, la barre de saisie, la réponse ; sur l'accueil, l'appli se ferme
     val ime = WindowInsets.isImeVisible
     val keyboard = LocalSoftwareKeyboardController.current
     val focus = LocalFocusManager.current
     val conversation = model.conversation
     val answering = conversation.question.isNotEmpty() || conversation.answered
     BackHandler(
-        enabled = ime || model.editing != null || model.typing ||
+        enabled = ime || model.page != MainViewModel.Page.MAIN || model.editing != null || model.typing ||
             (answering && !conversation.busy),
     ) {
         when {
@@ -147,6 +172,7 @@ private fun Screen(model: MainViewModel, flow: QuestionFlow) {
                 keyboard?.hide()
                 focus.clearFocus()
             }
+            model.page != MainViewModel.Page.MAIN -> model.page = MainViewModel.Page.MAIN
             model.editing != null -> model.editing = null
             model.typing -> model.typing = false
             else -> {
@@ -155,11 +181,19 @@ private fun Screen(model: MainViewModel, flow: QuestionFlow) {
             }
         }
     }
-    Home(model, flow)
+    when (model.page) {
+        MainViewModel.Page.MAP -> MapScreen(model.map, onMode = showMap, onSelect = model::selectPlace, onBack = { model.page = MainViewModel.Page.MAIN })
+        MainViewModel.Page.MAIN -> Home(model, flow, onMap = showMap, onPlace = model::openPlace)
+    }
 }
 
 @Composable
-private fun Home(model: MainViewModel, flow: QuestionFlow) {
+private fun Home(
+    model: MainViewModel,
+    flow: QuestionFlow,
+    onMap: (NearbyMode) -> Unit,
+    onPlace: (Place, String) -> Unit,
+) {
     val conversation = model.conversation
     // Texte de la barre de saisie, avec la position du curseur (pré-rempli quand on touche la question)
     var typed by rememberSaveable(stateSaver = TextFieldValue.Saver) { mutableStateOf(TextFieldValue("")) }
@@ -211,6 +245,7 @@ private fun Home(model: MainViewModel, flow: QuestionFlow) {
                     tint = if (model.speakAnswers) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+            TextButton(onClick = { onMap(NearbyMode.ALL) }) { IconLabel(R.drawable.ic_map, "Carte") }
         }
         model.status?.let {
             Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 20.dp))
@@ -271,7 +306,11 @@ private fun Home(model: MainViewModel, flow: QuestionFlow) {
                             TextButton(onClick = back, modifier = Modifier.align(Alignment.Start)) { Text("←  Retour") }
                         }
                         Spacer(Modifier.height(4.dp))
-                        Answer(conversation, onRephrase = rephrase)
+                        Answer(conversation, onPlace, onRephrase = rephrase)
+                        val nearby = conversation.nearby
+                        if (nearby != null && conversation.answered) {
+                            TextButton(onClick = { onMap(NEARBY_MODES[nearby] ?: NearbyMode.ALL) }) { IconLabel(R.drawable.ic_map, "Voir sur la carte") }
+                        }
                     }
                 }
                 Spacer(Modifier.height(16.dp))
@@ -380,7 +419,7 @@ private fun MicButton(size: Dp, enabled: Boolean, onClick: () -> Unit, modifier:
 
 /** La question, ce qui se passe, puis la réponse : une carte par ligne de la réponse compacte */
 @Composable
-private fun Answer(conversation: Conversation, onRephrase: (String) -> Unit) {
+private fun Answer(conversation: Conversation, onPlace: (Place, String) -> Unit, onRephrase: (String) -> Unit) {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         if (conversation.question.isNotEmpty()) {
             // La question se touche : elle passe dans la barre de saisie pour être corrigée ou complétée
@@ -410,7 +449,7 @@ private fun Answer(conversation: Conversation, onRephrase: (String) -> Unit) {
             LinearProgressIndicator(Modifier.fillMaxWidth(), trackColor = MaterialTheme.colorScheme.surfaceVariant)
         }
         if (conversation.cards.isNotEmpty()) {
-            for (card in conversation.cards) AnswerCardView(card)
+            for (card in conversation.cards) AnswerCardView(card, onPlace)
             if (conversation.cards.any { it.badges.isNotEmpty() }) {
                 Row(
                     Modifier.padding(start = 4.dp),
@@ -435,12 +474,31 @@ private fun Answer(conversation: Conversation, onRephrase: (String) -> Unit) {
     }
 }
 
-/** Une carte de réponse : le sujet en petit, puis la réponse en grand ou les passages en badges */
+/**
+ * Une carte de réponse : le sujet en petit, puis la réponse en grand ou les passages en badges ;
+ * la toucher ouvre la carte sur l'arrêt ou la station
+ */
 @Composable
-private fun AnswerCardView(card: AnswerCard) {
-    Surface(color = MaterialTheme.colorScheme.surfaceVariant, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
+private fun AnswerCardView(card: AnswerCard, onPlace: (Place, String) -> Unit) {
+    val place = card.place
+    val detail = card.value ?: card.subtitle.orEmpty()
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier.fillMaxWidth().then(if (place != null) Modifier.clickable { onPlace(place, detail) } else Modifier),
+    ) {
         Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(card.title, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(card.title, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
+                if (place != null) {
+                    Icon(
+                        painterResource(R.drawable.ic_map),
+                        contentDescription = "Voir sur la carte",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
+            }
             card.subtitle?.let { Text(it, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) }
             card.value?.let { Text(it, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) }
             if (card.badges.isNotEmpty()) {
@@ -544,3 +602,8 @@ private fun FavoritesEditor(text: String, onChange: (String) -> Unit, onSave: ()
         }
     }
 }
+
+/** Mot de « autour » (voir QuestionFlow) → ce que montre la carte */
+private val NEARBY_MODES = mapOf(
+    "bus" to NearbyMode.BUS, "tram" to NearbyMode.TRAM, "metro" to NearbyMode.METRO, "velo" to NearbyMode.BIKE,
+)

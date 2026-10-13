@@ -25,9 +25,14 @@ android {
         compose = true
     }
 
-    // Bibliothèque native de Compose livrée déjà allégée : rien à retirer, et pas de NDK requis pour le dire
+    lint {
+        // Timber n'arrive que par MapLibre (ses règles de lint avec) : l'appli journalise avec Log
+        disable += "LogNotTimber"
+    }
+
+    // Bibliothèques natives (Compose, MapLibre) livrées déjà allégées : rien à retirer, et pas de NDK requis pour le dire
     packaging {
-        jniLibs.keepDebugSymbols += "**/libandroidx.graphics.path.so"
+        jniLibs.keepDebugSymbols += listOf("**/libandroidx.graphics.path.so", "**/libmaplibre.so")
     }
 }
 
@@ -42,6 +47,8 @@ dependencies {
     implementation(libs.compose.material3)
     implementation(libs.activity.compose)
     implementation(libs.lifecycle.viewmodel.compose)
+    implementation(libs.lifecycle.runtime.compose)
     implementation(libs.glance.appwidget)
     implementation(libs.work.runtime)
+    implementation(libs.maplibre.android)
 }

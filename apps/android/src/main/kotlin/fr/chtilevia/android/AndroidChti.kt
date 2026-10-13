@@ -14,12 +14,15 @@ import fr.chtilevia.application.GetBikeStations
 import fr.chtilevia.application.GetDepartures
 import fr.chtilevia.application.InterpretUtterance
 import fr.chtilevia.application.ListFavorites
+import fr.chtilevia.application.Nearby
+import fr.chtilevia.application.NearbyMode
 import fr.chtilevia.application.NetworkProfile
 import fr.chtilevia.application.QuerySuggestions
 import fr.chtilevia.application.SuggestQuery
 import fr.chtilevia.application.Notice
 import fr.chtilevia.application.Notices
 import fr.chtilevia.application.UpdateTimetable
+import fr.chtilevia.domain.Position
 import fr.chtilevia.domain.serviceDates
 import fr.chtilevia.presentation.Chti
 import fr.chtilevia.presentation.ChtiServices
@@ -40,12 +43,13 @@ class AndroidChti(context: Context, private val profile: NetworkProfile = Networ
     private val listFavorites = ListFavorites(favorites)
     private val interpretUtterance = InterpretUtterance(favorites)
     private val bikeShare = GbfsFeed { fetch("${profile.bikeShareUrl}/$it") }
+    private val findNearby = FindNearby(gtfs.timetable, gtfs, bikeShare, clock)
     private val suggestQuery = SuggestQuery(gtfs.timetable, bikeShare, favorites, clock)
     private val chti = Chti(
         ChtiServices(
             departures = GetDepartures(gtfs.timetable, gtfs, GtfsRealtimeFeed { fetch(profile.realtimeUrl) }, clock, profile),
             bikeStations = GetBikeStations(bikeShare, clock),
-            nearby = FindNearby(gtfs.timetable, gtfs, bikeShare, clock),
+            nearby = findNearby,
             listFavorites = listFavorites,
             findFavorite = FindFavorite(favorites),
             interpretUtterance = interpretUtterance,
@@ -76,6 +80,18 @@ class AndroidChti(context: Context, private val profile: NetworkProfile = Networ
     /** Étape et propositions pour compléter une question en cours de frappe */
     @Synchronized
     fun suggest(input: String): QuerySuggestions = suggestQuery.execute(input)
+
+    /** Position d'une zone d'arrêt (identifiant GTFS), pour la carte */
+    @Synchronized
+    fun stopPosition(stopId: String): Position? = gtfs.timetable.stops()[stopId]?.position
+
+    /** Position d'une station V'Lille (identifiant GBFS), pour la carte ; null si V'Lille est injoignable */
+    @Synchronized
+    fun stationPosition(stationId: String): Position? = bikeShare.stations()?.firstOrNull { it.id == stationId }?.position
+
+    /** Arrêts et stations proches, en objets (pour la carte) */
+    @Synchronized
+    fun nearby(position: Position, count: Int, mode: NearbyMode): Nearby = findNearby.execute(position, count, mode)
 
     /** Commande comprise dans une phrase libre (comme `chti vocal`), ou null si elle n'est pas comprise */
     @Synchronized
