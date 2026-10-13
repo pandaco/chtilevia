@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Raccourci fixe (appui long sur l'icône) ; les favoris sont ajoutés par Shortcuts.kt -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutId="parler"
+        android:shortcutLongLabel="@string/shortcut_speak_long"
+        android:shortcutShortLabel="@string/shortcut_speak">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetClass="fr.chtilevia.android.AnswerActivity"
+            android:targetPackage="fr.chtilevia" />
+    </shortcut>
+</shortcuts>

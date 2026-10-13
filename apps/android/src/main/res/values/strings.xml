@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="widget_description">Poser une question à la voix ou lancer un favori</string>
+    <string name="shortcut_speak">Parler</string>
+    <string name="shortcut_speak_long">Poser une question à la voix</string>
 </resources>

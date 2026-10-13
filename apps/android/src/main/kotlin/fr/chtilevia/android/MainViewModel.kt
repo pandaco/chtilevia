@@ -32,6 +32,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 onMain { status = "Horaires indisponibles : vérifie la connexion, ils seront téléchargés à la première question." }
             }
             val names = app.chti.favoriteNames()
+            Shortcuts.update(app, names)
             onMain { favorites = names }
         }
     }
@@ -44,6 +45,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun saveFavorites(text: String) = background {
         app.chti.saveFavorites(text)
         val names = app.chti.favoriteNames()
+        Shortcuts.update(app, names)
         onMain {
             favorites = names
             // Les boutons du widget suivent les favoris

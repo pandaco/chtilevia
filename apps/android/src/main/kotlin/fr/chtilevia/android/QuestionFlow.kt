@@ -57,6 +57,7 @@ class QuestionFlow(
         return try {
             update(Conversation(status = "J'écoute…"))
             listening.launch(intent)
+            Shortcuts.spoke(activity)
             true
         } catch (_: ActivityNotFoundException) {
             update(Conversation())
@@ -85,6 +86,7 @@ class QuestionFlow(
     /** Favori, réponse en mode voix */
     fun favorite(name: String) {
         update(Conversation(question = name, status = "Je cherche…"))
+        Shortcuts.ranFavorite(activity, name)
         run(listOf("--voix", name))
     }
 
