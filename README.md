@@ -257,13 +257,23 @@ npx nx run :android:assembleDebug                                          # con
 adb install -r apps/android/build/outputs/apk/debug/android-debug.apk      # téléphone en débogage USB ou Wi-Fi
 ```
 
-- **Écran** : gros bouton 🎤, question au clavier en secours, réponse affichée et lue, favoris en
-  boutons, éditeur de favoris (même format que le fichier du shell : `nom: commande`).
-- **Widget** : appui long sur l'accueil → *Widgets* → *chtilevia*. Ses boutons ouvrent une carte en
-  bas de l'écran, par-dessus l'accueil, qui reste jusqu'à ce qu'on la touche ; la dernière réponse
-  est aussi gardée en notification.
-- **À proximité** : « vélo à proximité » utilise la position du téléphone (autorisation demandée la
-  première fois) et répond comme `chti autour`.
+- **Écran** : gros bouton 🎤 ; une question dite est lue et affichée, une question tapée ou un
+  favori touché est seulement affiché (bouton 🔊/🔇 pour ne jamais lire). Réponse en cartes,
+  passages en badges (vert : temps réel, gris : horaire théorique) ; une carte touchée montre
+  l'arrêt ou la station sur la carte. La question touchée se corrige au clavier.
+- **Saisie assistée** : *Écrire* propose, étape par étape, le mode, la ligne, l'arrêt, la direction
+  ou la station V'Lille, tirés des horaires et de V'Lille.
+- **Favoris** : boutons au-dessus de la barre du bas ; *Modifier* ouvre leur écran : nom, questions
+  tapées avec la même saisie assistée, ordre des boutons, suppression. Ils sont enregistrés au
+  format du fichier du shell (`nom: commande`).
+- **Thème** : clair ou sombre (bouton ☀/☾), gardé ; celui du téléphone tant qu'on n'a pas choisi.
+- **Carte** : OpenStreetMap, arrêts et stations proches filtrés par mode, liste touchable, et
+  *Itinéraire* qui ouvre l'appli de cartographie du téléphone.
+- **Widget** : appui long sur l'accueil → *Widgets* → *chtilevia*. Ses boutons répondent par une
+  notification, sans ouvrir l'appli ; la toucher ouvre la réponse dans l'appli. *Que demander ?*
+  ouvre l'aide.
+- **À proximité** : « vélo à proximité », « tram à proximité »… utilisent la position du téléphone
+  (autorisation demandée la première fois) et répondent comme `chti autour`.
 - **Raccourcis** : appui long sur l'icône → *Parler* et un raccourci par favori.
 - **Horaires** : téléchargés au premier lancement (~8 s), puis mis à jour chaque jour en arrière-plan
   (en Wi-Fi, batterie suffisante), et gardés en mémoire tant que l'appli tourne (réponse en moins
