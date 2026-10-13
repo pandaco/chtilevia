@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -17,6 +18,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -57,6 +59,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -94,7 +97,15 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         flow = QuestionFlow(this) { model.conversation = it }
         setContent {
-            ChtiTheme {
+            val dark = model.darkTheme ?: isSystemInDarkTheme()
+            // Barres du système (heure, batterie) lisibles sur le fond du thème choisi, pas celui du téléphone
+            DisposableEffect(dark) {
+                val transparent = android.graphics.Color.TRANSPARENT
+                val bars = if (dark) SystemBarStyle.dark(transparent) else SystemBarStyle.light(transparent, transparent)
+                enableEdgeToEdge(statusBarStyle = bars, navigationBarStyle = bars)
+                onDispose {}
+            }
+            ChtiTheme(dark) {
                 Surface(Modifier.fillMaxSize()) { Screen(model, flow) }
             }
         }
@@ -242,6 +253,7 @@ private fun Home(
         model.stopSpeaking()
         model.conversation = Conversation()
     }
+    val dark = model.darkTheme ?: isSystemInDarkTheme()
 
     Column(Modifier.fillMaxSize().safeDrawingPadding().imePadding()) {
         Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp, top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -252,6 +264,13 @@ private fun Home(
                     painterResource(if (model.speakAnswers) R.drawable.ic_volume_on else R.drawable.ic_volume_off),
                     contentDescription = if (model.speakAnswers) "Réponses lues : couper" else "Réponses non lues : activer",
                     tint = if (model.speakAnswers) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            IconButton(onClick = { model.toggleTheme(dark) }) {
+                Icon(
+                    painterResource(if (dark) R.drawable.ic_light_mode else R.drawable.ic_dark_mode),
+                    contentDescription = if (dark) "Passer en thème clair" else "Passer en thème sombre",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             TextButton(onClick = { onMap(NearbyMode.ALL) }) { IconLabel(R.drawable.ic_map, "Carte") }

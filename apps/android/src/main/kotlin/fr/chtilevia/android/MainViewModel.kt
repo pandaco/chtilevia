@@ -52,6 +52,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         if (!speakAnswers) app.speaker.stop()
     }
 
+    /** Thème choisi (réglage gardé) : true sombre, false clair, null celui du téléphone */
+    var darkTheme by mutableStateOf(app.darkTheme)
+        private set
+
+    /** Bascule clair ↔ sombre ; [current] : le thème affiché, celui du téléphone tant que rien n'est choisi */
+    fun toggleTheme(current: Boolean) {
+        darkTheme = !current
+        app.darkTheme = darkTheme
+    }
+
     /** Saisie au clavier ouverte */
     var typing by mutableStateOf(false)
 

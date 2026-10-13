@@ -25,6 +25,15 @@ class ChtiApplication : Application() {
         get() = settings.getBoolean("lire", true)
         set(value) = settings.edit { putBoolean("lire", value) }
 
+    /** Thème choisi : true sombre, false clair, null (rien choisi) celui du téléphone */
+    var darkTheme: Boolean?
+        get() = when (settings.getString("theme", null)) {
+            "sombre" -> true
+            "clair" -> false
+            else -> null
+        }
+        set(value) = settings.edit { putString("theme", value?.let { if (it) "sombre" else "clair" }) }
+
     /** Fil des commandes : réseau et fichiers hors du fil principal, une commande à la fois */
     val worker: ExecutorService = Executors.newSingleThreadExecutor { Thread(it, "chti") }
 

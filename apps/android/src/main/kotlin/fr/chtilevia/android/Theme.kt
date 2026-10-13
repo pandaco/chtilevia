@@ -79,7 +79,8 @@ private val Dark = darkColorScheme(
     outlineVariant = Brand.nightLine,
 )
 
+/** Thème de l'appli : [dark] true sombre, false clair, null celui du téléphone */
 @Composable
-fun ChtiTheme(content: @Composable () -> Unit) {
-    MaterialTheme(colorScheme = if (isSystemInDarkTheme()) Dark else Light, content = content)
+fun ChtiTheme(dark: Boolean? = null, content: @Composable () -> Unit) {
+    MaterialTheme(colorScheme = if (dark ?: isSystemInDarkTheme()) Dark else Light, content = content)
 }
