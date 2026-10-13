@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Fenêtre blanche au lancement, comme l'écran Compose (ChtiTheme) : pas d'éclair noir -->
+    <style name="Theme.Chti" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:colorAccent">@color/icon_background</item>
+    </style>
+</resources>

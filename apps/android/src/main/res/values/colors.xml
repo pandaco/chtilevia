@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Icône provisoire : rouge du réseau, pictogramme blanc -->
+    <!-- Rouge de l'icône, repris par l'appli et le widget (voir Theme.kt) -->
     <color name="icon_background">#E3051B</color>
 </resources>

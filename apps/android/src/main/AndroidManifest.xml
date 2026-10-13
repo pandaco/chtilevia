@@ -23,7 +23,7 @@
         android:name=".ChtiApplication"
         android:icon="@mipmap/ic_launcher"
         android:label="chtilevia"
-        android:theme="@android:style/Theme.Material.NoActionBar">
+        android:theme="@style/Theme.Chti">
         <activity
             android:name=".MainActivity"
             android:exported="true">
