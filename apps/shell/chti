@@ -415,12 +415,28 @@ def word_gap(query, name):
     return min(gaps) if gaps else None
 
 
+def in_digits(words):
+    # Nombres en lettres écrits en chiffres, comme dans les noms d'arrêts : « quatre cantons » -> « 4 cantons »
+    out, i = [], 0
+    while i < len(words):
+        pair = " ".join(words[i:i + 2])
+        if i + 1 < len(words) and pair in NUMBERS:
+            out.append(NUMBERS[pair])
+            i += 2
+        else:
+            out.append(NUMBERS.get(words[i], words[i]))
+            i += 1
+    return out
+
+
 def approx_gap(query, name):
-    # Écart entre une demande et un nom, à l'écrit (fold) ou au son ; None si sans rapport
+    # Écart entre une demande et un nom, à l'écrit (fold) ou au son, nombres en lettres ou en
+    # chiffres ; None si sans rapport
     q, n = fold(query).split(), fold(name).split()
     if not q or not n:
         return None
-    gaps = [g for g in (word_gap(q, n), word_gap([sound(w) for w in q], [sound(w) for w in n])) if g is not None]
+    gaps = [g for v in (q, in_digits(q)) for g in (word_gap(v, n), word_gap([sound(w) for w in v], [sound(w) for w in n]))
+            if g is not None]
     return min(gaps) if gaps else None
 
 

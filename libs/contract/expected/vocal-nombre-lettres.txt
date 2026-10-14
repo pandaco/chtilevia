@@ -1,0 +1,3 @@
+Métro 1, arrêt 4 Cantons Stade P. Mauroy, vers Lille Chu - Eurasanté : dans 1 minute, puis dans 4 minutes. Horaires théoriques.
+Métro 1, arrêt 4 Cantons Stade P. Mauroy, vers Villeneuve D Ascq 4 Cantons Stade P. Mauroy : dans 1 minute, puis dans 4 minutes. Horaires théoriques.
+[exit 0]

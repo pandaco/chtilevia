@@ -57,12 +57,40 @@ private fun wordGap(query: List<String>, name: List<String>): Int? {
     return gaps.minOrNull()
 }
 
-/** Écart entre une demande et un nom, à l'écrit ([fold]) ou au son ([sound]) ; null si sans rapport */
+/** Nombres dits en lettres (forme [fold]) et leur écriture en chiffres */
+val NUMBER_WORDS = mapOf(
+    "un" to "1", "une" to "1", "deux" to "2", "trois" to "3", "quatre" to "4", "cinq" to "5",
+    "six" to "6", "sept" to "7", "huit" to "8", "neuf" to "9", "dix" to "10", "onze" to "11",
+    "douze" to "12", "treize" to "13", "quatorze" to "14", "quinze" to "15", "seize" to "16",
+    "dix sept" to "17", "dix huit" to "18", "dix neuf" to "19", "vingt" to "20",
+)
+
+/** Nombres en lettres écrits en chiffres, comme dans les noms d'arrêts : « quatre cantons » → « 4 cantons » */
+private fun inDigits(words: List<String>): List<String> {
+    val out = mutableListOf<String>()
+    var i = 0
+    while (i < words.size) {
+        val pair = NUMBER_WORDS[words.subList(i, minOf(i + 2, words.size)).joinToString(" ")]
+        if (i + 1 < words.size && pair != null) {
+            out += pair
+            i += 2
+        } else {
+            out += NUMBER_WORDS[words[i]] ?: words[i]
+            i += 1
+        }
+    }
+    return out
+}
+
+/**
+ * Écart entre une demande et un nom, à l'écrit ([fold]) ou au son ([sound]), nombres en lettres ou
+ * en chiffres ; null si sans rapport
+ */
 fun approximateGap(query: String, name: String): Int? {
     val q = fold(query).split(' ').filter { it.isNotEmpty() }
     val n = fold(name).split(' ').filter { it.isNotEmpty() }
     if (q.isEmpty() || n.isEmpty()) return null
-    return listOfNotNull(wordGap(q, n), wordGap(q.map(::sound), n.map(::sound))).minOrNull()
+    return listOf(q, inDigits(q)).flatMap { v -> listOfNotNull(wordGap(v, n), wordGap(v.map(::sound), n.map(::sound))) }.minOrNull()
 }
 
 /** Éléments au nom le plus proche de la demande (tous ceux à égalité), vide si aucun ne ressemble */

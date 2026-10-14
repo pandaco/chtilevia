@@ -1,5 +1,6 @@
 package fr.chtilevia.application
 
+import fr.chtilevia.domain.NUMBER_WORDS
 import fr.chtilevia.domain.fold
 
 /**
@@ -32,18 +33,18 @@ class InterpretUtterance(private val favorites: FavoritesStore) {
         val command: List<String> = when (val head = body[0]) {
             "bus", "ligne", "liane" -> {
                 if (rest.isEmpty()) throw ChtiError.UtteranceMissingLine()
-                var line = NUMBERS[rest.take(2).joinToString(" ")]
+                var line = NUMBER_WORDS[rest.take(2).joinToString(" ")]
                 if (line != null) {
                     rest = rest.drop(2)
                 } else {
-                    line = NUMBERS[rest[0]] ?: rest[0]
+                    line = NUMBER_WORDS[rest[0]] ?: rest[0]
                     rest = rest.drop(1)
                 }
                 if (head == "liane" && line.all { it.isDigit() } && line.isNotEmpty()) line = "L$line"
                 listOf("bus", line.uppercase())
             }
             "metro", "metros" -> {
-                val number = rest.firstOrNull()?.let { (NUMBERS[it] ?: it).trimStart('m') }
+                val number = rest.firstOrNull()?.let { (NUMBER_WORDS[it] ?: it).trimStart('m') }
                 if (number != "1" && number != "2") throw ChtiError.UtteranceUnknownMetro()
                 rest = rest.drop(1)
                 listOf("metro", number)
@@ -92,13 +93,6 @@ class InterpretUtterance(private val favorites: FavoritesStore) {
         FavoritesFile.names(favorites.read().orEmpty()).lastOrNull { spokenKey(it) == key }
 
     private companion object {
-        val NUMBERS = mapOf(
-            "un" to "1", "une" to "1", "deux" to "2", "trois" to "3", "quatre" to "4", "cinq" to "5",
-            "six" to "6", "sept" to "7", "huit" to "8", "neuf" to "9", "dix" to "10", "onze" to "11",
-            "douze" to "12", "treize" to "13", "quatorze" to "14", "quinze" to "15", "seize" to "16",
-            "dix sept" to "17", "dix huit" to "18", "dix neuf" to "19", "vingt" to "20",
-        )
-
         /** Mots ignorés en tête de phrase et en tête du nom d'arrêt (jamais au milieu : « Pont de Bois ») */
         val FILLERS = setOf(
             "quand", "passe", "est", "ce", "que", "qu", "il", "y", "a", "le", "la", "les", "l", "au",

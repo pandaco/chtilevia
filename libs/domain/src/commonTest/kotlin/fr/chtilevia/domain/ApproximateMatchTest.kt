@@ -35,6 +35,16 @@ class ApproximateMatchTest {
     }
 
     @Test
+    fun numbersInWordsMatchDigits() {
+        assertEquals(0, approximateGap("quatre cantons", "4 Cantons Stade P. Mauroy"))
+        assertEquals(0, approximateGap("Quatre-Chemins", "Ascq 4 Chemins"))
+        assertEquals(0, approximateGap("dix huit juin", "18 Juin"))
+        assertEquals(0, approximateGap("huit mai", "Rue Du 8 Mai 45"))
+        // « Pont Neuf » n'est pas « Pont 9 » : le nom tel quel compte aussi
+        assertEquals(0, approximateGap("pont neuf", "Pont Neuf"))
+    }
+
+    @Test
     fun gapRejectsUnrelatedNames() {
         assertNull(approximateGap("zzz", "Marais"))
         assertNull(approximateGap("bonjour", "Gambetta"))

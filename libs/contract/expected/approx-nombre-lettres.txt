@@ -1,0 +1,7 @@
+
+M1 — 4 Cantons Stade P. Mauroy  (4 CANTONS STADE PIERRE MAUROY  STATION DE MÉTRO M1)
+  → Villeneuve D Ascq 4 Cantons Stade P. Mauroy
+     23:51  dans 1 min     🕒 théorique
+  → Lille Chu - Eurasanté
+     23:53  dans 4 min     🕒 théorique
+[exit 0]

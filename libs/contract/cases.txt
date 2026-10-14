@@ -74,6 +74,9 @@ approx-autre-sens       | MIDI   | rt-midi.pb   | bus 10 esplanate -d flandres
 approx-ambigu           | MIDI   | rt-midi.pb   | bus 10 marie
 voix-approx-ambigu      | MIDI   | aucun        | --voix bus 10 marie
 vocal-approx-oral       | MIDI   | rt-midi.pb   | vocal le prochain tram à Croix la Roche vers Roubaix
+approx-nombre-lettres   | SOIR   | aucun        | metro 1 quatre cantons -n 1
+approx-nombre-direction | MIDI   | aucun        | metro 1 republique vers quatre cantons -n 1
+vocal-nombre-lettres    | MIDI   | aucun        | vocal prochain métro un à Quatre-Cantons
 # Autour d'une position : arrêts desservis (avec leurs lignes) et stations V'Lille les plus proches
 autour-position         | MINUIT | aucun        | autour 50.6363 3.0640
 autour-format-carte     | MINUIT | aucun        | autour 50.6363, 3.0640 -n 1
