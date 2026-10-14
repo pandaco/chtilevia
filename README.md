@@ -275,6 +275,8 @@ adb install -r apps/android/build/outputs/apk/debug/android-debug.apk      # té
 - **À proximité** : « vélo à proximité », « tram à proximité »… utilisent la position du téléphone
   (autorisation demandée la première fois) et répondent comme `chti autour`.
 - **Raccourcis** : appui long sur l'icône → *Parler* et un raccourci par favori.
+- **AppFunctions** (Android 16 et plus) : les outils du [serveur MCP](#avec-un-assistant-ia-mcp),
+  exposés aux agents du téléphone (Gemini…). Voir [AppFunctions](#appfunctions-agents-du-téléphone).
 - **Horaires** : téléchargés au premier lancement (~8 s), puis mis à jour chaque jour en arrière-plan
   (en Wi-Fi, batterie suffisante), et gardés en mémoire tant que l'appli tourne (réponse en moins
   d'un dixième de seconde ensuite). 44 Mo sur le téléphone.
@@ -310,6 +312,26 @@ gemini mcp add -s user chtilevia node "$PWD/apps/mcp/src/main.ts"               
 ```
 
 Outils, configuration de Claude Desktop et architecture : [`apps/mcp/README.md`](apps/mcp/README.md).
+
+### AppFunctions (agents du téléphone)
+
+L'appli Android expose les mêmes outils aux agents du téléphone par
+[AppFunctions](https://developer.android.com/ai/appfunctions) (Android 16 et plus, bibliothèque
+Jetpack expérimentale) : `prochainsPassages`, `listerArrets`, `stationVelo`, `autourDeMoi`,
+`listerFavoris`, `favori`, avec les paramètres des outils MCP (un test de `apps/mcp` vérifie la
+parité). Chaque fonction répond en phrases à lire (`text`) et en JSON du contrat (`json`) ; une
+erreur devient une exception AppFunctions (argument invalide, arrêt introuvable…) avec le message
+de chti. Tout est en lecture seule.
+
+Gemini n'appelle ces fonctions que pour les testeurs de son programme d'accès anticipé ; sans y être
+inscrit, on les essaie avec adb :
+
+```sh
+adb shell cmd app_function list-app-functions --package fr.chtilevia
+adb shell "cmd app_function execute-app-function --package fr.chtilevia \
+  --function 'fr.chtilevia.android.BaseChtiAppFunctionService#prochainsPassages' \
+  --parameters '{\"mode\":\"tram\",\"arret\":\"croisé laroche\",\"direction\":\"roubaix\"}' --brief-yaml"
+```
 
 ## Sources de données (open data, sans clé d'API)
 
