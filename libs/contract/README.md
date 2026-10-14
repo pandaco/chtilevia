@@ -76,3 +76,6 @@ Les cas `json-*` produisent un document JSON (suivi de la ligne `[exit N]`) qui 
 
 Une nouvelle fonctionnalité commence par ses cas : ils fixent le comportement attendu de toutes les
 implémentations.
+
+Pourquoi des tests figés, comment lire un échec, rejouer un cas à la main ou régénérer les fixtures :
+[Le contrat et les tests](../../docs/dev/04-contrat-et-tests.md).
