@@ -52,5 +52,5 @@ Installation terminée. Reste à faire sur le téléphone :
   - ajouter le widget « Termux:Widget » sur l'écran d'accueil ;
   - toucher « Parler » une première fois et autoriser le micro pour Termux:API ;
   - adapter les favoris : nano ~/.config/chtipasse/favoris
-Guide complet : ~/chtipasse/docs/android.md
+Guide complet : ~/chtipasse/docs/guide/termux.md
 EOF

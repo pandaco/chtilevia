@@ -1,6 +1,10 @@
-# chti sur Android — guide d'utilisation
+# Chtipasse dans Termux — guide d'installation
 
-Ce guide explique comment installer `chti` sur un téléphone Android, puis comment l'utiliser au
+> Tu veux simplement l'appli ? Elle s'installe en un geste et n'a besoin de rien d'autre :
+> voir [l'appli Android](appli-android.md). Ce guide s'adresse à qui préfère tout garder dans
+> [Termux](https://termux.dev), avec le script `chti` et le widget Termux:Widget.
+
+Ce guide explique comment installer `chti` dans Termux sur un téléphone Android, puis comment l'utiliser au
 quotidien : **à la voix** ou **en un clic** depuis l'écran d'accueil. Tout tourne sur le téléphone :
 pas de serveur, pas de compte, pas d'abonnement.
 
@@ -20,8 +24,8 @@ Un widget sur l'écran d'accueil, avec un bouton par action :
 La règle est simple : **si tu demandes à la voix, chti répond à la voix ; si tu touches un bouton,
 chti répond par écrit.**
 
-Exemple de réponse : *« Tram, arrêt Croise Laroche, vers Roubaix Eurotéléport : dans 4 minutes,
-puis dans 16 minutes. »*
+Exemple de réponse : *« Tram, arrêt Croise Laroche, vers Roubaix Eurotéléport : dans 1 minute,
+puis dans 13 minutes. »*
 
 ## Installation (une seule fois, ~15 minutes)
 
@@ -91,7 +95,7 @@ rentrer-velo: velo gare lille europe --prendre
 rentrer-velo: velo la madeleine gare --deposer
 ```
 
-- La commande est celle que tu taperais après `chti` (voir le [README](../README.md#appels-possibles)).
+- La commande est celle que tu taperais après `chti` (voir [la commande `chti`](terminal.md#toutes-les-commandes)).
 - Un même nom sur plusieurs lignes enchaîne les commandes : c'est ce qui permet d'avoir les vélos
   au départ **et** les places à l'arrivée.
 - Pour trouver le nom exact d'un arrêt : `chti bus l1` liste les arrêts de la Liane 1.
@@ -167,7 +171,7 @@ Le bouton **Sport** apparaît dans le widget (rafraîchis-le au besoin). Remplac
 
 ### Dans le terminal Termux
 
-Toutes les commandes du [README](../README.md#appels-possibles) marchent aussi dans Termux :
+Toutes les [commandes de `chti`](terminal.md#toutes-les-commandes) marchent aussi dans Termux :
 `chti bus l1 republique`, `chti velo rihour`, `chti metro 1 republique -d chu`…
 
 ## Mettre à jour
