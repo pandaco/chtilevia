@@ -1,4 +1,4 @@
-# chtilevia
+# Chtipasse
 
 > T'as ton bus, biloute ?
 
@@ -227,7 +227,7 @@ Règles :
 
 Sur un téléphone Android, chti tourne directement sur le téléphone, **sans serveur**, de deux façons :
 
-- **l'appli chtilevia** (`apps/android`, cœur Kotlin) : un écran et un widget d'accueil, sans rien
+- **l'appli Chtipasse** (`apps/android`, cœur Kotlin) : un écran et un widget d'accueil, sans rien
   d'autre à installer ;
 - **Termux** (`apps/shell/termux`) : le script `chti` et le widget Termux:Widget.
 
@@ -250,7 +250,7 @@ sur son bouton répond par écrit. Les phrases comprises sont décrites dans
 > les comptes aux États-Unis, en anglais, et seulement via un serveur. Le widget est la seule voie
 > vocale sans serveur depuis la France.
 
-### Appli chtilevia
+### Appli Chtipasse
 
 ```sh
 npx nx run :android:assembleDebug                                          # construit l'appli
@@ -269,7 +269,7 @@ adb install -r apps/android/build/outputs/apk/debug/android-debug.apk      # té
 - **Thème** : clair ou sombre (bouton ☀/☾), gardé ; celui du téléphone tant qu'on n'a pas choisi.
 - **Carte** : OpenStreetMap, arrêts et stations proches filtrés par mode, liste touchable, et
   *Itinéraire* qui ouvre l'appli de cartographie du téléphone.
-- **Widget** : appui long sur l'accueil → *Widgets* → *chtilevia*. Ses boutons répondent par une
+- **Widget** : appui long sur l'accueil → *Widgets* → *Chtipasse*. Ses boutons répondent par une
   notification, sans ouvrir l'appli ; la toucher ouvre la réponse dans l'appli. *Que demander ?*
   ouvre l'aide.
 - **À proximité** : « vélo à proximité », « tram à proximité »… utilisent la position du téléphone

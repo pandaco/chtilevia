@@ -264,7 +264,7 @@ private fun Home(
         Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp, top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             AppLogo()
             Spacer(Modifier.size(10.dp))
-            Text("chtilevia", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+            Text("Chtipasse", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
             Spacer(Modifier.weight(1f))
             IconButton(onClick = model::toggleSpeech) {
                 Icon(

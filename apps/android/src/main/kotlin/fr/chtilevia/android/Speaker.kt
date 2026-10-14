@@ -88,6 +88,6 @@ class Speaker(context: Context) : TextToSpeech.OnInitListener {
     }
 
     private companion object {
-        const val TAG = "chtilevia"
+        const val TAG = "chtipasse"
     }
 }

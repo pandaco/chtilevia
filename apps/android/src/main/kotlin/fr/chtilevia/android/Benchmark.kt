@@ -51,7 +51,7 @@ class Benchmark(private val app: AndroidChti, private val filesDir: File, privat
     }
 
     private companion object {
-        const val TAG = "chtilevia"
+        const val TAG = "chtipasse"
         val COMMANDS = listOf(
             listOf("tram", "croise", "laroche", "vers", "roubaix"),
             listOf("bus", "10", "gambetta"),

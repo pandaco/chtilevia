@@ -1,4 +1,4 @@
-# Serveur MCP chtilevia
+# Serveur MCP Chtipasse
 
 Donne aux assistants IA (Claude Code, Claude Desktop, Gemini CLI, tout client
 [MCP](https://modelcontextprotocol.io)) les prochains passages Ilévia et la disponibilité V'Lille.

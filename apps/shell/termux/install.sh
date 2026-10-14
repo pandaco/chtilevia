@@ -1,5 +1,5 @@
 #!/bin/sh
-# Installe chtilevia dans Termux (Android) : dépendances, commandes chti et chti-widget,
+# Installe Chtipasse dans Termux (Android) : dépendances, commandes chti et chti-widget,
 # favoris d'exemple, raccourcis du widget Termux:Widget, puis construction du cache.
 # Usage, depuis le dépôt cloné dans Termux : sh apps/shell/termux/install.sh
 set -eu
