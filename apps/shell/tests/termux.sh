@@ -74,7 +74,7 @@ ls "$HOME/.shortcuts/tasks" >>"$LOG"
 check "install : raccourci Parler" "Parler"
 check "install : raccourci Travail" "Travail"
 check "install : raccourci Rentrer à vélo" "Rentrer à vélo"
-cp "$FIX/config/chtilevia/favoris" "$XDG_CONFIG_HOME/chtilevia/favoris" # favoris des fixtures
+cp "$FIX/config/chtipasse/favoris" "$XDG_CONFIG_HOME/chtipasse/favoris" # favoris des fixtures
 
 shortcut() { sh "$HOME/.shortcuts/tasks/$1"; }
 

@@ -52,7 +52,7 @@ class ContractTest {
     // Référentiel construit une fois pour tous les cas, depuis le zip des fixtures (≡ chti update)
     private val cache = Files.createTempDirectory("chti-kotlin-tests").toFile()
     private val gtfs by lazy {
-        GtfsCache(File(cache, "chtilevia").path, fixtures.resolve("gtfs.zip").toURI().toString())
+        GtfsCache(File(cache, "chtipasse").path, fixtures.resolve("gtfs.zip").toURI().toString())
             .also { it.refresh(force = true, notices = Notices.NONE) }
     }
 
@@ -90,7 +90,7 @@ class ContractTest {
         val clock = Clock { now }
         // « aucun » : flux absent, comme une URL injoignable
         val realtime = fixtures.resolve(if (case.realtime == "aucun") "absent.pb" else case.realtime).toURI().toString()
-        val favorites = FileFavoritesStore(File(fixtures, "config/chtilevia/favoris").path)
+        val favorites = FileFavoritesStore(File(fixtures, "config/chtipasse/favoris").path)
         val bikeShare = GbfsFeed { fetch(fixtures.resolve(it).toURI().toString()) }
         val services = ChtiServices(
             departures = GetDepartures(gtfs.timetable, gtfs, GtfsRealtimeFeed { fetch(realtime) }, clock, profile),

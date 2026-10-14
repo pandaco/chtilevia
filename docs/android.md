@@ -44,34 +44,34 @@ Le plus discret : passer par une archive, sans rien publier sur internet.
 
 1. **Sur ton ordinateur**, dans le dossier du projet :
    ```sh
-   git archive --format=zip -o chtilevia.zip HEAD
+   git archive --format=zip -o chtipasse.zip HEAD
    ```
-2. Copie `chtilevia.zip` dans le dossier **Téléchargements** du téléphone (câble USB, Google Drive,
+2. Copie `chtipasse.zip` dans le dossier **Téléchargements** du téléphone (câble USB, Google Drive,
    e-mail à toi-même…).
 3. **Dans Termux**, donne l'accès aux fichiers du téléphone (Android demande une autorisation :
    accepte), puis décompresse :
    ```sh
    termux-setup-storage
    pkg install -y unzip
-   unzip ~/storage/downloads/chtilevia.zip -d ~/chtilevia
+   unzip ~/storage/downloads/chtipasse.zip -d ~/chtipasse
    ```
 
 Si le projet est sur un dépôt git (GitHub…), tu peux aussi faire :
-`pkg install -y git && git clone <url-du-dépôt> ~/chtilevia`.
+`pkg install -y git && git clone <url-du-dépôt> ~/chtipasse`.
 
 ### 3. Lancer l'installeur
 
 De préférence en Wi-Fi (il télécharge ~9 Mo d'horaires) :
 
 ```sh
-sh ~/chtilevia/apps/shell/termux/install.sh
+sh ~/chtipasse/apps/shell/termux/install.sh
 ```
 
 Il affiche 5 étapes :
 
 1. installation des outils nécessaires (`python`, `curl`, `jq`…) ;
 2. création des commandes `chti` et `chti-widget` ;
-3. copie des **favoris d'exemple** dans `~/.config/chtilevia/favoris` (si tu n'en as pas déjà) ;
+3. copie des **favoris d'exemple** dans `~/.config/chtipasse/favoris` (si tu n'en as pas déjà) ;
 4. installation des 3 boutons du widget ;
 5. téléchargement et préparation des horaires (quelques dizaines de secondes).
 
@@ -80,7 +80,7 @@ Il affiche 5 étapes :
 Les favoris fournis sont des exemples. Remplace-les par tes trajets :
 
 ```sh
-nano ~/.config/chtilevia/favoris
+nano ~/.config/chtipasse/favoris
 ```
 
 Le format est `nom: commande`, une commande par ligne :
@@ -175,7 +175,7 @@ Toutes les commandes du [README](../README.md#appels-possibles) marchent aussi d
 - **Les horaires** se mettent à jour tout seuls, une fois par jour, au premier usage.
   Pour forcer : `chti update`.
 - **Le projet** : recopie la nouvelle archive comme à l'étape 2 (en remplaçant l'ancien dossier :
-  `rm -rf ~/chtilevia` avant `unzip`), puis relance `sh ~/chtilevia/apps/shell/termux/install.sh`.
+  `rm -rf ~/chtipasse` avant `unzip`), puis relance `sh ~/chtipasse/apps/shell/termux/install.sh`.
   Tes favoris sont conservés.
 
 ## Dépannage
@@ -191,12 +191,12 @@ Toutes les commandes du [README](../README.md#appels-possibles) marchent aussi d
 | « L'arrêt … n'est pas desservi … en direction de … » | L'arrêt existe, mais la ligne n'y passe que dans d'autres directions (souvent une ligne à sens unique à cet endroit) : la réponse les cite. |
 | Le premier usage de la journée est lent | Normal : les horaires sont retéléchargés et préparés une fois par jour (quelques secondes). |
 | Les heures sont décalées | Vérifie le fuseau horaire du téléphone (Paramètres → Date et heure). |
-| `chti : commande requise introuvable` | Un outil manque : relance `sh ~/chtilevia/apps/shell/termux/install.sh`. |
+| `chti : commande requise introuvable` | Un outil manque : relance `sh ~/chtipasse/apps/shell/termux/install.sh`. |
 
 ## Désinstaller
 
 ```sh
-rm -rf ~/chtilevia ~/.config/chtilevia ~/.cache/chtilevia
+rm -rf ~/chtipasse ~/.config/chtipasse ~/.cache/chtipasse
 rm -f "$PREFIX/bin/chti" "$PREFIX/bin/chti-widget"
 rm -f ~/.shortcuts/tasks/Parler ~/.shortcuts/tasks/Travail ~/.shortcuts/tasks/"Rentrer à vélo"
 ```

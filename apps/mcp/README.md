@@ -37,12 +37,12 @@ npx nx run :node:build           # compile le cœur Kotlin pour Node (à refaire
 ```
 
 Le premier appel télécharge et indexe les horaires (quelques secondes) ; le cache est celui de `chti`
-(`~/.cache/chtilevia`), partagé avec le script.
+(`~/.cache/chtipasse`), partagé avec le script.
 
 Sans JDK, le serveur peut s'appuyer sur le script shell : `CHTI_GATEWAY=shell`, avec les dépendances
 de `chti` (`curl`, `jq`, `unzip`, `python3`).
 
-Les favoris sont ceux de `chti` (`~/.config/chtilevia/favoris`).
+Les favoris sont ceux de `chti` (`~/.config/chtipasse/favoris`).
 
 Dans les commandes ci-dessous, remplacer `/chemin/vers/chtipasse` par le chemin absolu du dépôt.
 

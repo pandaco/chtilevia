@@ -1,6 +1,7 @@
 package fr.chtipasse.android
 
 import android.util.Log
+import fr.chtipasse.adapters.APP_DIRECTORY
 import fr.chtipasse.adapters.fetch
 import fr.chtipasse.adapters.gtfs.GtfsCache
 import fr.chtipasse.application.NetworkProfile
@@ -36,7 +37,7 @@ class Benchmark(private val app: AndroidChti, private val filesDir: File, privat
         line("Archive : ${zip.size / 1024} Ko")
 
         // Même cache que l'appli, reconstruit avec l'archive déjà téléchargée
-        val root = filesDir.resolve("chtilevia")
+        val root = filesDir.resolve(APP_DIRECTORY)
         val cache = GtfsCache(root.path, url, download = { zip }, keepStopTimes = false)
         timed("Décompression et index") { cache.refresh(force = true, notices = Notices.NONE) }
         line("Place occupée : ${root.resolve("gtfs").walk().filter { it.isFile }.sumOf { it.length() } / 1024} Ko")

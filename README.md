@@ -110,8 +110,8 @@ chti travail                         # un favori
 ### Favoris
 
 Un favori donne un nom court à une ou plusieurs commandes : `chti travail` au lieu de
-`chti tram croise laroche vers roubaix -n 2`. Ils sont lus dans `~/.config/chtilevia/favoris`
-(ou `$XDG_CONFIG_HOME/chtilevia/favoris`), au format `nom: commande` :
+`chti tram croise laroche vers roubaix -n 2`. Ils sont lus dans `~/.config/chtipasse/favoris`
+(ou `$XDG_CONFIG_HOME/chtipasse/favoris`), au format `nom: commande` :
 
 ```
 # Le tram pour aller au travail
@@ -122,7 +122,7 @@ rentrer-velo: velo gare lille europe --prendre
 rentrer-velo: velo la madeleine gare --deposer
 ```
 
-- Un fichier d'exemple est fourni : `mkdir -p ~/.config/chtilevia && cp apps/shell/exemples/favoris ~/.config/chtilevia/`.
+- Un fichier d'exemple est fourni : `mkdir -p ~/.config/chtipasse && cp apps/shell/exemples/favoris ~/.config/chtipasse/`.
 - La commande est celle que tu taperais après `chti`. `#` commence un commentaire.
 - Le nom ignore la casse ; il ne doit pas reprendre une commande existante (`bus`, `velo`…).
 - Si une des commandes échoue, les suivantes sont quand même lancées et le code retour vaut `1`.
@@ -291,9 +291,9 @@ la mise à jour, le dépannage et la désinstallation.
 En résumé :
 
 ```sh
-# dans Termux, une fois le projet copié dans ~/chtilevia
-sh ~/chtilevia/apps/shell/termux/install.sh   # outils, commandes, boutons du widget, horaires
-nano ~/.config/chtilevia/favoris       # tes trajets (fichier local, jamais publié)
+# dans Termux, une fois le projet copié dans ~/chtipasse
+sh ~/chtipasse/apps/shell/termux/install.sh   # outils, commandes, boutons du widget, horaires
+nano ~/.config/chtipasse/favoris       # tes trajets (fichier local, jamais publié)
 ```
 
 ## Avec un assistant IA (MCP)
@@ -342,7 +342,7 @@ adb shell "cmd app_function execute-app-function --package fr.chtilevia \
 | Stations V'Lille | `https://media.ilevia.fr/opendata/station_information.json` | GBFS 2.3 |
 | Disponibilité V'Lille | `https://media.ilevia.fr/opendata/station_status.json` | GBFS 2.3 |
 
-Le GTFS (~9 Mo) est mis en cache dans `~/.cache/chtilevia` (ou `$XDG_CACHE_HOME/chtilevia`) et rafraîchi
+Le GTFS (~9 Mo) est mis en cache dans `~/.cache/chtipasse` (ou `$XDG_CACHE_HOME/chtipasse`) et rafraîchi
 automatiquement toutes les 24 h.
 
 ### Requêtes curl brutes
@@ -432,6 +432,7 @@ chaque modification**, pour s'assurer qu'on n'a rien cassé.
 ```sh
 apps/shell/tests/contract.sh   # tests de non-régression : 79 cas, hors ligne, ~7 s
 apps/shell/tests/termux.sh     # partie Android, avec des commandes Termux simulées : 19 vérifications
+apps/shell/tests/app-dir.sh    # reprise des dossiers d'avant le renommage (chtilevia → chtipasse)
 shellcheck apps/shell/chti apps/shell/tests/*.sh apps/shell/termux/*.sh apps/shell/termux/shortcuts/*   # analyse du shell (paquet shellcheck)
 ```
 
@@ -513,7 +514,7 @@ Les chemins absolus sont remplacés par `<racine>` pour que les références soi
 | `libs/contract/fixtures/gtfs.zip` | Extrait du GTFS : lignes 10, tram et M1, du 10 au 12/10/2026 |
 | `libs/contract/fixtures/rt-midi.pb`, `rt-minuit.pb` | Flux temps réel enregistrés le 10/10/2026 à 12:46 et le 11/10 à 00:00 |
 | `libs/contract/fixtures/station_*.json` | Quelques stations V'Lille, dont une hors service |
-| `libs/contract/fixtures/config/chtilevia/favoris` | Favoris de test |
+| `libs/contract/fixtures/config/chtipasse/favoris` | Favoris de test |
 | `libs/contract/expected/` | Sorties de référence, une par cas |
 | `libs/contract/make_fixtures.py` | Régénère les fixtures à partir d'un nouvel instantané (voir plus bas) |
 
@@ -611,8 +612,8 @@ Utilisées par les tests, elles servent aussi à reproduire un cas à la main :
 |---|---|
 | `CHTI_NOW` | Heure courante figée (timestamp epoch) |
 | `CHTI_GTFS_URL`, `CHTI_RT_URL`, `CHTI_GBFS_URL` | Sources de données (acceptent `file://`) |
-| `XDG_CACHE_HOME` | Emplacement du cache (`$XDG_CACHE_HOME/chtilevia`) |
-| `XDG_CONFIG_HOME` | Emplacement des favoris (`$XDG_CONFIG_HOME/chtilevia/favoris`) |
+| `XDG_CACHE_HOME` | Emplacement du cache (`$XDG_CACHE_HOME/chtipasse`) |
+| `XDG_CONFIG_HOME` | Emplacement des favoris (`$XDG_CONFIG_HOME/chtipasse/favoris`) |
 
 ```sh
 # Rejouer à la main le cas « bus-temps-reel », sans toucher au cache habituel

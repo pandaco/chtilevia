@@ -1,4 +1,4 @@
-Favoris (<racine>/libs/contract/fixtures/config/chtilevia/favoris) :
+Favoris (<racine>/libs/contract/fixtures/config/chtipasse/favoris) :
   travail:      tram croise laroche vers roubaix -n 2
   Rentrer-Velo: velo gare lille europe --prendre
   rentrer-velo: velo la madeleine gare --deposer

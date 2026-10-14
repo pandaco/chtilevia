@@ -7,8 +7,13 @@ set -eu
 GTFS_URL="${CHTI_GTFS_URL:-https://media.ilevia.fr/opendata/gtfs.zip}"
 RT_URL="${CHTI_RT_URL:-https://proxy.transport.data.gouv.fr/resource/ilevia-lille-gtfs-rt}"
 GBFS_URL="${CHTI_GBFS_URL:-https://media.ilevia.fr/opendata}"
-CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/chtilevia"
-FAVORITES="${XDG_CONFIG_HOME:-$HOME/.config}/chtilevia/favoris"
+# Dossier $1/chtipasse ; l'ancien (chtilevia, nom d'avant le renommage), s'il existe seul, est repris
+app_dir() {
+	[ -e "$1/chtipasse" ] || [ ! -d "$1/chtilevia" ] || mv "$1/chtilevia" "$1/chtipasse" 2>/dev/null || :
+	printf '%s/chtipasse\n' "$1"
+}
+CACHE=$(app_dir "${XDG_CACHE_HOME:-$HOME/.cache}")
+FAVORITES="$(app_dir "${XDG_CONFIG_HOME:-$HOME/.config}")/favoris"
 GTFS_MAX_AGE_MIN=1440
 GTFS_RETRY_MIN=60
 

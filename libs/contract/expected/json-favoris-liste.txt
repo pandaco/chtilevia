@@ -1,6 +1,6 @@
 {
   "type": "favorites",
-  "path": "<racine>/libs/contract/fixtures/config/chtilevia/favoris",
+  "path": "<racine>/libs/contract/fixtures/config/chtipasse/favoris",
   "favorites": [
     {
       "name": "travail",

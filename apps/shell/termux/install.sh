@@ -21,7 +21,10 @@ sed "1s|.*|#!$SHELL_PATH|" "$ROOT/termux/widget.sh" >"$PREFIX/bin/chti-widget"
 chmod +x "$PREFIX/bin/chti" "$PREFIX/bin/chti-widget"
 
 echo "3/5 Favoris"
-config="${XDG_CONFIG_HOME:-$HOME/.config}/chtilevia"
+base="${XDG_CONFIG_HOME:-$HOME/.config}"
+# Favoris d'avant le renommage (chtilevia) repris, comme le fait chti
+[ -e "$base/chtipasse" ] || [ ! -d "$base/chtilevia" ] || mv "$base/chtilevia" "$base/chtipasse"
+config="$base/chtipasse"
 mkdir -p "$config"
 if [ -f "$config/favoris" ]; then
 	echo "    $config/favoris existe déjà, conservé"
@@ -48,6 +51,6 @@ cat <<'EOF'
 Installation terminée. Reste à faire sur le téléphone :
   - ajouter le widget « Termux:Widget » sur l'écran d'accueil ;
   - toucher « Parler » une première fois et autoriser le micro pour Termux:API ;
-  - adapter les favoris : nano ~/.config/chtilevia/favoris
-Guide complet : ~/chtilevia/docs/android.md
+  - adapter les favoris : nano ~/.config/chtipasse/favoris
+Guide complet : ~/chtipasse/docs/android.md
 EOF

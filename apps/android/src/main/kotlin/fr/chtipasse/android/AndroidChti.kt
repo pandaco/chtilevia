@@ -1,6 +1,7 @@
 package fr.chtipasse.android
 
 import android.content.Context
+import fr.chtipasse.adapters.appDirectory
 import fr.chtipasse.adapters.bikeshare.GbfsFeed
 import fr.chtipasse.adapters.favorites.FileFavoritesStore
 import fr.chtipasse.adapters.fetch
@@ -34,10 +35,10 @@ import java.io.File
 
 /**
  * Racine de composition de l'appli : le cœur avec les adaptateurs JVM, le référentiel dans les
- * fichiers privés de l'appli (`files/chtilevia/gtfs`) et les favoris dans `files/chtilevia/favoris`.
+ * fichiers privés de l'appli (`files/chtipasse/gtfs`) et les favoris dans `files/chtipasse/favoris`.
  */
 class AndroidChti(context: Context, private val profile: NetworkProfile = NetworkProfile.ILEVIA) {
-    private val root = context.filesDir.resolve("chtilevia").path
+    private val root = appDirectory(context.filesDir.path)
     // Cache propre à l'appli : stop_times.txt ne sert plus une fois l'index construit
     val gtfs = GtfsCache(root, profile.gtfsUrl, keepStopTimes = false)
     private val clock = Clock { System.currentTimeMillis() / 1000 }

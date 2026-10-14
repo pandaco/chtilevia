@@ -2,6 +2,7 @@
 
 package fr.chtipasse.node
 
+import fr.chtipasse.adapters.appDirectory
 import fr.chtipasse.adapters.bikeshare.GbfsFeed
 import fr.chtipasse.adapters.favorites.FileFavoritesStore
 import fr.chtipasse.adapters.fetch
@@ -43,8 +44,8 @@ fun runChti(args: Array<String>, env: dynamic): ChtiRun {
     )
     val fixedNow = variable("CHTI_NOW")?.toLong()
     val clock = Clock { fixedNow ?: (Date.now() / 1000).toLong() }
-    val gtfs = GtfsCache("${variable("XDG_CACHE_HOME") ?: "$home/.cache"}/chtilevia", profile.gtfsUrl)
-    val favorites = FileFavoritesStore("${variable("XDG_CONFIG_HOME") ?: "$home/.config"}/chtilevia/favoris")
+    val gtfs = GtfsCache(appDirectory(variable("XDG_CACHE_HOME") ?: "$home/.cache"), profile.gtfsUrl)
+    val favorites = FileFavoritesStore("${appDirectory(variable("XDG_CONFIG_HOME") ?: "$home/.config")}/favoris")
     val bikeShare = GbfsFeed { fetch("${profile.bikeShareUrl}/$it") }
     val services = ChtiServices(
         departures = GetDepartures(gtfs.timetable, gtfs, GtfsRealtimeFeed { fetch(profile.realtimeUrl) }, clock, profile),

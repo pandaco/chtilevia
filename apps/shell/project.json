@@ -10,8 +10,8 @@
       "options": { "cwd": "{projectRoot}" }
     },
     "test": {
-      "dependsOn": ["test-contract", "test-termux"],
-      "command": "echo 'Tests shell : contrat et Termux verts'"
+      "dependsOn": ["test-contract", "test-termux", "test-app-dir"],
+      "command": "echo 'Tests shell : contrat, Termux et dossiers verts'"
     },
     "test-contract": {
       "command": "sh {projectRoot}/tests/contract.sh",
@@ -20,6 +20,11 @@
     },
     "test-termux": {
       "command": "sh {projectRoot}/tests/termux.sh",
+      "cache": true,
+      "inputs": ["default", "^default"]
+    },
+    "test-app-dir": {
+      "command": "sh {projectRoot}/tests/app-dir.sh",
       "cache": true,
       "inputs": ["default", "^default"]
     }

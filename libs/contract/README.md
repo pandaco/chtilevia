@@ -15,7 +15,7 @@ Ce dossier ne contient que des données. Chaque implémentation a son propre ex�
 | `fixtures/gtfs.zip` | Extrait du GTFS : lignes 10, tram et M1, du 10 au 12/10/2026 |
 | `fixtures/rt-midi.pb`, `rt-minuit.pb` | Flux temps réel enregistrés le 10/10/2026 à 12:46 et le 11/10 à 00:00 |
 | `fixtures/station_*.json` | Quelques stations V'Lille, dont une hors service |
-| `fixtures/config/chtilevia/favoris` | Favoris de test |
+| `fixtures/config/chtipasse/favoris` | Favoris de test |
 | `expected/<nom>.txt` | Sortie de référence de chaque cas |
 | `make_fixtures.py` | Régénère les fixtures à partir d'un nouvel instantané |
 | `schema/response.schema.json` | Schéma JSON (2020-12) des réponses de `chti --json` : format de réponse commun à toutes les façades (MCP, AppFunctions…) |
@@ -42,7 +42,7 @@ Pour chaque cas, l'exécuteur :
 1. construit une fois l'index GTFS depuis `fixtures/gtfs.zip`, dans un cache temporaire ;
 2. fige l'heure à l'epoch de la colonne **heure** ;
 3. lit le GTFS, le flux temps réel et V'Lille dans `fixtures/`, les favoris dans
-   `fixtures/config/chtilevia/favoris` ;
+   `fixtures/config/chtipasse/favoris` ;
 4. lance la commande et produit la sortie à comparer.
 
 Pour le shell, cela passe par ces variables d'environnement :
