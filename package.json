@@ -1,6 +1,7 @@
 {
   "name": "chtipasse",
   "private": true,
+  "license": "GPL-3.0-or-later",
   "description": "Prochains passages Ilévia et disponibilité V'Lille : shell, Android, assistants IA",
   "scripts": {
     "lint": "nx run-many -t lint",
