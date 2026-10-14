@@ -3,7 +3,7 @@
   "name": "mcp",
   "projectType": "application",
   "tags": ["scope:mcp", "layer:app"],
-  "implicitDependencies": ["shell", "contract", ":node"],
+  "implicitDependencies": ["shell", "contract", ":node", ":android"],
   "targets": {
     "lint": {
       "command": "tsc --noEmit -p .",
