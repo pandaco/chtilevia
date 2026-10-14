@@ -307,8 +307,8 @@ héberger.
 ```sh
 npm install
 npx nx run :node:build                                                               # cœur Kotlin pour Node
-claude mcp add --scope user chtilevia -- node "$PWD/apps/mcp/src/main.ts"           # Claude Code
-gemini mcp add -s user chtilevia node "$PWD/apps/mcp/src/main.ts"                   # Gemini CLI
+claude mcp add --scope user chtipasse -- node "$PWD/apps/mcp/src/main.ts"           # Claude Code
+gemini mcp add -s user chtipasse node "$PWD/apps/mcp/src/main.ts"                   # Gemini CLI
 ```
 
 Outils, configuration de Claude Desktop et architecture : [`apps/mcp/README.md`](apps/mcp/README.md).

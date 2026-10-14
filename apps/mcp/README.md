@@ -44,13 +44,13 @@ de `chti` (`curl`, `jq`, `unzip`, `python3`).
 
 Les favoris sont ceux de `chti` (`~/.config/chtilevia/favoris`).
 
-Dans les commandes ci-dessous, remplacer `/chemin/vers/chtilevia` par le chemin absolu du dépôt.
+Dans les commandes ci-dessous, remplacer `/chemin/vers/chtipasse` par le chemin absolu du dépôt.
 
 ### Claude Code
 
 ```sh
-claude mcp add --scope user chtilevia -- node /chemin/vers/chtilevia/apps/mcp/src/main.ts
-claude mcp list                  # chtilevia doit apparaître « connected »
+claude mcp add --scope user chtipasse -- node /chemin/vers/chtipasse/apps/mcp/src/main.ts
+claude mcp list                  # chtipasse doit apparaître « connected »
 ```
 
 ### Claude Desktop
@@ -62,9 +62,9 @@ chemin complet de `node` (`which node`).
 ```json
 {
   "mcpServers": {
-    "chtilevia": {
+    "chtipasse": {
       "command": "/opt/homebrew/bin/node",
-      "args": ["/chemin/vers/chtilevia/apps/mcp/src/main.ts"]
+      "args": ["/chemin/vers/chtipasse/apps/mcp/src/main.ts"]
     }
   }
 }
@@ -73,7 +73,7 @@ chemin complet de `node` (`which node`).
 ### Gemini CLI
 
 ```sh
-gemini mcp add -s user chtilevia node /chemin/vers/chtilevia/apps/mcp/src/main.ts
+gemini mcp add -s user chtipasse node /chemin/vers/chtipasse/apps/mcp/src/main.ts
 ```
 
 ou, dans `~/.gemini/settings.json` :
@@ -81,9 +81,9 @@ ou, dans `~/.gemini/settings.json` :
 ```json
 {
   "mcpServers": {
-    "chtilevia": {
+    "chtipasse": {
       "command": "node",
-      "args": ["/chemin/vers/chtilevia/apps/mcp/src/main.ts"]
+      "args": ["/chemin/vers/chtipasse/apps/mcp/src/main.ts"]
     }
   }
 }

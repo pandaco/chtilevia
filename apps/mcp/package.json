@@ -1,5 +1,5 @@
 {
-  "name": "@chtilevia/mcp",
+  "name": "@chtipasse/mcp",
   "version": "0.1.0",
   "private": true,
   "description": "Serveur MCP Chtipasse : passages Ilévia et V'Lille pour Claude, Gemini CLI et tout client MCP",

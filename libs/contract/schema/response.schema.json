@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:chtilevia:contract:response",
+  "$id": "urn:chtipasse:contract:response",
   "title": "Réponse de chti --json",
   "description": "Document unique écrit sur stdout par `chti --json <commande>`. Le champ `type` indique sa forme. Code retour 0 en cas de succès, 1 si la réponse (ou un résultat de favori) est une erreur.",
   "oneOf": [

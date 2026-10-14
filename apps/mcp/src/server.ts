@@ -6,7 +6,7 @@ import { outputSchemaFor } from './contract-schema.ts';
 import type { ChtiGateway, ChtiResponse } from './ports/chti-gateway.ts';
 import { errorResponse } from './ports/chti-gateway.ts';
 
-export const SERVER_INFO = { name: 'chtilevia', version: '0.1.0' };
+export const SERVER_INFO = { name: 'chtipasse', version: '0.1.0' };
 
 const INSTRUCTIONS = `Transports en commun de la métropole lilloise (réseau Ilévia : bus, tram, métro) et vélos V'Lille.
 Les noms d'arrêt et de station sont cherchés sans tenir compte de la casse ni des accents ; une partie du nom suffit.
