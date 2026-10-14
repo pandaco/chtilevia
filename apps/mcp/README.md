@@ -17,7 +17,7 @@ Il tourne en local, en stdio : aucun serveur à héberger.
 | `prochains_passages` | `mode` (bus, tram, metro), `ligne` (sauf tram), `arret`, `direction`?, `nombre`? | `departures` |
 | `lister_arrets` | `mode`, `ligne` (sauf tram), `direction`? | `stops` |
 | `station_velo` | `station`, `mode`? (tout, prendre, deposer) | `bike_stations` |
-| `autour_de_moi` | `latitude`, `longitude`, `nombre`? | `nearby` |
+| `autour_de_moi` | `latitude`, `longitude`, `nombre`?, `mode`? (bus, tram, metro, velo) | `nearby` |
 | `lister_favoris` | — | `favorites` |
 | `favori` | `nom` | `favorite` |
 
@@ -29,68 +29,26 @@ français) est signalée par `isError: true`. Tous les outils sont en lecture se
 ## Installation
 
 Prérequis : Node 24 ou plus récent (il exécute le TypeScript directement, sans compilation), et
-de quoi compiler le cœur Kotlin (JDK 17+, SDK Android : voir le README principal).
+de quoi compiler le cœur Kotlin (JDK 17+, SDK Android : voir
+[Premiers pas](../../docs/dev/01-premiers-pas.md)).
 
 ```sh
 npm install                      # à la racine du dépôt
 npx nx run :node:build           # compile le cœur Kotlin pour Node (à refaire après une mise à jour du dépôt)
 ```
 
+Ensuite, déclarer le serveur dans le client : Claude Code, Claude Desktop et Antigravity sont décrits
+pas à pas dans le guide [Assistants IA](../../docs/guide/assistants-ia.md). Pour n'importe quel autre
+client, la commande à lancer est `node /chemin/vers/chtipasse/apps/mcp/src/main.ts` (transport stdio).
+
 Le premier appel télécharge et indexe les horaires (quelques secondes) ; le cache est celui de `chti`
-(`~/.cache/chtipasse`), partagé avec le script.
+(`~/.cache/chtipasse`), partagé avec le script. Les favoris sont ceux de `chti`
+(`~/.config/chtipasse/favoris`).
 
 Sans JDK, le serveur peut s'appuyer sur le script shell : `CHTI_GATEWAY=shell`, avec les dépendances
 de `chti` (`curl`, `jq`, `unzip`, `python3`).
 
-Les favoris sont ceux de `chti` (`~/.config/chtipasse/favoris`).
-
-Dans les commandes ci-dessous, remplacer `/chemin/vers/chtipasse` par le chemin absolu du dépôt.
-
-### Claude Code
-
-```sh
-claude mcp add --scope user chtipasse -- node /chemin/vers/chtipasse/apps/mcp/src/main.ts
-claude mcp list                  # chtipasse doit apparaître « connected »
-```
-
-### Claude Desktop
-
-Dans `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS), puis redémarrer
-Claude Desktop. Une application graphique ne voit pas toujours le `PATH` du terminal : indiquer le
-chemin complet de `node` (`which node`).
-
-```json
-{
-  "mcpServers": {
-    "chtipasse": {
-      "command": "/opt/homebrew/bin/node",
-      "args": ["/chemin/vers/chtipasse/apps/mcp/src/main.ts"]
-    }
-  }
-}
-```
-
-### Antigravity
-
-```sh
-agy mcp add chtipasse node /chemin/vers/chtipasse/apps/mcp/src/main.ts
-agy mcp list                     # chtipasse doit apparaître « enabled »
-```
-
-ou, dans `~/.gemini/config/mcp_config.json` :
-
-```json
-{
-  "mcpServers": {
-    "chtipasse": {
-      "command": "node",
-      "args": ["/chemin/vers/chtipasse/apps/mcp/src/main.ts"]
-    }
-  }
-}
-```
-
-### Autre client / débogage
+### Débogage
 
 ```sh
 npx @modelcontextprotocol/inspector node apps/mcp/src/main.ts
@@ -98,7 +56,8 @@ npx @modelcontextprotocol/inspector node apps/mcp/src/main.ts
 
 Variables d'environnement reconnues : `CHTI_GATEWAY` (`core` par défaut, ou `shell`),
 `CHTI_CORE_MODULE` (autre module `chtipasse-node.mjs`), `CHTI_PATH` (autre script `chti`), et toutes
-celles de `chti` (`CHTI_NOW`, `CHTI_*_URL`, `XDG_*`, voir le README principal).
+celles de `chti` (`CHTI_NOW`, `CHTI_*_URL`, `XDG_*`, voir
+[Le contrat et les tests](../../docs/dev/04-contrat-et-tests.md#rejouer-un-cas-à-la-main)).
 
 ## Architecture
 
@@ -130,4 +89,8 @@ npx nx run-many -t lint test -p mcp      # typage (tsc) + tests
 `test/contract.test.ts` relie un client MCP au serveur en mémoire et vérifie que chaque appel
 d'outil rend **exactement** le document d'un cas `json-*` de `libs/contract` (mêmes fixtures, même
 heure figée), avec chacune des deux passerelles (Nx compile d'abord le cœur Kotlin). Il valide aussi toutes les sorties JSON du contrat avec le schéma (ajv), et les
-garde-fous ci-dessus.
+garde-fous ci-dessus. `test/appfunctions.test.ts` vérifie que les AppFunctions de l'appli Android
+exposent les mêmes outils, avec les mêmes paramètres.
+
+Pour comprendre la place du serveur dans le projet : [Le serveur MCP](../../docs/dev/08-serveur-mcp.md)
+dans le guide développeurs.
