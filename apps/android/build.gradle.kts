@@ -11,7 +11,7 @@ android {
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "fr.chtilevia"
+        applicationId = "fr.chtipasse"
         minSdk = 26
         targetSdk = 37
         versionCode = 1

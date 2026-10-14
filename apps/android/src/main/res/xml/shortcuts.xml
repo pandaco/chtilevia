@@ -9,6 +9,6 @@
         <intent
             android:action="android.intent.action.VIEW"
             android:targetClass="fr.chtipasse.android.AnswerActivity"
-            android:targetPackage="fr.chtilevia" />
+            android:targetPackage="fr.chtipasse" />
     </shortcut>
 </shortcuts>

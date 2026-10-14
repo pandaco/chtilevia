@@ -114,7 +114,7 @@ class MainActivity : ComponentActivity() {
                 Surface(Modifier.fillMaxSize()) { Screen(model, flow) }
             }
         }
-        // adb shell am start -n fr.chtilevia/fr.chtipasse.android.MainActivity --ez mesurer true : mesure du GTFS complet
+        // adb shell am start -n fr.chtipasse/.android.MainActivity --ez mesurer true : mesure du GTFS complet
         if (savedInstanceState == null && intent.getBooleanExtra("mesurer", false)) model.measure()
         if (savedInstanceState == null) openFrom(intent)
     }

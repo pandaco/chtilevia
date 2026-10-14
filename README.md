@@ -327,8 +327,8 @@ Gemini n'appelle ces fonctions que pour les testeurs de son programme d'accès a
 inscrit, on les essaie avec adb :
 
 ```sh
-adb shell cmd app_function list-app-functions --package fr.chtilevia
-adb shell "cmd app_function execute-app-function --package fr.chtilevia \
+adb shell cmd app_function list-app-functions --package fr.chtipasse
+adb shell "cmd app_function execute-app-function --package fr.chtipasse \
   --function 'fr.chtipasse.android.BaseChtiAppFunctionService#prochainsPassages' \
   --parameters '{\"mode\":\"tram\",\"arret\":\"croisé laroche\",\"direction\":\"roubaix\"}' --brief-yaml"
 ```
