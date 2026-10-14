@@ -1,6 +1,6 @@
 # Serveur MCP Chtipasse
 
-Donne aux assistants IA (Claude Code, Claude Desktop, Gemini CLI, tout client
+Donne aux assistants IA (Claude Code, Claude Desktop, Antigravity, tout client
 [MCP](https://modelcontextprotocol.io)) les prochains passages Ilévia et la disponibilité V'Lille.
 Il tourne en local, en stdio : aucun serveur à héberger.
 
@@ -70,13 +70,14 @@ chemin complet de `node` (`which node`).
 }
 ```
 
-### Gemini CLI
+### Antigravity
 
 ```sh
-gemini mcp add -s user chtipasse node /chemin/vers/chtipasse/apps/mcp/src/main.ts
+agy mcp add chtipasse node /chemin/vers/chtipasse/apps/mcp/src/main.ts
+agy mcp list                     # chtipasse doit apparaître « enabled »
 ```
 
-ou, dans `~/.gemini/settings.json` :
+ou, dans `~/.gemini/config/mcp_config.json` :
 
 ```json
 {

@@ -71,8 +71,10 @@ ln -s "$PWD/apps/shell/chti" ~/.local/bin/chti   # optionnel, pour l'avoir dans 
   existe dans plusieurs communes), chacun est affiché avec sa commune.
   Si aucun arrêt ne contient le texte, chti prend celui qui lui ressemble le plus, à l'écrit ou au
   son : fautes de frappe ou de reconnaissance vocale (`gambeta`, `croix la roche`, `saint mort`),
-  mots collés ou séparés, mot manquant (`eglise marais`). Si plusieurs arrêts ressemblent autant à
-  la demande, chti n'en choisit aucun et les propose (code `ambiguous_stop`).
+  mots collés ou séparés, mot manquant (`eglise marais`), nombres en lettres (`quatre cantons` pour
+  « 4 Cantons »). Si plusieurs arrêts ressemblent autant à la demande, chti n'en choisit aucun et
+  les propose (code `ambiguous_stop`). Les stations V'Lille suivent la même règle, mais toutes
+  celles qui ressemblent autant à la demande sont affichées (`rihourr`, `sainte élaine`).
 - **`-d <direction>`** (alias `--direction`, `--vers`, ou `--vers=<direction>`) : ne garde que les
   courses dont la destination contient ce texte (à défaut, celles dont la destination lui ressemble
   le plus). Placée n'importe où après la ligne.
@@ -246,9 +248,9 @@ Un favori dit à voix haute (« travail » via *Parler*) répond donc à la voix
 sur son bouton répond par écrit. Les phrases comprises sont décrites dans
 [Phrases comprises](#phrases-comprises).
 
-> Pourquoi pas l'appli Gemini ? Elle ne peut appeler un outil personnel (« custom app ») que pour
-> les comptes aux États-Unis, en anglais, et seulement via un serveur. Le widget est la seule voie
-> vocale sans serveur depuis la France.
+> Et Gemini ? L'appli Chtipasse lui expose ses outils par [AppFunctions](#appfunctions-agents-du-téléphone),
+> sans serveur, mais Gemini ne les appelle pour l'instant que pour les testeurs de son programme
+> d'accès anticipé. D'ici là, le widget reste la voie vocale.
 
 ### Appli Chtipasse
 
@@ -299,7 +301,7 @@ nano ~/.config/chtipasse/favoris       # tes trajets (fichier local, jamais publ
 ## Avec un assistant IA (MCP)
 
 Un serveur [MCP](https://modelcontextprotocol.io) local donne les mêmes informations à Claude Code,
-Claude Desktop, Gemini CLI ou tout client MCP : on pose la question en langage naturel, l'assistant
+Claude Desktop, Antigravity ou tout client MCP : on pose la question en langage naturel, l'assistant
 appelle `prochains_passages`, `station_velo`, `favori`… Il s'appuie sur le cœur Kotlin compilé pour
 Node (mêmes réponses que `chti --json`, sans curl, jq ni python3) et tourne en stdio, sans serveur à
 héberger.
@@ -308,7 +310,7 @@ héberger.
 npm install
 npx nx run :node:build                                                               # cœur Kotlin pour Node
 claude mcp add --scope user chtipasse -- node "$PWD/apps/mcp/src/main.ts"           # Claude Code
-gemini mcp add -s user chtipasse node "$PWD/apps/mcp/src/main.ts"                   # Gemini CLI
+agy mcp add chtipasse node "$PWD/apps/mcp/src/main.ts"                              # Antigravity
 ```
 
 Outils, configuration de Claude Desktop et architecture : [`apps/mcp/README.md`](apps/mcp/README.md).
@@ -382,8 +384,9 @@ Python embarqué dans `chti`.
   arrêts suivants, le dernier retard connu est propagé (comportement standard GTFS-RT). Les courses
   sans suivi temps réel sont affichées en théorique.
 - Sans réseau, le script retombe sur les horaires théoriques du cache ; V'Lille nécessite le réseau.
-- Android : pas de mot d'activation (« Hey Google ») : il faut toucher le widget. L'installation n'a pas encore été validée sur un vrai
-  téléphone, seulement en simulant les commandes Termux (`apps/shell/tests/termux.sh`).
+- Android : pas de mot d'activation (« Hey Google ») : il faut toucher le widget. L'appli est utilisée
+  sur un Pixel (Android 17) ; l'installation Termux n'a été vérifiée qu'en simulant les commandes
+  Termux (`apps/shell/tests/termux.sh`).
 
 ## Contribution
 
@@ -430,13 +433,13 @@ Deux outils vérifient le script. Ils ne servent pas à l'usage quotidien, seule
 chaque modification**, pour s'assurer qu'on n'a rien cassé.
 
 ```sh
-apps/shell/tests/contract.sh   # tests de non-régression : 79 cas, hors ligne, ~7 s
+apps/shell/tests/contract.sh   # tests de non-régression : 122 cas, hors ligne, ~20 s
 apps/shell/tests/termux.sh     # partie Android, avec des commandes Termux simulées : 19 vérifications
 apps/shell/tests/app-dir.sh    # reprise des dossiers d'avant le renommage (chtilevia → chtipasse)
 shellcheck apps/shell/chti apps/shell/tests/*.sh apps/shell/termux/*.sh apps/shell/termux/shortcuts/*   # analyse du shell (paquet shellcheck)
 ```
 
-**Avant chaque commit**, tout doit passer : les deux scripts de test doivent afficher `0 échec(s)`,
+**Avant chaque commit**, tout doit passer : les scripts de test ne doivent signaler aucun échec,
 et `shellcheck` ne doit rien afficher.
 
 Le dépôt est un monorepo [Nx](https://nx.dev) : la même vérification se lance en une commande pour
