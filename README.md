@@ -1,644 +1,180 @@
+<div align="center">
+
 # Chtipasse
 
-> T'as ton bus, biloute ?
+**T'as ton bus, biloute ?**
 
-Prochains passages du réseau Ilévia (bus, tram, métro — Métropole Européenne de Lille) et
-disponibilité des stations V'Lille, directement dans le terminal, avec une seule commande : `chti`.
+Demande à voix haute quand passe ton bus, ton tram ou ton métro, ou s'il reste un V'Lille.
+Tu as la réponse en une seconde, sans compte et sans publicité.
 
-> **Projet indépendant, non affilié à Ilévia ni à la MEL.** Les données proviennent de l'open data
-> publié par Ilévia et transport.data.gouv.fr ; aucune garantie d'exactitude.
+[![Licence GPL-3.0](https://img.shields.io/badge/licence-GPL--3.0-c8102e)](LICENSE)
+![Android 8.0+](https://img.shields.io/badge/Android-8.0%2B-3ddc84)
+![Données ouvertes](https://img.shields.io/badge/donn%C3%A9es-ouvertes-0a7bbb)
 
-## Présentation
+</div>
 
-`chti` est un script shell unique, sans interface graphique, qui interroge les données ouvertes du réseau :
+<!-- Captures d'écran à venir : les déposer dans docs/images/ et les afficher ici. -->
 
-- **bus / tram** : prochains passages en temps réel à un arrêt, regroupés par direction ;
-- **métro** : prochains passages théoriques (aucun temps réel métro n'est publié en open data) ;
-- **V'Lille** : nombre de vélos disponibles et de places libres d'une station.
+---
 
-```
-$ chti bus 10 marais -d flandres
+## Une question, une réponse
 
-10 — Marais  (LOMME MARAIS 59160 LOMME)
-  → Lille Gare Lille Flandres
-     12:53  dans 6 min      ⏱  temps réel
-     13:15  dans 29 min     ⏱  temps réel
-     13:22  dans 36 min     🕒 théorique
+Tu es sur le quai, le téléphone dans une main, ton sac dans l'autre. Tu touches le micro :
 
-$ chti velo rihour
-Rihour  (32 bornes)
-  🚲 23 vélo(s) dispo   🅿️  9 place(s) libre(s)
-  maj il y a 1 min
-```
+> 🎤 « Prochain tram à Croisé Laroche vers Roubaix »
+>
+> 🔊 *« Tram, arrêt Croise Laroche, vers Roubaix Eurotéléport : dans 1 minute, puis dans
+> 13 minutes. »*
 
-### Installation
+Le soir, tu rentres à vélo. Un seul bouton sur l'écran d'accueil :
 
-Dépendances : `curl`, `jq`, `unzip`, `python3` (bibliothèque standard uniquement).
+> 👆 **Rentrer à vélo**
+>
+> Gare Lille Europe : 🚲 14 &nbsp;·&nbsp; La Madeleine Gare : 🅿️ 13
 
-```sh
-chmod +x apps/shell/chti
-ln -s "$PWD/apps/shell/chti" ~/.local/bin/chti   # optionnel, pour l'avoir dans le PATH
-```
+Tu sors d'un rendez-vous dans un quartier que tu connais mal :
 
-## Appels possibles
+> 🎤 « Vélo à proximité »
+>
+> 📍 Rihour, à 117 m : 1 vélo, 31 places &nbsp;·&nbsp; Gare Lille Flandres, à 378 m : 32 places
 
-| Commande | Effet |
+Pas d'itinéraire à construire, pas de menu à parcourir : **tu poses ta question, Chtipasse y
+répond.**
+
+## Pourquoi Chtipasse
+
+**🗣️ Tu parles comme tu veux.** « Quand passe le bus dix à l'arrêt Marais direction Lille
+Flandres » est compris aussi bien que « bus 10 marais ». Les fautes de frappe, les noms mal
+entendus par la reconnaissance vocale (« saint mort » pour Saint-Maur), les nombres en lettres et
+les mots oubliés sont rattrapés.
+
+**🔇 La réponse suit ta façon de demander.** Si tu poses la question à voix haute, Chtipasse te
+répond à voix haute. Si tu touches un bouton, la réponse est écrite et silencieuse, pratique dans
+le métro ou en réunion.
+
+**⭐ Tes trajets en un geste.** Un favori peut enchaîner plusieurs questions : les vélos au départ
+*et* les places libres à l'arrivée, ou ton bus *et* ta correspondance. Chaque favori a son bouton
+dans l'appli, dans le widget et dans les raccourcis de l'icône.
+
+**🚇 Tout le réseau, une seule appli.** Bus, Lianes, tram, métro et V'Lille sont réunis. Tu peux
+demander seulement les vélos disponibles (pour partir) ou seulement les places libres (pour
+rendre ton vélo).
+
+**⏱️ Honnête sur l'heure.** Chaque passage indique s'il vient du suivi en temps réel du véhicule
+(badge vert) ou de l'horaire prévu (badge gris). Tu sais à quoi te fier.
+
+**⚡ Instantané, même hors ligne.** Les horaires sont gardés sur le téléphone et mis à jour chaque
+jour en arrière-plan, en Wi-Fi : la réponse arrive en moins d'un dixième de seconde. Sans réseau, Chtipasse
+répond avec les horaires prévus.
+
+**🔒 Tes trajets restent chez toi.** Chtipasse n'a ni compte, ni publicité, ni pistage, ni serveur.
+Tout se calcule sur ton téléphone, et ta position ne sert qu'au moment où tu demandes ce qu'il y a
+autour de toi.
+
+**🤖 Prêt pour les assistants IA.** Claude, Antigravity et les agents du téléphone peuvent
+interroger Chtipasse directement et te répondre avec les vrais horaires.
+
+## Tout ce qu'elle sait faire
+
+| | |
 |---|---|
-| `chti bus <ligne>` | Liste les arrêts de la ligne, dans chaque sens |
-| `chti bus <ligne> <arrêt>` | Prochains passages à l'arrêt, toutes directions |
-| `chti bus <ligne> <arrêt> -d <direction>` | Prochains passages à l'arrêt, vers cette direction uniquement |
-| `chti bus <ligne> <arrêt> -n <nombre>` | Affiche `<nombre>` passages par direction au lieu de 3 |
-| `chti bus <ligne> -d <direction>` | Liste des arrêts, pour cette direction uniquement |
-| `chti tram [arrêt] [-d <direction>] [-n <nombre>]` | Idem pour le tramway (Lille ↔ Roubaix / Tourcoing) |
-| `chti metro <1\|2> [arrêt] [-d <direction>] [-n <nombre>]` | Idem pour le métro M1 ou M2 (horaires théoriques) |
-| `chti velo <station>` | Vélos disponibles et places libres des stations V'Lille correspondantes |
-| `chti velo <station> --prendre` | Seulement les vélos disponibles (pour partir) |
-| `chti velo <station> --deposer` | Seulement les places libres (pour rendre le vélo) |
-| `chti autour <latitude> <longitude> [-n <nombre>]` | Arrêts les plus proches (avec leurs lignes) et stations V'Lille les plus proches, à vol d'oiseau |
-| `chti <favori>` | Lance la ou les commandes enregistrées sous ce nom (voir [Favoris](#favoris)) |
-| `chti favoris` | Liste les favoris |
-| `chti --voix <commande>` | Même réponse, en phrases à lire à voix haute (voir [Sortie parlée](#sortie-parlée)) |
-| `chti --json <commande>` | Même réponse, en JSON pour les programmes (voir [Sortie JSON](#sortie-json)) |
-| `chti vocal "<phrase>"` | Comprend une phrase libre et répond en mode voix (voir [Phrases comprises](#phrases-comprises)) |
-| `chti update` | Force le re-téléchargement du référentiel GTFS |
-| `chti help` | Affiche l'aide |
+| **Prochains passages** | Les 3 prochains passages à un arrêt, dans chaque direction ou vers celle que tu choisis, avec le temps réel quand il existe ; le service du lendemain après le dernier passage |
+| **Arrêts d'une ligne** | La liste des arrêts, dans chaque sens |
+| **V'Lille** | Vélos disponibles et places libres d'une station, ou de toutes celles qui correspondent ; stations fermées signalées |
+| **À proximité** | Les arrêts (avec leurs lignes) et les stations V'Lille les plus proches, filtrables par mode |
+| **Carte** | Carte OpenStreetMap des arrêts et stations autour de toi, et bouton *Itinéraire* vers ton appli de navigation |
+| **Voix** | Un gros bouton micro, des réponses lues en français, et une lecture que tu peux couper d'un geste |
+| **Saisie assistée** | Au clavier, Chtipasse propose étape par étape le mode, la ligne, l'arrêt et la direction |
+| **Favoris** | Un nom, une ou plusieurs questions ; création, ordre et modification depuis l'appli |
+| **Widget** | *Parler* et un bouton par favori, avec la réponse en notification, sans ouvrir l'appli |
+| **Raccourcis** | Appui long sur l'icône : *Parler* et tes favoris |
+| **Aide intégrée** | Des exemples de questions, à toucher pour les essayer |
+| **Thème** | Clair, sombre, ou celui du téléphone |
 
-### Paramètres
+Le détail : [Ce que Chtipasse comprend](docs/guide/questions.md) ·
+[L'appli Android](docs/guide/appli-android.md).
 
-- **`<ligne>`** : nom de la ligne tel qu'affiché sur le réseau — `10`, `L1`, `C5`, `CO3`, `Z2`… (insensible à la casse).
-- **`<arrêt>`** / **`<station>`** : tout ou partie du nom, sur un ou plusieurs mots, sans guillemets nécessaires.
-  Casse, accents et ponctuation sont ignorés. Si plusieurs arrêts correspondent (ex. « gambetta »
-  existe dans plusieurs communes), chacun est affiché avec sa commune.
-  Si aucun arrêt ne contient le texte, chti prend celui qui lui ressemble le plus, à l'écrit ou au
-  son : fautes de frappe ou de reconnaissance vocale (`gambeta`, `croix la roche`, `saint mort`),
-  mots collés ou séparés, mot manquant (`eglise marais`), nombres en lettres (`quatre cantons` pour
-  « 4 Cantons »). Si plusieurs arrêts ressemblent autant à la demande, chti n'en choisit aucun et
-  les propose (code `ambiguous_stop`). Les stations V'Lille suivent la même règle, mais toutes
-  celles qui ressemblent autant à la demande sont affichées (`rihourr`, `sainte élaine`).
-- **`-d <direction>`** (alias `--direction`, `--vers`, ou `--vers=<direction>`) : ne garde que les
-  courses dont la destination contient ce texte (à défaut, celles dont la destination lui ressemble
-  le plus). Placée n'importe où après la ligne.
-  Une direction inconnue affiche la liste des directions possibles ; un arrêt qui existe mais n'est
-  pas desservi dans cette direction le dit, avec les directions qui le desservent.
-  Le mot **`vers`** sans tiret marche aussi : tous les mots qui le suivent forment la direction
-  (`chti bus 10 gambetta vers lille flandres`).
-- **`-n <nombre>`** (alias `--nombre`, ou `--nombre=<nombre>`) : nombre de prochains passages affichés
-  par direction, entier ≥ 1, **3 par défaut**. Si le service du jour ne suffit pas, les premiers
-  départs du lendemain sont affichés. Combinable avec `-d`, dans n'importe quel ordre.
-- **`<latitude> <longitude>`** (pour `autour`) : en degrés décimaux, comme les donne une appli de
-  carte : `50.6366 3.0630`, `50.6366, 3.0630`, `50.6366,3.0630` ou `50,6366 3,0630`. Avec `-n`,
-  le nombre d'arrêts et de stations donnés (3 par défaut).
-- **`--prendre`** / **`--deposer`** (ou `--déposer`) : pour V'Lille, n'affiche que les vélos
-  disponibles, ou que les places libres. Indique aussi « location / dépôt impossible » si la station
-  le refuse.
-- **`metro`** accepte `1`, `2`, `m1`, `m2` ; `métro`, `vélo` et `vlille` sont acceptés comme alias.
+## Chtipasse et les autres applis
 
-### Exemples
+Chtipasse ne remplace ni l'appli officielle du réseau ni un calculateur d'itinéraire. Il fait une
+seule chose, et il la fait vite.
 
-```sh
-chti bus 10                          # arrêts de la ligne 10
-chti bus 10 gambetta                 # passages à « Gambetta », dans tous les sens
-chti bus l1 republique -d wambrechies  # passages de la Liane 1 vers Wambrechies
-chti tram croise laroche --vers roubaix
-chti tram -d tourcoing               # arrêts du tram vers Tourcoing
-chti metro 1 republique -d chu
-chti metro 2 gare lille flandres -n 10   # les 10 prochaines rames dans chaque sens
-chti bus 10 gambetta -d flandres -n 5    # les 5 prochains bus vers Lille Flandres
-chti velo gare                       # toutes les stations V'Lille contenant « gare »
-chti tram croise laroche vers roubaix  # « vers » sans tiret
-chti travail                         # un favori
-```
-
-### Favoris
-
-Un favori donne un nom court à une ou plusieurs commandes : `chti travail` au lieu de
-`chti tram croise laroche vers roubaix -n 2`. Ils sont lus dans `~/.config/chtipasse/favoris`
-(ou `$XDG_CONFIG_HOME/chtipasse/favoris`), au format `nom: commande` :
-
-```
-# Le tram pour aller au travail
-travail:      tram croise laroche vers roubaix -n 2
-
-# Rentrer à vélo : vélos au départ, places à l'arrivée (un nom répété = commandes enchaînées)
-rentrer-velo: velo gare lille europe --prendre
-rentrer-velo: velo la madeleine gare --deposer
-```
-
-- Un fichier d'exemple est fourni : `mkdir -p ~/.config/chtipasse && cp apps/shell/exemples/favoris ~/.config/chtipasse/`.
-- La commande est celle que tu taperais après `chti`. `#` commence un commentaire.
-- Le nom ignore la casse ; il ne doit pas reprendre une commande existante (`bus`, `velo`…).
-- Si une des commandes échoue, les suivantes sont quand même lancées et le code retour vaut `1`.
-- Attention aux directions trop larges : pour le bus 10, « vers lille » correspond aux deux sens
-  (Lille Flandres et Lille CHU). Vérifie avec `chti bus 10 -d lille`.
-
-### Lecture du résultat
-
-- Les N prochains passages par direction (`-n`, 3 par défaut) ; au-delà d'une heure, l'attente
-  s'affiche en heures (`dans 8 h 04`).
-- `⏱  temps réel` : horaire issu du suivi des véhicules ; `🕒 théorique` : horaire planifié.
-- Code retour `0` en cas de succès, `1` si ligne / arrêt / direction / station / favori introuvable ou si le service est injoignable.
-
-### Sortie parlée
-
-`--voix` (placé n'importe où) remplace l'affichage par des phrases simples, sans emoji ni colonnes,
-pensées pour la synthèse vocale. Il sert au [widget Android](#sur-android), mais
-marche partout :
-
-```
-$ chti --voix bus 10 marais vers flandres
-Bus 10, arrêt Marais, vers Lille Gare Lille Flandres : dans 7 minutes, puis dans 30 minutes.
-
-$ chti --voix metro 1 republique -d chu
-Métro 1, arrêt République Beaux-Arts, vers Lille Chu - Eurasanté : dans 1 minute, puis dans 4 minutes. Horaires théoriques.
-
-$ chti --voix rentrer-velo
-Gare Lille Europe : 14 vélos disponibles.
-La Madeleine Gare : 13 places libres.
-```
-
-- 2 passages par direction par défaut (`-n` pour en demander plus).
-- Au-delà d'une heure, l'heure est donnée (« à 7 h 42 »). Un horaire sans temps réel est suivi de
-  « (prévu) », ou la phrase se termine par « Horaires théoriques. » s'ils le sont tous.
-- Les erreurs sont aussi des phrases, sur stderr, sans le préfixe `chti :`.
-
-### Sortie JSON
-
-`--json` (placé n'importe où) remplace l'affichage par un document JSON unique sur stdout, pour les
-programmes : serveur MCP pour les assistants IA, scripts, widgets. Sa forme est décrite par le
-schéma [`libs/contract/schema/response.schema.json`](libs/contract/schema/response.schema.json).
-
-```
-$ chti --json bus 10 marais -d flandres -n 1
-{
-  "type": "departures",
-  "line": { "id": "10", "name": "10", "mode": "bus", "label": "Bus 10", … },
-  "now": "2026-10-10T12:46:00+02:00",
-  "stops": [
-    { "id": "1008", "name": "Marais", "description": "LOMME MARAIS 59160 LOMME",
-      "directions": [
-        { "headsign": "Lille Gare Lille Flandres",
-          "departures": [ { "time": "2026-10-10T12:53:01+02:00", "minutes": 7, "realtime": true } ] } ] }
-  ],
-  "warnings": []
-}
-```
-
-- `type` donne la forme du document : `departures`, `stops` (ligne sans arrêt), `bike_stations`,
-  `favorites`, `favorite` (un résultat par commande du favori), `update` ou `error`.
-- Les erreurs sont aussi du JSON sur stdout (`"type": "error"`), avec un `code` stable
-  (`unknown_line`, `unknown_direction`…), le `message` en français et parfois des `details`
-  (directions possibles). Le code retour reste `1`.
-- Les avertissements (flux temps réel indisponible, GTFS non mis à jour) sont dans `warnings`, pas
-  sur stderr.
-- Pour V'Lille, le JSON donne les faits bruts (vélos, places, location / dépôt possibles) ;
-  `--prendre` / `--deposer` sont seulement rappelés dans `mode`.
-- Incompatible avec `--voix` et avec `vocal` : un programme interprète la phrase lui-même.
-
-### Phrases comprises
-
-`chti vocal "<phrase>"` transforme une phrase dite naturellement (telle que la renvoie la
-reconnaissance vocale) en commande `chti`, puis répond en [sortie parlée](#sortie-parlée) :
-
-| Phrase | Commande lancée |
+| Tu veux… | Le bon outil |
 |---|---|
-| « Prochain bus 10 à Gambetta vers Lille Flandres » | `bus 10 gambetta -d lille flandres` |
-| « Quand passe le bus dix à l'arrêt Marais direction Lille Flandres » | `bus 10 marais -d lille flandres` |
-| « Métro un République vers CHU » | `metro 1 republique -d chu` |
-| « Le prochain tram à Croisé Laroche vers Roubaix » | `tram croise laroche -d roubaix` |
-| « Liane 1 République » | `bus L1 republique` |
-| « V'Lille Gare Lille Flandres pour déposer » | `velo gare lille flandres --deposer` |
-| « Vélo gare Lille Europe pour prendre un vélo » | `velo gare lille europe --prendre` |
-| « Travail », « Rentrer à vélo » | le favori `travail`, `rentrer-velo` |
-| « Vélo à proximité », « les arrêts autour de moi », « le métro le plus près d'ici » | `autour`, complété de la position par l'appli Android |
+| Aller à une adresse que tu ne connais pas, à Lille ou ailleurs | Un calculateur d'itinéraire : Google Maps, Transit, Citymapper… |
+| Consulter l'information officielle du réseau (perturbations, titres de transport) | Les services d'Ilévia |
+| Savoir **tout de suite** quand passe *ton* bus, *ton* tram ou *ton* métro, et s'il reste un V'Lille, à la voix ou d'un geste | **Chtipasse** |
 
-Règles :
+Ce qui le distingue :
 
-- **Mode** : `bus` / `ligne` / `liane`, `métro`, `tram` / `tramway`, `vélo` / `V'Lille`, ou un nom de favori
-  (les petits mots comme « à » sont ignorés : « rentrer à vélo » trouve `rentrer-velo`).
-- **Ligne** : en chiffres ou en lettres jusqu'à vingt (« dix » → `10`) ; « liane 1 » → `L1`.
-- **Direction** : tout ce qui suit « vers », « direction » ou « en direction de ».
-- **V'Lille** : « prendre » / « emprunter » → `--prendre` ; « déposer » / « rendre » / « poser » → `--deposer`.
-- **À proximité** : « proximité », « proche », « autour de moi », « près d'ici »… → `autour`. Le shell
-  ne connaît pas la position du téléphone et demande donc une position ; l'appli Android ajoute la
-  sienne (avec ton accord).
-- Les mots d'introduction (« quand passe le prochain… », « à l'arrêt ») sont ignorés en début de
-  phrase et en début de nom d'arrêt, mais jamais au milieu d'un nom (« Pont de Bois » reste intact).
-- Si la phrase n'est pas comprise, la réponse le dit et donne un exemple (code retour `1`).
+- **Conçu pour un seul réseau.** Chtipasse connaît les arrêts, les Lianes et les directions de la
+  métropole lilloise. C'est ce qui lui permet de comprendre une phrase approximative au lieu
+  d'exiger le nom exact d'un arrêt.
+- **Une question, pas un trajet.** Il n'y a ni départ ni arrivée à saisir : tu nommes l'arrêt, tu
+  as les passages.
+- **Bus, tram, métro et V'Lille au même endroit**, jusque dans un même favori.
+- **La voix dans les deux sens** : tu parles, il répond, sans regarder l'écran.
+- **Aucune donnée personnelle collectée**, et un code ouvert que chacun peut vérifier.
+- **Ouvert** : utilisable aussi dans un terminal, dans Termux et par les assistants IA.
 
-## Sur Android
+## Ta vie privée
 
-Sur un téléphone Android, chti tourne directement sur le téléphone, **sans serveur**, de deux façons :
+- Pas de compte, pas de publicité, pas de mesure d'audience, pas de serveur Chtipasse.
+- Tes favoris et tes réglages restent sur ton téléphone.
+- Ta position n'est demandée que pour « à proximité » et la carte. Elle est utilisée sur le
+  téléphone, au moment de la question, et elle n'est jamais enregistrée.
+- Les seules données téléchargées sont des données publiques : horaires, temps réel, V'Lille et
+  fonds de carte.
 
-- **l'appli Chtipasse** (`apps/android`, cœur Kotlin) : un écran et un widget d'accueil, sans rien
-  d'autre à installer ;
-- **Termux** (`apps/shell/termux`) : le script `chti` et le widget Termux:Widget.
+Le détail : [politique de confidentialité](docs/confidentialite.md).
 
-Dans les deux cas, le widget propose deux façons de demander, et la réponse suit la façon de demander :
+## Les limites, en toute franchise
 
-- **à la voix** : le bouton *Parler* écoute ta question et **lit la réponse à voix haute** ;
-- **en un clic** : un bouton de favori **affiche la réponse**, sans voix.
+- **Métro** : Ilévia ne publie pas de temps réel métro en données ouvertes, donc les passages du
+  métro sont ceux prévus (et Chtipasse le dit).
+- **V'Lille** demande une connexion ; les horaires, non.
+- **Pas d'« Ok Google »** pour l'instant : il faut toucher le micro, le widget ou un raccourci.
+- **Pas d'itinéraire ni d'info trafic** : ce n'est pas son rôle.
 
-| Bouton du widget | Ce qu'il fait | Réponse |
-|---|---|---|
-| **Parler** | Écoute une phrase (« métro 1 République vers CHU », « vélo à proximité », « travail »…) | À voix haute + notification |
-| **Travail** | Favori `travail` | Écrite + notification |
-| **Rentrer à vélo** | Favori `rentrer-velo` : vélos au départ, places à l'arrivée | Écrite + notification |
+## L'installer
 
-Un favori dit à voix haute (« travail » via *Parler*) répond donc à la voix ; le même favori touché
-sur son bouton répond par écrit. Les phrases comprises sont décrites dans
-[Phrases comprises](#phrases-comprises).
-
-> Et Gemini ? L'appli Chtipasse lui expose ses outils par [AppFunctions](#appfunctions-agents-du-téléphone),
-> sans serveur, mais Gemini ne les appelle pour l'instant que pour les testeurs de son programme
-> d'accès anticipé. D'ici là, le widget reste la voie vocale.
-
-### Appli Chtipasse
-
-```sh
-npx nx run :android:assembleDebug                                          # construit l'appli
-adb install -r apps/android/build/outputs/apk/debug/android-debug.apk      # téléphone en débogage USB ou Wi-Fi
-```
-
-- **Écran** : gros bouton 🎤 ; une question dite est lue et affichée, une question tapée ou un
-  favori touché est seulement affiché (bouton 🔊/🔇 pour ne jamais lire). Réponse en cartes,
-  passages en badges (vert : temps réel, gris : horaire théorique) ; une carte touchée montre
-  l'arrêt ou la station sur la carte. La question touchée se corrige au clavier.
-- **Saisie assistée** : *Écrire* propose, étape par étape, le mode, la ligne, l'arrêt, la direction
-  ou la station V'Lille, tirés des horaires et de V'Lille.
-- **Favoris** : boutons au-dessus de la barre du bas ; *Modifier* ouvre leur écran : nom, questions
-  tapées avec la même saisie assistée, ordre des boutons, suppression. Ils sont enregistrés au
-  format du fichier du shell (`nom: commande`).
-- **Thème** : clair ou sombre (bouton ☀/☾), gardé ; celui du téléphone tant qu'on n'a pas choisi.
-- **Carte** : OpenStreetMap, arrêts et stations proches filtrés par mode, liste touchable, et
-  *Itinéraire* qui ouvre l'appli de cartographie du téléphone.
-- **Widget** : appui long sur l'accueil → *Widgets* → *Chtipasse*. Ses boutons répondent par une
-  notification, sans ouvrir l'appli ; la toucher ouvre la réponse dans l'appli. *Que demander ?*
-  ouvre l'aide.
-- **À proximité** : « vélo à proximité », « tram à proximité »… utilisent la position du téléphone
-  (autorisation demandée la première fois) et répondent comme `chti autour`.
-- **Raccourcis** : appui long sur l'icône → *Parler* et un raccourci par favori.
-- **AppFunctions** (Android 16 et plus) : les outils du [serveur MCP](#avec-un-assistant-ia-mcp),
-  exposés aux agents du téléphone (Gemini…). Voir [AppFunctions](#appfunctions-agents-du-téléphone).
-- **Horaires** : téléchargés au premier lancement (~8 s), puis mis à jour chaque jour en arrière-plan
-  (en Wi-Fi, batterie suffisante), et gardés en mémoire tant que l'appli tourne (réponse en moins
-  d'un dixième de seconde ensuite). 44 Mo sur le téléphone.
-
-### Termux
-
-**👉 Installation et utilisation pas à pas : [docs/android.md](docs/android.md)**. Le guide couvre les
-applis à installer (Termux, Termux:API, Termux:Widget depuis F-Droid), la copie du projet sans le
-publier, l'installeur, les favoris, l'ajout du widget, les phrases comprises, l'ajout de boutons,
-la mise à jour, le dépannage et la désinstallation.
-
-En résumé :
-
-```sh
-# dans Termux, une fois le projet copié dans ~/chtipasse
-sh ~/chtipasse/apps/shell/termux/install.sh   # outils, commandes, boutons du widget, horaires
-nano ~/.config/chtipasse/favoris       # tes trajets (fichier local, jamais publié)
-```
-
-## Avec un assistant IA (MCP)
-
-Un serveur [MCP](https://modelcontextprotocol.io) local donne les mêmes informations à Claude Code,
-Claude Desktop, Antigravity ou tout client MCP : on pose la question en langage naturel, l'assistant
-appelle `prochains_passages`, `station_velo`, `favori`… Il s'appuie sur le cœur Kotlin compilé pour
-Node (mêmes réponses que `chti --json`, sans curl, jq ni python3) et tourne en stdio, sans serveur à
-héberger.
-
-```sh
-npm install
-npx nx run :node:build                                                               # cœur Kotlin pour Node
-claude mcp add --scope user chtipasse -- node "$PWD/apps/mcp/src/main.ts"           # Claude Code
-agy mcp add chtipasse node "$PWD/apps/mcp/src/main.ts"                              # Antigravity
-```
-
-Outils, configuration de Claude Desktop et architecture : [`apps/mcp/README.md`](apps/mcp/README.md).
-
-### AppFunctions (agents du téléphone)
-
-L'appli Android expose les mêmes outils aux agents du téléphone par
-[AppFunctions](https://developer.android.com/ai/appfunctions) (Android 16 et plus, bibliothèque
-Jetpack expérimentale) : `prochainsPassages`, `listerArrets`, `stationVelo`, `autourDeMoi`,
-`listerFavoris`, `favori`, avec les paramètres des outils MCP (un test de `apps/mcp` vérifie la
-parité). Chaque fonction répond en phrases à lire (`text`) et en JSON du contrat (`json`) ; une
-erreur devient une exception AppFunctions (argument invalide, arrêt introuvable…) avec le message
-de chti. Tout est en lecture seule.
-
-Gemini n'appelle ces fonctions que pour les testeurs de son programme d'accès anticipé ; sans y être
-inscrit, on les essaie avec adb :
-
-```sh
-adb shell cmd app_function list-app-functions --package fr.chtipasse
-adb shell "cmd app_function execute-app-function --package fr.chtipasse \
-  --function 'fr.chtipasse.android.BaseChtiAppFunctionService#prochainsPassages' \
-  --parameters '{\"mode\":\"tram\",\"arret\":\"croisé laroche\",\"direction\":\"roubaix\"}' --brief-yaml"
-```
-
-## Sources de données (open data, sans clé d'API)
-
-| Donnée | URL | Format |
-|---|---|---|
-| Temps réel bus + tram | `https://proxy.transport.data.gouv.fr/resource/ilevia-lille-gtfs-rt` | GTFS-RT (protobuf) |
-| Référentiel lignes / arrêts / horaires | `https://media.ilevia.fr/opendata/gtfs.zip` | GTFS |
-| Stations V'Lille | `https://media.ilevia.fr/opendata/station_information.json` | GBFS 2.3 |
-| Disponibilité V'Lille | `https://media.ilevia.fr/opendata/station_status.json` | GBFS 2.3 |
-
-Le GTFS (~9 Mo) est mis en cache dans `~/.cache/chtipasse` (ou `$XDG_CACHE_HOME/chtipasse`) et rafraîchi
-automatiquement toutes les 24 h.
-
-### Requêtes curl brutes
-
-V'Lille :
-
-```sh
-# Toutes les stations (id, nom, capacité, coordonnées)
-curl -s https://media.ilevia.fr/opendata/station_information.json | jq '.data.stations[]'
-
-# Retrouver l'id d'une station par son nom
-curl -s https://media.ilevia.fr/opendata/station_information.json \
-  | jq '.data.stations[] | select(.name | test("rihour"; "i")) | {station_id, name, capacity}'
-
-# Disponibilité d'une station (ici id 10 = Rihour)
-curl -s https://media.ilevia.fr/opendata/station_status.json \
-  | jq '.data.stations[] | select(.station_id == "10") | {num_bikes_available, num_docks_available, is_renting, is_returning}'
-```
-
-Bus, tram, métro :
-
-```sh
-# Référentiel GTFS : routes.txt (lignes), stops.txt (arrêts), trips.txt, stop_times.txt (horaires), calendar_dates.txt
-curl -sL -o gtfs.zip https://media.ilevia.fr/opendata/gtfs.zip && unzip -o gtfs.zip -d gtfs
-
-# Flux temps réel (binaire protobuf GTFS-RT — décodé par le script)
-curl -s -o ilevia.pb https://proxy.transport.data.gouv.fr/resource/ilevia-lille-gtfs-rt
-```
-
-Le flux temps réel est du protobuf binaire : il n'est pas lisible avec `jq`, d'où le petit décodeur
-Python embarqué dans `chti`.
-
-### Limites
-
-- **Métro (M1, M2)** : aucun temps réel publié en open data ; passages théoriques uniquement.
-- **Bus / tram** : le flux temps réel ne détaille que les prochains arrêts de chaque course ; pour les
-  arrêts suivants, le dernier retard connu est propagé (comportement standard GTFS-RT). Les courses
-  sans suivi temps réel sont affichées en théorique.
-- Sans réseau, le script retombe sur les horaires théoriques du cache ; V'Lille nécessite le réseau.
-- Android : pas de mot d'activation (« Hey Google ») : il faut toucher le widget. L'appli est utilisée
-  sur un Pixel (Android 17) ; l'installation Termux n'a été vérifiée qu'en simulant les commandes
-  Termux (`apps/shell/tests/termux.sh`).
-
-## Contribution
-
-### Organisation du script
-
-L'essentiel tient dans le fichier `chti` :
-
-| Partie | Rôle |
+| Où | Comment |
 |---|---|
-| sh — `usage`, `die`, `need`, `fetch` | Aide, erreurs, vérification des dépendances, téléchargements `curl` |
-| sh — `gtfs_refresh` | Cache du GTFS (âge max 24 h), repli sur l'ancien cache si le réseau est KO (nouvel essai au plus une fois par heure) |
-| sh — `transit`, `departures` | Parsing des arguments (arrêt, `-d`, `-n`), récupération du flux temps réel |
-| sh — `velo` | V'Lille : `curl` + `jq` uniquement (jointure info / statut sur `station_id`) |
-| python — `build_index` | Découpe `stop_times.txt` (~53 Mo) en un index par ligne (`idx/<route_id>.tsv`) |
-| python — `pb`, `read_rt` | Décodeur protobuf minimal pour GTFS-Realtime |
-| python — `rt_times` | Horaires temps réel d'une course, avec propagation du retard |
-| python — `departures`, `list_stops` | Recherche d'arrêt / direction, fusion théorique + temps réel, affichage |
-| sh — `favorite_commands`, `run_favorite` | Lecture du fichier de favoris, enchaînement des commandes |
-| python — `say_departures`, `spoken_line` | Sortie parlée (`--voix`) des passages ; la sortie parlée V'Lille est dans le filtre jq de `velo` |
-| python — `parse_phrase` | `chti vocal` : phrase libre → arguments de `chti` |
-
-Le Python est embarqué via un heredoc (`run_py`) et lancé en mode isolé (`python3 -I`).
-
-Autour du script :
-
-| Fichier | Rôle |
-|---|---|
-| `apps/shell/exemples/favoris` | Favoris d'exemple, copiés par l'installeur Android |
-| `apps/shell/termux/install.sh` | Installation dans Termux |
-| `apps/shell/termux/widget.sh` | Devient la commande `chti-widget` : lance `chti --voix`, puis notification et, selon le mode, voix (`--parle`) ou message à l'écran (`--ecrit`) |
-| `apps/shell/termux/shortcuts/*` | Les boutons du widget (un fichier = un bouton) |
-| `docs/android.md` | Guide d'installation et d'utilisation sur Android |
-
-### Conventions
-
-- Aucune dépendance à installer : sh POSIX, `curl`, `jq`, `unzip`, Python **bibliothèque standard uniquement**.
-- Commentaires en français, identifiants (variables, fonctions) en anglais.
-- Messages utilisateur en français, erreurs sur stderr via `die`, code retour non nul en cas d'échec.
-- Fichiers de travail non versionnés dans `./tmp` (ignoré par git).
-
-### Tests
-
-Deux outils vérifient le script. Ils ne servent pas à l'usage quotidien, seulement **après
-chaque modification**, pour s'assurer qu'on n'a rien cassé.
-
-```sh
-apps/shell/tests/contract.sh   # tests de non-régression : 122 cas, hors ligne, ~20 s
-apps/shell/tests/termux.sh     # partie Android, avec des commandes Termux simulées : 19 vérifications
-apps/shell/tests/app-dir.sh    # reprise des dossiers d'avant le renommage (chtilevia → chtipasse)
-shellcheck apps/shell/chti apps/shell/tests/*.sh apps/shell/termux/*.sh apps/shell/termux/shortcuts/*   # analyse du shell (paquet shellcheck)
-```
-
-**Avant chaque commit**, tout doit passer : les scripts de test ne doivent signaler aucun échec,
-et `shellcheck` ne doit rien afficher.
-
-Le dépôt est un monorepo [Nx](https://nx.dev) : la même vérification se lance en une commande pour
-tous les projets, avec un cache qui saute ce qui n'a pas changé (Node requis) :
-
-```sh
-npm install                          # une fois : installe Nx dans node_modules/
-npx nx run-many -t lint test build   # shellcheck, typage, tests et compilation de tous les projets
-npx nx graph                         # graphe des projets et de leurs dépendances
-```
-
-`libs/contract` ne contient que des données : fixtures et sorties de référence, partagées par toutes
-les implémentations de chti (script shell, serveur MCP, cœur Kotlin).
-
-#### Cœur Kotlin (`libs/`)
-
-La logique de chti est portée en Kotlin Multiplatform, en architecture hexagonale, pour l'appli
-Android et le serveur MCP. Le cœur se comporte exactement comme le script : il passe les mêmes cas
-du contrat (`libs/contract`), au caractère près. Chaque module compile pour la JVM, Android et Node.js.
-
-| Module | Rôle | Dépend de |
-|---|---|---|
-| `libs/domain` | Modèles et règles métier purs : recherche sans accents et approximative, jours de service, fusion théorique / temps réel | rien (sauf kotlinx-datetime) |
-| `libs/application` | Cas d'usage, ports (GTFS, temps réel, V'Lille, favoris, horloge), grammaire des commandes, phrase libre | domain |
-| `libs/presentation` | Sorties texte, voix et JSON du contrat ; `Chti`, équivalent de la commande | application |
-| `libs/adapters` | GTFS statique (cache partagé avec le shell), GTFS-RT, V'Lille (GBFS), fichier des favoris | application |
-| `libs/node` | Racine de composition pour Node : `runChti`, la commande exportée en module ES pour le serveur MCP | presentation, adapters |
-| `libs/core-tests` | Règles d'architecture (Konsist) et contrat joué par le cœur | tout |
-
-Les adaptateurs sont communs à toutes les cibles (décodage CSV, protobuf, JSON, zip ; cache GTFS).
-Seul l'accès au système est propre à chaque plateforme : `java.io` / `java.net` sur la JVM et Android
-(source set `jvmShared`), modules `node:*` sous Node (le téléchargement passe par un processus `node`
-enfant, pour garder des ports synchrones).
-
-Prérequis : un JDK 17 ou plus récent (`JAVA_HOME`) et le SDK Android (`ANDROID_HOME`, installé avec
-Android Studio). Gradle (wrapper `./gradlew`) est lancé par Nx ; on peut aussi l'appeler directement :
-
-```sh
-./gradlew test                       # tests de tous les modules, sur toutes les cibles
-./gradlew :domain:jvmTest            # une seule cible
-./gradlew :core-tests:test           # architecture et contrat
-```
-
-- La configuration commune des modules est dans `buildSrc/` (plugin `chtipasse.kmp-library`) et les
-  versions dans `gradle/libs.versions.toml`.
-- `libs/core-tests` fait échouer le build si une couche importe ce qu'elle ne devrait pas (le cœur
-  n'importe que la bibliothèque standard et kotlinx-datetime, la présentation pas les adaptateurs…).
-- Le contrat crée un test par cas de `libs/contract/cases.txt` : `Chti` est lancé sur les fixtures,
-  à l'heure du cas, et sa sortie doit être identique à `expected/<cas>.txt`.
-- Nx ne met pas en cache les tâches Gradle : les entrées qu'il en déduit ne suivent pas les
-  dépendances (une sortie d'avant un changement de version pouvait être restaurée). Gradle a son
-  propre cache et sait ce qui est à jour.
-
-#### Pourquoi des tests « figés » ?
-
-Les horaires changent chaque minute : en lançant `chti bus 10 marais` à la main, impossible de
-savoir si « 12:53 dans 7 min » est juste ou faux, puisque la bonne réponse change sans arrêt.
-Les tests figent donc le monde :
-
-1. **Données figées** : une copie des flux enregistrée à un instant précis (`libs/contract/fixtures/`).
-2. **Heure figée** : le script croit qu'on est à cet instant-là (variable `CHTI_NOW`).
-3. **Réponses de référence** : la sortie correcte de chaque commande, relue et enregistrée une fois
-   pour toutes (`libs/contract/expected/<cas>.txt`).
-
-`apps/shell/tests/contract.sh` relance chaque commande dans ces conditions et compare sa sortie (stdout, stderr et
-code retour) à la référence. Les mêmes entrées doivent toujours donner exactement la même sortie. Le format du contrat (cas,
-heures, sorties attendues) est décrit dans [`libs/contract/README.md`](libs/contract/README.md).
-Les chemins absolus sont remplacés par `<racine>` pour que les références soient valables sur toutes les machines.
-
-| Fichier | Rôle |
-|---|---|
-| `libs/contract/cases.txt` | Liste des cas (commande, heure, flux temps réel) |
-| `libs/contract/clocks.txt` | Heures figées des cas |
-| `apps/shell/tests/contract.sh` | Lance les cas avec le script et compare les sorties |
-| `libs/contract/fixtures/gtfs.zip` | Extrait du GTFS : lignes 10, tram et M1, du 10 au 12/10/2026 |
-| `libs/contract/fixtures/rt-midi.pb`, `rt-minuit.pb` | Flux temps réel enregistrés le 10/10/2026 à 12:46 et le 11/10 à 00:00 |
-| `libs/contract/fixtures/station_*.json` | Quelques stations V'Lille, dont une hors service |
-| `libs/contract/fixtures/config/chtipasse/favoris` | Favoris de test |
-| `libs/contract/expected/` | Sorties de référence, une par cas |
-| `libs/contract/make_fixtures.py` | Régénère les fixtures à partir d'un nouvel instantané (voir plus bas) |
-
-Cas couverts : temps réel avec propagation du retard, passage de minuit, service du lendemain,
-flux temps réel indisponible, fin de service du métro, filtres `-d` et `-n` (y compris placés avant
-l'arrêt), le mot `vers`, le rapprochement approximatif des arrêts et directions (fautes, phonétique,
-ex æquo proposés), `autour` (notations de la position, distances en m et km, erreurs), V'Lille
-(accents, plusieurs résultats, station hors service, `--prendre` / `--deposer`), les favoris
-(liste, enchaînement, casse du nom, commande en échec, favori inconnu), la sortie parlée `--voix`,
-la compréhension des phrases (`vocal` : chiffres en lettres, « à l'arrêt », « en direction de »,
-favoris, phrases incomprises), la sortie JSON `--json` (passages, arrêts, V'Lille, favoris,
-erreurs avec code, échappement des guillemets) et les messages d'erreur.
-
-#### Lire un échec
-
-Quand une sortie diffère de la référence, le cas est marqué `ÉCHEC` avec la différence :
-`-` = ligne attendue absente, `+` = ligne en trop.
+| **Android** | Bientôt sur Google Play. En attendant : [construire l'APK](docs/dev/01-premiers-pas.md#étape-3--construire-lappli-android) |
+| **Terminal** (macOS, Linux) | La commande `chti` : [guide du terminal](docs/guide/terminal.md) |
+| **Termux** (Android) | `chti` et son widget Termux : [guide Termux](docs/guide/termux.md) |
+| **Assistants IA** | Serveur MCP pour Claude Code, Claude Desktop, Antigravity : [guide](docs/guide/assistants-ia.md) |
 
 ```
-ÉCHEC bus-options-avant-arret  (chti bus 10 --nombre=2 --vers=chu marais)
-      -10 — Eglise Du Marais  (EGLISE DU MARAIS 59160 LOMME)
-      -  aucun passage prévu
-      -
-       10 — Marais  (LOMME MARAIS 59160 LOMME)
+$ chti tram croise laroche vers roubaix -n 2
+
+TRAM — Croise Laroche  (CROISE LAROCHE 59700 MARCQ EN BAROEUL)
+  → Roubaix Eurotéléport
+     12:47  dans 1 min     ⏱  temps réel
+     12:59  dans 13 min    ⏱  temps réel
 ```
 
-Deux situations possibles :
+## Sous le capot
 
-- **Régression** (la nouvelle sortie est fausse) : corriger le script, relancer `apps/shell/tests/contract.sh`.
-- **Changement voulu** (nouveau format d'affichage, correction de bug…) : régénérer les
-  références avec `apps/shell/tests/contract.sh --update`, puis **relire** `git diff libs/contract/expected/` : seules les
-  différences attendues doivent apparaître. `--update` enregistre la sortie actuelle telle quelle,
-  y compris si elle est fausse : sans relecture, un bug deviendrait la référence.
+Chtipasse existe en trois implémentations : un script shell sans dépendance, un cœur Kotlin
+Multiplatform (JVM, Android, Node) et un serveur MCP. Elles ne divergent jamais, parce qu'un
+**contrat de 122 cas figés** (une commande, une heure, la sortie exacte attendue) est joué par
+chacune, **au caractère près**, à chaque modification. Le cœur suit une architecture hexagonale
+dont les règles sont vérifiées automatiquement.
 
-#### Ajouter un cas
+Envie de voir comment ça marche, ou d'y contribuer ? Le
+[guide développeurs](docs/README.md#comprendre-et-contribuer) se lit en neuf chapitres courts, en
+commençant par [Premiers pas](docs/dev/01-premiers-pas.md).
 
-1. Ajouter une ligne dans `libs/contract/cases.txt` (apostrophes autorisées) :
-   ```
-   nom-du-cas | MIDI | rt-midi.pb | bus 10 gambetta -d flandres
-   ```
-   - **heure** : `MIDI` (10/10 12:46), `SOIR` (10/10 23:50) ou `MINUIT` (11/10 00:00), voir `libs/contract/clocks.txt` ;
-   - **flux temps réel** : `rt-midi.pb`, `rt-minuit.pb`, ou `aucun` pour simuler un flux indisponible ;
-   - **arguments** : ceux passés à `chti`. Seules les lignes 10, tram et M1 existent dans les fixtures.
-2. Lancer `apps/shell/tests/contract.sh --update`.
-3. Relire `libs/contract/expected/nom-du-cas.txt` et vérifier que la sortie est juste.
-4. Commiter le cas avec sa référence.
+## Données et licence
 
-#### Tests Android simulés
+Les horaires, le temps réel et l'état des stations V'Lille proviennent des données ouvertes
+publiées par Ilévia, directement et via le
+[point d'accès national transport.data.gouv.fr](https://transport.data.gouv.fr). Les fonds de carte
+viennent d'[OpenStreetMap](https://www.openstreetmap.org/copyright), via
+[OpenFreeMap](https://openfreemap.org).
 
-`apps/shell/tests/termux.sh` vérifie la partie Termux (`apps/shell/termux/`) sans téléphone. Il crée un faux Termux dans un dossier
-temporaire : `pkg`, `termux-speech-to-text`, `termux-notification`, `termux-toast` et `termux-tts-speak` y sont
-remplacés par de petites imitations qui notent ce qu'on leur demande dans un journal. Le test lance
-ensuite le vrai `apps/shell/termux/install.sh`, puis les vrais boutons du widget sur les fixtures, et vérifie
-dans le journal ce qui aurait été affiché et lu à voix haute : *Parler* doit répondre à la voix, les
-boutons de favoris par écrit et jamais à la voix. La phrase « entendue » est fixée par
-la variable `FAKE_PHRASE`.
+> **Projet indépendant, non affilié à Ilévia ni à la Métropole Européenne de Lille.** Les données
+> sont fournies telles quelles, sans garantie d'exactitude.
 
-#### Régénérer les fixtures
-
-Rarement nécessaire : par exemple si Ilévia change le format de ses données. Les fixtures doivent
-alors être recréées à partir d'un nouvel instantané :
-
-```sh
-mkdir -p tmp/raw && cd tmp/raw
-curl -sL -o gtfs.zip https://media.ilevia.fr/opendata/gtfs.zip && unzip -o gtfs.zip
-curl -s -o rt-midi.pb https://proxy.transport.data.gouv.fr/resource/ilevia-lille-gtfs-rt     # en journée
-curl -s -o rt-minuit.pb https://proxy.transport.data.gouv.fr/resource/ilevia-lille-gtfs-rt   # vers minuit
-curl -s -O https://media.ilevia.fr/opendata/station_information.json
-curl -s -O https://media.ilevia.fr/opendata/station_status.json
-cd ../..
-python3 -I libs/contract/make_fixtures.py tmp/raw libs/contract/fixtures
-```
-
-Ensuite :
-
-1. Adapter `DATES` dans `libs/contract/make_fixtures.py` aux jours de l'instantané, puis relancer la commande ci-dessus.
-2. Adapter `MIDI`, `SOIR` et `MINUIT` dans `libs/contract/clocks.txt` aux heures de capture (timestamp epoch, ex. `date -j -f '%Y-%m-%d %H:%M:%S' '2026-10-10 12:46:00' +%s`).
-3. Lancer `apps/shell/tests/contract.sh --update` et relire **toutes** les références.
-
-Les données brutes restent dans `tmp/` et ne sont pas versionnées.
-
-#### shellcheck
-
-Le shell est piégeux : une variable sans guillemets ou un nom de fichier avec un espace peuvent
-faire planter le script dans certains cas seulement. `shellcheck` relit le script sans l'exécuter et
-signale ces pièges, comme un correcteur orthographique. S'il n'affiche rien, aucun problème n'a été
-trouvé. Un avertissement volontairement ignoré doit être justifié en commentaire
-(`# shellcheck disable=SC2086 # raison`).
-
-#### Variables d'environnement
-
-Utilisées par les tests, elles servent aussi à reproduire un cas à la main :
-
-| Variable | Effet |
-|---|---|
-| `CHTI_NOW` | Heure courante figée (timestamp epoch) |
-| `CHTI_GTFS_URL`, `CHTI_RT_URL`, `CHTI_GBFS_URL` | Sources de données (acceptent `file://`) |
-| `XDG_CACHE_HOME` | Emplacement du cache (`$XDG_CACHE_HOME/chtipasse`) |
-| `XDG_CONFIG_HOME` | Emplacement des favoris (`$XDG_CONFIG_HOME/chtipasse/favoris`) |
-
-```sh
-# Rejouer à la main le cas « bus-temps-reel », sans toucher au cache habituel
-XDG_CACHE_HOME=/tmp/chti-test CHTI_NOW=1791629160 \
-CHTI_GTFS_URL="file://$PWD/libs/contract/fixtures/gtfs.zip" \
-CHTI_RT_URL="file://$PWD/libs/contract/fixtures/rt-midi.pb" \
-apps/shell/chti bus 10 marais
-```
-
-Au premier lancement, le message « Mise à jour du référentiel GTFS… » s'affiche en plus, le temps
-de construire le cache de test.
-
-Pour tester le comportement hors ligne : `HTTPS_PROXY=http://127.0.0.1:9 apps/shell/chti bus 10 gambetta`
-(le script doit retomber sur les horaires théoriques).
-
-### Commits
-
-Messages en anglais, au format Conventional Commits compact, un commit par changement logique :
-
-```text
-feat: add direction filter for transit commands
-
-Users at busy stops only care about one direction; filtering on the
-trip headsign keeps the output short.
-```
+Chtipasse est un logiciel libre, publié sous licence [GPL-3.0-or-later](LICENSE).
