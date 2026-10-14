@@ -10,7 +10,7 @@ export const SERVER_INFO = { name: 'chtipasse', version: '0.1.0' };
 
 const INSTRUCTIONS = `Transports en commun de la métropole lilloise (réseau Ilévia : bus, tram, métro) et vélos V'Lille.
 Les noms d'arrêt et de station sont cherchés sans tenir compte de la casse ni des accents ; une partie du nom suffit.
-Pour les arrêts et les directions, les fautes d'orthographe ou de reconnaissance vocale sont tolérées (« gambeta », « croix la roche ») ; si plusieurs arrêts ressemblent autant à la demande, l'erreur ambiguous_stop les liste dans details.suggestions : faire choisir l'utilisateur.
+Pour les arrêts, les directions et les stations V'Lille, les fautes d'orthographe ou de reconnaissance vocale et les nombres en lettres sont tolérés (« gambeta », « croix la roche », « quatre cantons », « rihourr ») ; si plusieurs arrêts ressemblent autant à la demande, l'erreur ambiguous_stop les liste dans details.suggestions : faire choisir l'utilisateur.
 Pour une position (lat, lon), autour_de_moi donne les arrêts proches avec leurs lignes : enchaîner avec prochains_passages.
 Les horaires sont en temps réel quand le flux Ilévia le permet (realtime: true), sinon théoriques. Le métro n'a que des horaires théoriques.
 En cas d'erreur, la réponse a "type": "error", un code stable et un message en français ; details.directions liste les directions possibles quand la direction demandée n'existe pas.`;

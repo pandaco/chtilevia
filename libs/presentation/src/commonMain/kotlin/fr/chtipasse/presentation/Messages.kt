@@ -26,7 +26,7 @@ internal val USAGE = """
     |-n / --nombre : nombre de passages affichés par direction (3 par défaut) ; avec autour, nombre
     |  d'arrêts et de stations V'Lille.
     |--prendre / --deposer : n'affiche que les vélos disponibles / que les places libres.
-    |La recherche ignore la casse et les accents, et tolère les fautes (arrêts, directions).
+    |La recherche ignore la casse et les accents, et tolère les fautes (arrêts, directions, stations).
     |
 """.trimMargin()
 
