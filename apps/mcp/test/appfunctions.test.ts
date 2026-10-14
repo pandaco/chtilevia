@@ -12,7 +12,7 @@ import type { ChtiGateway } from '../src/ports/chti-gateway.ts';
 import { createServer } from '../src/server.ts';
 
 const APP_FUNCTIONS = fileURLToPath(
-    new URL('../../android/src/main/kotlin/fr/chtilevia/android/ChtiAppFunctions.kt', import.meta.url)
+    new URL('../../android/src/main/kotlin/fr/chtipasse/android/ChtiAppFunctions.kt', import.meta.url)
 );
 
 interface Signature {

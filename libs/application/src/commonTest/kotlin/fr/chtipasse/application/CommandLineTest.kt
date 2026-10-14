@@ -1,0 +1,83 @@
+package fr.chtipasse.application
+
+import fr.chtipasse.domain.BikeMode
+import fr.chtipasse.domain.Position
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+
+class CommandLineTest {
+    private fun parse(command: String) = CommandLine.parse(command.split(' '))
+
+    @Test
+    fun optionsAnywhereAndVersWithoutDash() {
+        assertEquals(Command.NextDepartures("10", "marais", "chu", 2), parse("bus 10 --nombre=2 --vers=chu marais"))
+        assertEquals(Command.NextDepartures("TRAM", "croise laroche", "roubaix", null), parse("tram croise laroche vers roubaix"))
+        assertEquals(Command.NextDepartures("M1", "republique", "lille chu", 4), parse("metro m1 republique -n 4 vers lille chu"))
+        assertEquals(Command.NextDepartures("10", "", "hegel", null), parse("bus 10 -d hegel"))
+    }
+
+    @Test
+    fun countIsValidatedLikeTheShell() {
+        assertEquals(0, (parse("tram x -n 00") as Command.NextDepartures).count)
+        assertEquals("abc", assertFailsWith<ChtiError.InvalidCount> { parse("tram -n abc") }.value)
+        assertFailsWith<ChtiError.InvalidCount> { parse("tram -n 0") }
+        val missing = assertFailsWith<ChtiError.MissingOptionValue> { parse("bus 10 marais -d") }
+        assertEquals("-d", missing.option)
+        assertEquals(ChtiError.MissingOptionValue.Expected.DIRECTION, missing.expected)
+    }
+
+    @Test
+    fun commandsAndFavorites() {
+        assertEquals(Command.BikeStations("sainte helene", BikeMode.RETURN), parse("vélo sainte --déposer helene"))
+        assertEquals(Command.BikeStations("", BikeMode.TAKE), parse("velo --prendre"))
+        assertEquals(Command.Utterance("métro un république"), parse("vocal métro un république"))
+        assertEquals(Command.FavoriteOrUnknown("travail"), parse("travail"))
+        assertEquals(Command.FavoriteOrUnknown("travail en vélo"), parse("travail en vélo"))
+        assertFailsWith<ChtiError.UnknownMetro> { parse("metro 3") }
+        assertFailsWith<ChtiError.MissingLine> { parse("bus") }
+    }
+
+    @Test
+    fun positionInTheUsualNotations() {
+        val expected = Command.Nearby(Position(50.6366, 3.063), null)
+        assertEquals(expected, parse("autour 50.6366 3.063"))
+        assertEquals(expected, parse("autour 50.6366, 3.063"))
+        assertEquals(expected, parse("autour 50,6366 3,063"))
+        assertEquals(expected, parse("autour 50.6366,3.063"))
+        assertEquals(Command.Nearby(Position(-1.0, 2.0), 5), parse("autour -n 5 -1 2"))
+    }
+
+    @Test
+    fun positionIsValidated() {
+        assertFailsWith<ChtiError.MissingPosition> { parse("autour") }
+        assertEquals("91 3", assertFailsWith<ChtiError.InvalidPosition> { parse("autour 91 3") }.text)
+        assertFailsWith<ChtiError.InvalidPosition> { parse("autour 50,6366") }
+        assertFailsWith<ChtiError.InvalidPosition> { parse("autour 5e1 3") }
+        assertFailsWith<ChtiError.InvalidPosition> { parse("autour 50 3 4") }
+        // Le nombre est vérifié d'abord, comme dans le shell
+        assertFailsWith<ChtiError.InvalidCount> { parse("autour -n 0") }
+    }
+
+    @Test
+    fun nearbyModeAnywhere() {
+        val here = Position(50.6366, 3.063)
+        assertEquals(Command.Nearby(here, null, NearbyMode.BIKE), parse("autour vélo 50.6366 3.063"))
+        assertEquals(Command.Nearby(here, 2, NearbyMode.METRO), parse("autour 50.6366 3.063 metro -n 2"))
+        assertEquals(Command.Nearby(here, null, NearbyMode.ALL), parse("autour 50.6366 3.063"))
+    }
+
+    @Test
+    fun nearbyPhrasesKeepTheMode() {
+        val utterances = InterpretUtterance(object : FavoritesStore {
+            override val location = "favoris"
+
+            override fun read(): String? = null
+        })
+        assertEquals(listOf("autour", "velo"), utterances.execute("vélo à proximité"))
+        assertEquals(listOf("autour", "velo"), utterances.execute("une V'Lille près d'ici"))
+        assertEquals(listOf("autour", "bus"), utterances.execute("les bus autour de moi"))
+        assertEquals(listOf("autour", "metro"), utterances.execute("le métro le plus proche"))
+        assertEquals(listOf("autour"), utterances.execute("qu'est-ce qu'il y a à proximité"))
+    }
+}

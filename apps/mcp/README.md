@@ -96,7 +96,7 @@ npx @modelcontextprotocol/inspector node apps/mcp/src/main.ts
 ```
 
 Variables d'environnement reconnues : `CHTI_GATEWAY` (`core` par défaut, ou `shell`),
-`CHTI_CORE_MODULE` (autre module `chtilevia-node.mjs`), `CHTI_PATH` (autre script `chti`), et toutes
+`CHTI_CORE_MODULE` (autre module `chtipasse-node.mjs`), `CHTI_PATH` (autre script `chti`), et toutes
 celles de `chti` (`CHTI_NOW`, `CHTI_*_URL`, `XDG_*`, voir le README principal).
 
 ## Architecture

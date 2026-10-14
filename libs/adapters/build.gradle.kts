@@ -4,7 +4,7 @@
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 
 plugins {
-    id("chtilevia.kmp-library")
+    id("chtipasse.kmp-library")
 }
 
 kotlin {

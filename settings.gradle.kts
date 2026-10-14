@@ -15,7 +15,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "chtilevia"
+rootProject.name = "chtipasse"
 
 // Modules nommés à plat (:domain…) mais rangés dans libs/ : pas de projet intermédiaire « :libs »
 for (module in listOf("domain", "application", "presentation", "adapters", "node", "core-tests")) {

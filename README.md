@@ -329,7 +329,7 @@ inscrit, on les essaie avec adb :
 ```sh
 adb shell cmd app_function list-app-functions --package fr.chtilevia
 adb shell "cmd app_function execute-app-function --package fr.chtilevia \
-  --function 'fr.chtilevia.android.BaseChtiAppFunctionService#prochainsPassages' \
+  --function 'fr.chtipasse.android.BaseChtiAppFunctionService#prochainsPassages' \
   --parameters '{\"mode\":\"tram\",\"arret\":\"croisé laroche\",\"direction\":\"roubaix\"}' --brief-yaml"
 ```
 
@@ -479,7 +479,7 @@ Android Studio). Gradle (wrapper `./gradlew`) est lancé par Nx ; on peut aussi 
 ./gradlew :core-tests:test           # architecture et contrat
 ```
 
-- La configuration commune des modules est dans `buildSrc/` (plugin `chtilevia.kmp-library`) et les
+- La configuration commune des modules est dans `buildSrc/` (plugin `chtipasse.kmp-library`) et les
   versions dans `gradle/libs.versions.toml`.
 - `libs/core-tests` fait échouer le build si une couche importe ce qu'elle ne devrait pas (le cœur
   n'importe que la bibliothèque standard et kotlinx-datetime, la présentation pas les adaptateurs…).

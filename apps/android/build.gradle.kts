@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "fr.chtilevia.android"
+    namespace = "fr.chtipasse.android"
     compileSdk = 37
 
     defaultConfig {

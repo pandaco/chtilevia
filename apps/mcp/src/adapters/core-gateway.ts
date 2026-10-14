@@ -7,7 +7,7 @@ import { CommandGateway } from './command-gateway.ts';
 
 /** Module produit par Gradle ; ses dépendances npm se résolvent depuis build/js/node_modules */
 export const DEFAULT_CORE_MODULE = fileURLToPath(
-    new URL('../../../../build/js/packages/chtilevia-node/kotlin/chtilevia-node.mjs', import.meta.url)
+    new URL('../../../../build/js/packages/chtipasse-node/kotlin/chtipasse-node.mjs', import.meta.url)
 );
 
 /** Ce qu'exporte libs/node (voir ChtiNode.kt) */
@@ -16,7 +16,7 @@ interface CoreModule {
 }
 
 export interface CoreGatewayOptions {
-    /** Chemin du module chtilevia-node.mjs (défaut : sortie de Gradle dans le dépôt) */
+    /** Chemin du module chtipasse-node.mjs (défaut : sortie de Gradle dans le dépôt) */
     modulePath?: string;
     /** Variables ajoutées à l'environnement (CHTI_NOW, CHTI_*_URL, XDG_*…), surtout pour les tests */
     env?: Record<string, string>;

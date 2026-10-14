@@ -1,4 +1,4 @@
-// Préchargé (node --require) par les tests Kotlin/JS, voir buildSrc/…/chtilevia.kmp-library.gradle.kts.
+// Préchargé (node --require) par les tests Kotlin/JS, voir buildSrc/…/chtipasse.kmp-library.gradle.kts.
 // Retire le seul avertissement « alsoWithHtml » de kotlin-web-helpers (sans effet, corrigé en 3.5.4) ;
 // tout autre message passe tel quel.
 'use strict';

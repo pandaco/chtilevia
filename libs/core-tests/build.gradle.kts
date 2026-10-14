@@ -31,7 +31,7 @@ tasks.test {
     if (JavaVersion.current() >= JavaVersion.VERSION_23) jvmArgs("--sun-misc-unsafe-memory-access=allow")
     // Le contrat se lit depuis le dépôt ; le relancer quand ses données changent
     val contract = rootProject.layout.projectDirectory.dir("libs/contract")
-    systemProperty("chtilevia.contract", contract.asFile.absolutePath)
-    systemProperty("chtilevia.root", rootProject.layout.projectDirectory.asFile.absolutePath)
+    systemProperty("chtipasse.contract", contract.asFile.absolutePath)
+    systemProperty("chtipasse.root", rootProject.layout.projectDirectory.asFile.absolutePath)
     inputs.dir(contract).withPropertyName("contract").withPathSensitivity(PathSensitivity.RELATIVE)
 }

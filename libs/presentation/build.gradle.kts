@@ -1,6 +1,6 @@
 // Présentation : mise en forme des résultats (texte terminal, phrases à lire, JSON du contrat).
 plugins {
-    id("chtilevia.kmp-library")
+    id("chtipasse.kmp-library")
 }
 
 kotlin {

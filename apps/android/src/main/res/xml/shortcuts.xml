@@ -8,7 +8,7 @@
         android:shortcutShortLabel="@string/shortcut_speak">
         <intent
             android:action="android.intent.action.VIEW"
-            android:targetClass="fr.chtilevia.android.AnswerActivity"
+            android:targetClass="fr.chtipasse.android.AnswerActivity"
             android:targetPackage="fr.chtilevia" />
     </shortcut>
 </shortcuts>

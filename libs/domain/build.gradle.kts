@@ -1,7 +1,7 @@
 // Domaine : modèles et règles métier purs. Ni Android, ni I/O ; seule bibliothèque : les dates
 // (fuseau du réseau, jours de service), indispensables aux horaires.
 plugins {
-    id("chtilevia.kmp-library")
+    id("chtipasse.kmp-library")
 }
 
 kotlin {
