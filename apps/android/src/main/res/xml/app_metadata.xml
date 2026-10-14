@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Description de l'appli pour les agents (AppFunctions) : liens entre fonctions et limites, pas leur détail -->
+<AppFunctionAppMetadata xmlns:appfn="http://schemas.android.com/apk/androidx.appfunctions"
+    appfn:description="This app provides public transport information for the Lille metropolitan area (Ilévia network: bus, tram, metro) and V'Lille bike share. Answers are in French.
+    Operational Patterns:
+    - Stop, station and direction names are matched ignoring case and accents; part of a name is enough, and spelling or speech recognition mistakes are tolerated.
+    - For a position, use 'autourDeMoi' to find nearby stops with their lines, then 'prochainsPassages' for the departures at one of them.
+    - Call 'listerFavoris' before 'favori' to get the exact favorite names.
+    - Each answer has 'text', ready to be read aloud, and 'json', the same answer as structured data.
+    Constraints:
+    - Read-only: no function changes data or settings.
+    - The metro only has scheduled times; bus and tram times are real-time when the Ilévia feed allows it.
+    - When several stops match equally (ambiguous_stop), the error lists them: ask the user to choose."
+    appfn:displayDescription="@string/appfunctions_description" />

@@ -3,4 +3,5 @@
     <string name="widget_description">Poser une question à la voix ou lancer un favori</string>
     <string name="shortcut_speak">Parler</string>
     <string name="shortcut_speak_long">Poser une question à la voix</string>
+    <string name="appfunctions_description">Prochains passages Ilévia (bus, tram, métro), vélos V\'Lille et favoris</string>
 </resources>

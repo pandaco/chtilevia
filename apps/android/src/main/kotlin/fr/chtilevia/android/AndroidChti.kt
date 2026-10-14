@@ -153,8 +153,11 @@ class AndroidChti(context: Context, private val profile: NetworkProfile = Networ
 
     private fun failure(message: String) = Result.failure<String>(IllegalArgumentException(message))
 
-    /** Résultat d'une commande : code retour et texte (sorties standard et d'erreur, dans l'ordre) */
-    data class Reply(val exit: Int, val text: String)
+    /**
+     * Résultat d'une commande : code retour, texte (sorties standard et d'erreur, dans l'ordre) et
+     * sortie standard seule (le document de `--json`, sans les messages)
+     */
+    data class Reply(val exit: Int, val text: String, val out: String = text)
 
     /**
      * Lance une commande chti (mêmes arguments que le shell) ; à appeler hors du fil principal.
@@ -163,9 +166,11 @@ class AndroidChti(context: Context, private val profile: NetworkProfile = Networ
     @Synchronized
     fun run(args: List<String>): Reply {
         val output = StringBuilder()
+        val standard = StringBuilder()
         val console = object : Console {
             override fun out(text: String) {
                 output.append(text)
+                standard.append(text)
             }
 
             override fun err(text: String) {
@@ -173,6 +178,6 @@ class AndroidChti(context: Context, private val profile: NetworkProfile = Networ
             }
         }
         val exit = chti.run(args, console)
-        return Reply(exit, output.toString())
+        return Reply(exit, output.toString(), standard.toString())
     }
 }

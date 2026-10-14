@@ -2,6 +2,8 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.plugin.compose")
+    // AppFunctions : le compilateur génère le service et le schéma lus par le système
+    id("com.google.devtools.ksp")
 }
 
 android {
@@ -51,4 +53,6 @@ dependencies {
     implementation(libs.glance.appwidget)
     implementation(libs.work.runtime)
     implementation(libs.maplibre.android)
+    implementation(libs.appfunctions)
+    ksp(libs.appfunctions.compiler)
 }
