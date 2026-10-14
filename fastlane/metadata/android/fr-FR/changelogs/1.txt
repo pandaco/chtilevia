@@ -1,0 +1,6 @@
+Première version de Chtipasse :
+• prochains passages bus, tram et métro, avec le temps réel quand il existe ;
+• vélos et places V'Lille ;
+• questions à la voix, réponses lues à voix haute ;
+• favoris, widget d'accueil et raccourcis ;
+• arrêts et stations à proximité, sur une carte.

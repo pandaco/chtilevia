@@ -1,0 +1,54 @@
+T'as ton bus, biloute ?
+
+Chtipasse te dit quand passe ton bus, ton tram ou ton métro dans la métropole lilloise, et s'il reste un V'Lille à la station. Tu poses ta question à voix haute, Chtipasse te répond à voix haute. Pas de compte, pas de publicité, pas d'itinéraire à construire : une question, une réponse.
+
+🗣️ DEMANDE COMME TU PARLES
+• « Prochain tram à Croisé Laroche vers Roubaix », « bus 10 Gambetta », « métro 1 République vers CHU », « Liane 1 République ».
+• Les fautes de frappe, les noms mal entendus, les nombres en lettres et les mots oubliés sont rattrapés : un morceau du nom suffit.
+• Si deux arrêts se ressemblent, Chtipasse te les propose au lieu de choisir à ta place.
+• Tu préfères écrire ? La saisie assistée te propose la ligne, l'arrêt et la direction au fil de la frappe.
+
+🔊 LA RÉPONSE SUIT TA FAÇON DE DEMANDER
+• Question dite au micro : réponse lue à voix haute, en français.
+• Bouton touché : réponse écrite, silencieuse, parfaite dans le métro ou en réunion.
+• Un geste coupe la voix quand tu veux.
+
+⭐ TES TRAJETS EN UN GESTE
+• Crée des favoris : « Travail », « Rentrer à vélo »…
+• Un favori peut enchaîner plusieurs questions : les vélos au départ ET les places libres à l'arrivée.
+• Chaque favori a son bouton dans l'appli, dans le widget d'accueil et dans les raccourcis de l'icône.
+• Le widget répond par une notification, sans même ouvrir l'appli.
+
+🚇 TOUT LE RÉSEAU, UNE SEULE APPLI
+• Bus, Lianes, tram et métro : les prochains passages à ton arrêt, dans chaque direction ou vers celle que tu choisis.
+• Temps réel ou horaire prévu ? Chaque passage te le dit (badge vert ou gris).
+• V'Lille : vélos disponibles et places libres, ou seulement ce qui t'intéresse (« pour prendre », « pour déposer »).
+• Après le dernier passage, les premiers départs du lendemain.
+
+📍 AUTOUR DE TOI
+• « À proximité », « vélo à proximité », « le métro le plus proche » : les arrêts et stations les plus proches, avec leur distance.
+• Une carte OpenStreetMap des arrêts et stations, filtrable par mode, et un bouton Itinéraire vers ton appli de navigation.
+
+⚡ RAPIDE, MÊME SANS RÉSEAU
+• Les horaires sont gardés sur ton téléphone et mis à jour chaque jour, en Wi-Fi.
+• La réponse arrive en moins d'un dixième de seconde.
+• Sans connexion, Chtipasse répond avec les horaires prévus.
+
+🔒 TES TRAJETS RESTENT CHEZ TOI
+• Pas de compte, pas de publicité, pas de pistage, pas de serveur.
+• Tout se calcule sur ton téléphone.
+• Ta position ne sert qu'au moment où tu demandes ce qu'il y a autour de toi. Elle n'est jamais enregistrée.
+
+🤖 PRÊT POUR LES ASSISTANTS
+Sur Android 16 et plus, Chtipasse met ses réponses à disposition des agents du téléphone (AppFunctions).
+
+EN TOUTE FRANCHISE
+• Le métro n'a pas de temps réel en données ouvertes : ses passages sont les horaires prévus, et Chtipasse te le dit.
+• V'Lille demande une connexion.
+• Chtipasse ne calcule pas d'itinéraire et ne donne pas l'info trafic : il fait une seule chose, et il la fait vite.
+
+LOGICIEL LIBRE
+Chtipasse est un logiciel libre (licence GPL-3.0) : son code est ouvert et chacun peut vérifier ce qu'il fait.
+
+Données : horaires, temps réel et V'Lille issus des données ouvertes publiées par Ilévia et transport.data.gouv.fr ; fonds de carte © contributeurs OpenStreetMap.
+Chtipasse est un projet indépendant, non affilié à Ilévia ni à la Métropole Européenne de Lille.
