@@ -137,6 +137,7 @@ departures() {
 # V'Lille : $@ = mots du nom de station, avec --prendre (vélos seuls) ou --deposer (places seules)
 velo() {
 	need jq
+	need python3
 	station=""
 	mode=tout
 	for word in "$@"; do
@@ -149,18 +150,15 @@ velo() {
 	[ -n "$station" ] || die missing_station "précise un nom de station, ex : chti velo rihour"
 	fetch "$GBFS_URL/station_information.json" "$TMP/info.json" || die bike_service_unreachable "V'Lille injoignable"
 	fetch "$GBFS_URL/station_status.json" "$TMP/status.json" || die bike_service_unreachable "V'Lille injoignable"
+	# Stations retenues (identifiants, dans l'ordre du flux), choisies comme les arrêts : voir stations()
+	ids=$(run_py stations "$TMP/info.json" "$station")
 	if [ "${CHTI_JSON:-}" = 1 ]; then
 		velo_json "$station" "$mode"
 		return
 	fi
-	jq -r -n --arg q "$station" --arg mode "$mode" --arg voice "${CHTI_VOIX:-0}" --argjson clock "${CHTI_NOW:-null}" --slurpfile info "$TMP/info.json" --slurpfile status "$TMP/status.json" '
-		def fold: ascii_downcase
-			| gsub("[àâäÀÂÄ]"; "a") | gsub("[éèêëÉÈÊË]"; "e") | gsub("[îïÎÏ]"; "i")
-			| gsub("[ôöÔÖ]"; "o") | gsub("[ùûüÙÛÜ]"; "u") | gsub("[çÇ]"; "c")
-			| gsub("[^a-z0-9]+"; " ") | ltrimstr(" ") | rtrimstr(" ");
+	jq -r -n --arg q "$station" --arg mode "$mode" --arg voice "${CHTI_VOIX:-0}" --argjson clock "${CHTI_NOW:-null}" --argjson ids "$ids" --slurpfile info "$TMP/info.json" --slurpfile status "$TMP/status.json" '
 		($status[0].data.stations | map({key: .station_id, value: .}) | from_entries) as $st
-		| ($q | fold) as $needle
-		| [$info[0].data.stations[] | select(.name | fold | contains($needle))]
+		| [$info[0].data.stations[] | select(.station_id | IN($ids[]))]
 		| def bikes: if . == 0 then "aucun vélo disponible" elif . == 1 then "1 vélo disponible"
 			else "\(.) vélos disponibles" end;
 		  def docks: if . == 0 then "aucune place libre" elif . == 1 then "1 place libre"
@@ -196,15 +194,10 @@ velo() {
 
 # Version JSON de velo : faits bruts par station, l'interprétation (prendre / déposer) au client
 velo_json() {
-	jq -n --arg q "$1" --arg mode "$2" --argjson clock "${CHTI_NOW:-null}" \
+	jq -n --arg q "$1" --arg mode "$2" --argjson clock "${CHTI_NOW:-null}" --argjson ids "$ids" \
 		--slurpfile info "$TMP/info.json" --slurpfile status "$TMP/status.json" '
-		def fold: ascii_downcase
-			| gsub("[àâäÀÂÄ]"; "a") | gsub("[éèêëÉÈÊË]"; "e") | gsub("[îïÎÏ]"; "i")
-			| gsub("[ôöÔÖ]"; "o") | gsub("[ùûüÙÛÜ]"; "u") | gsub("[çÇ]"; "c")
-			| gsub("[^a-z0-9]+"; " ") | ltrimstr(" ") | rtrimstr(" ");
 		($status[0].data.stations | map({key: .station_id, value: .}) | from_entries) as $st
-		| ($q | fold) as $needle
-		| [$info[0].data.stations[] | select(.name | fold | contains($needle))]
+		| [$info[0].data.stations[] | select(.station_id | IN($ids[]))]
 		| if length == 0 then
 			{type: "error", code: "unknown_station",
 			 message: "Aucune station V'\''Lille ne correspond à « \($q) ».", details: {}}
@@ -445,6 +438,19 @@ def closest(query, names):
     gaps = {n: approx_gap(query, n) for n in names}
     gaps = {n: g for n, g in gaps.items() if g is not None}
     return [n for n, g in gaps.items() if g == min(gaps.values())] if gaps else []
+
+
+def stations(info_path, query):
+    # Stations V'Lille dont le nom contient la demande, sinon celles au nom le plus proche (toutes à
+    # égalité), dans l'ordre du flux : leurs identifiants, en JSON
+    with open(info_path, encoding="utf-8") as f:
+        info = json.load(f)["data"]["stations"]
+    needle = fold(query)
+    found = [s for s in info if needle in fold(s["name"])]
+    if not found:
+        best = set(closest(query, [s["name"] for s in info]))
+        found = [s for s in info if s["name"] in best]
+    print(json.dumps([s["station_id"] for s in found]))
 
 
 def rows(path):
@@ -1135,6 +1141,8 @@ elif mode == "position":
     parse_position(sys.argv[2:])
 elif mode == "nearby":
     nearby(*sys.argv[2:10])
+elif mode == "stations":
+    stations(sys.argv[2], sys.argv[3])
 elif mode == "parse":
     print("\n".join(parse_phrase(sys.argv[2], sys.argv[3])))
 PY

@@ -1,0 +1,9 @@
+Gare Lille Flandres  (32 bornes)
+  🚲 0 vélo(s) dispo   🅿️  32 place(s) libre(s)
+  maj il y a 2 min
+
+Gare Lille Europe  (32 bornes)
+  🚲 14 vélo(s) dispo   🅿️  18 place(s) libre(s)
+  maj il y a 4 min
+
+[exit 0]

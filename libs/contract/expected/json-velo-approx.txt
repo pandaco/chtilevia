@@ -1,0 +1,20 @@
+{
+  "type": "bike_stations",
+  "query": "port de lile",
+  "mode": "all",
+  "stations": [
+    {
+      "id": "33",
+      "name": "Port de Lille",
+      "capacity": 26,
+      "status": "out_of_service",
+      "bikes": 0,
+      "docks": 26,
+      "renting": false,
+      "returning": false,
+      "last_reported": "2026-10-10T21:57:09Z",
+      "age_minutes": 3
+    }
+  ]
+}
+[exit 0]

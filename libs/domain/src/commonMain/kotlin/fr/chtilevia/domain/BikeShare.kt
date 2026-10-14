@@ -36,8 +36,11 @@ data class BikeStation(
     enum class Availability { UNKNOWN, OUT_OF_SERVICE, OK }
 }
 
-/** Stations dont le nom contient [query] (casse et accents ignorés), dans l'ordre du flux */
+/**
+ * Stations dont le nom contient [query] (casse et accents ignorés), sinon celles au nom le plus
+ * proche (fautes, reconnaissance vocale ; toutes à égalité), dans l'ordre du flux
+ */
 fun List<BikeStation>.matching(query: String): List<BikeStation> {
     val needle = fold(query)
-    return filter { needle in fold(it.name) }
+    return filter { needle in fold(it.name) }.ifEmpty { closestTo(query) { listOf(it.name) } }
 }

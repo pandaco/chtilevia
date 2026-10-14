@@ -1,0 +1,2 @@
+Rihour : 1 vélo disponible.
+[exit 0]

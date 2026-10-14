@@ -26,6 +26,9 @@ erreur-velo             | MINUIT | aucun        | velo zzz
 velo-prendre            | MINUIT | aucun        | velo --prendre rihour
 velo-deposer            | MINUIT | aucun        | velo sainte helene --déposer
 velo-prendre-hs         | MINUIT | aucun        | velo port de lille --prendre
+velo-approx-faute       | MINUIT | aucun        | velo rihourr
+velo-approx-oral        | MINUIT | aucun        | velo sainte élaine --deposer
+velo-approx-plusieurs   | MINUIT | aucun        | velo garre lile
 bus-vers-sans-tiret     | MIDI   | rt-midi.pb   | bus 10 marais vers lille flandres -n 1
 favoris-liste           | MIDI   | aucun        | favoris
 favori-tram             | MIDI   | rt-midi.pb   | travail
@@ -52,6 +55,7 @@ vocal-metro-en-lettres  | MIDI   | rt-midi.pb   | vocal métro un république ve
 vocal-tram              | MIDI   | rt-midi.pb   | vocal le prochain tram à Croisé Laroche vers Roubaix
 vocal-velo-deposer      | MINUIT | aucun        | vocal V'Lille Sainte Hélène pour déposer
 vocal-velo-prendre      | MINUIT | aucun        | vocal vélo gare lille europe pour prendre un vélo
+vocal-velo-approx       | MINUIT | aucun        | vocal V'Lille Ri Houre pour prendre
 vocal-favori            | MIDI   | rt-midi.pb   | vocal travail
 vocal-favori-liaison    | MINUIT | aucun        | vocal Rentrer à vélo
 vocal-incompris         | MIDI   | aucun        | vocal bonjour
@@ -103,6 +107,7 @@ json-velo-station          | MINUIT | aucun        | --json velo rihour
 json-velo-plusieurs        | MINUIT | aucun        | --json velo gare
 json-velo-hors-service     | MINUIT | aucun        | --json velo port de lille
 json-velo-prendre          | MINUIT | aucun        | --json velo rihour --prendre
+json-velo-approx           | MINUIT | aucun        | --json velo port de lile
 json-favoris-liste         | MIDI   | aucun        | --json favoris
 json-favori-tram           | MIDI   | rt-midi.pb   | --json travail
 json-favori-velo           | MINUIT | aucun        | --json rentrer-velo
