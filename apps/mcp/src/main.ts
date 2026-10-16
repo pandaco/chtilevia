@@ -12,7 +12,15 @@ if (kind !== 'core' && kind !== 'shell') {
     console.error(`CHTI_GATEWAY inconnu : ${kind} (core ou shell)`);
     process.exit(2);
 }
-const gateway = kind === 'shell' ? new ShellGateway() : new CoreGateway();
+let gateway: ShellGateway | CoreGateway;
+if (kind === 'shell') {
+    gateway = new ShellGateway();
+} else {
+    const core = new CoreGateway();
+    // Référentiel préparé en tâche de fond : la première recherche n'attend pas son téléchargement
+    void core.prepare();
+    gateway = core;
+}
 const handle = serveStdio(() => createServer(gateway));
 
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {

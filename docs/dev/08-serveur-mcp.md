@@ -27,8 +27,10 @@ flowchart LR
 ## L'essentiel en trois idées
 
 1. **Un port, deux passerelles.** Le serveur ne connaît que `ChtiGateway`. La passerelle par
-   défaut appelle le cœur Kotlin compilé pour Node (`runChti`). La passerelle de secours lance le
-   script `chti --json`. Les deux rendent les mêmes documents.
+   défaut appelle le cœur Kotlin compilé pour Node (`runChti`). Elle garde le référentiel en mémoire
+   et, au démarrage, le met à jour en tâche de fond s'il a plus de 24 h (`prepareTimetable`, dans un
+   `node` enfant). La passerelle de secours lance le script `chti --json`. Les deux rendent les mêmes
+   documents.
 2. **Le contrat comme schéma de sortie.** Chaque réponse est un document de
    `libs/contract/schema/response.schema.json`, renvoyé en `structuredContent`. Ce même schéma sert
    d'`outputSchema` aux outils.

@@ -16,6 +16,7 @@ import fr.chtipasse.application.GetDepartures
 import fr.chtipasse.application.InterpretUtterance
 import fr.chtipasse.application.ListFavorites
 import fr.chtipasse.application.NetworkProfile
+import fr.chtipasse.application.Notices
 import fr.chtipasse.application.UpdateTimetable
 import fr.chtipasse.presentation.Chti
 import fr.chtipasse.presentation.ChtiServices
@@ -50,8 +51,7 @@ fun runChti(args: Array<String>, env: dynamic): ChtiRun {
     )
     val fixedNow = variable("CHTI_NOW")?.toLong()
     val clock = Clock { fixedNow ?: (Date.now() / 1000).toLong() }
-    val cacheDir = appDirectory(variable("XDG_CACHE_HOME") ?: "$home/.cache")
-    val gtfs = gtfsCaches.getOrPut(cacheDir to profile.gtfsUrl) { GtfsCache(cacheDir, profile.gtfsUrl) }
+    val gtfs = gtfsCache(env, profile.gtfsUrl)
     val favorites = FileFavoritesStore("${appDirectory(variable("XDG_CONFIG_HOME") ?: "$home/.config")}/favoris")
     val bikeShare = GbfsFeed { fetch("${profile.bikeShareUrl}/$it") }
     val services = ChtiServices(
@@ -76,4 +76,21 @@ fun runChti(args: Array<String>, env: dynamic): ChtiRun {
     }
     val exit = Chti(services, profile.timeZone).run(args.toList(), console)
     return ChtiRun(exit, out.toString(), err.toString())
+}
+
+/**
+ * Télécharge et prépare le référentiel s'il est absent ou a plus de 24 h, sans lancer de commande :
+ * le serveur MCP l'appelle au démarrage pour qu'aucune recherche n'attende le téléchargement
+ */
+@JsExport
+fun prepareTimetable(env: dynamic) {
+    val gtfsUrl = (env["CHTI_GTFS_URL"] as String?)?.takeIf { it.isNotEmpty() } ?: NetworkProfile.ILEVIA.gtfsUrl
+    gtfsCache(env, gtfsUrl).refresh(force = false, notices = Notices.NONE)
+}
+
+/** Cache GTFS de l'environnement [env] (XDG_CACHE_HOME, sinon ~/.cache), partagé entre les appels */
+private fun gtfsCache(env: dynamic, gtfsUrl: String): GtfsCache {
+    val home = (env["HOME"] as String?)?.takeIf { it.isNotEmpty() } ?: ""
+    val cacheDir = appDirectory((env["XDG_CACHE_HOME"] as String?)?.takeIf { it.isNotEmpty() } ?: "$home/.cache")
+    return gtfsCaches.getOrPut(cacheDir to gtfsUrl) { GtfsCache(cacheDir, gtfsUrl) }
 }

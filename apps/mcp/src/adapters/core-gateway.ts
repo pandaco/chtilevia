@@ -1,6 +1,8 @@
 // Adaptateur v2 : répond au port ChtiGateway avec le cœur Kotlin compilé pour Node (libs/node,
 // `npx nx run :node:build`). Mêmes réponses que le shell, sans curl, jq ni python3.
+import { execFile } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { promisify } from 'node:util';
 
 import type { ChtiResponse } from '../ports/chti-gateway.ts';
 import { CommandGateway } from './command-gateway.ts';
@@ -13,7 +15,14 @@ export const DEFAULT_CORE_MODULE = fileURLToPath(
 /** Ce qu'exporte libs/node (voir ChtiNode.kt) */
 interface CoreModule {
     runChti(args: string[], env: Record<string, string | undefined>): { exit: number; out: string; err: string };
+    prepareTimetable(env: Record<string, string | undefined>): void;
 }
+
+/** Préparation du référentiel par un node enfant : le cœur est synchrone, le serveur reste libre */
+const PREPARE_SCRIPT = `
+const core = await import(process.argv[1]);
+core.prepareTimetable(process.env);
+`;
 
 export interface CoreGatewayOptions {
     /** Chemin du module chtipasse-node.mjs (défaut : sortie de Gradle dans le dépôt) */
@@ -31,6 +40,17 @@ export class CoreGateway extends CommandGateway {
         super();
         this.modulePath = options.modulePath ?? process.env.CHTI_CORE_MODULE ?? DEFAULT_CORE_MODULE;
         this.env = options.env ?? {};
+    }
+
+    /** Télécharge le référentiel s'il est absent ou périmé, sans bloquer le serveur pendant ce temps */
+    async prepare(): Promise<void> {
+        try {
+            await promisify(execFile)(process.execPath, ['--input-type=module', '-e', PREPARE_SCRIPT, this.modulePath], {
+                env: { ...process.env, ...this.env }
+            });
+        } catch {
+            // Sans réseau ni référentiel : la prochaine recherche le signalera, comme sans préparation
+        }
     }
 
     protected async run(args: string[]): Promise<ChtiResponse> {
