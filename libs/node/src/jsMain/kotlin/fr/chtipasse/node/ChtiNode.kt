@@ -22,6 +22,12 @@ import fr.chtipasse.presentation.ChtiServices
 import fr.chtipasse.presentation.Console
 import kotlin.js.Date
 
+/**
+ * Caches GTFS par dossier et source : le référentiel reste en mémoire d'un appel à l'autre, comme dans
+ * l'appli Android (voir CachedTimetable), au lieu d'être relu à chaque recherche du serveur MCP
+ */
+private val gtfsCaches = HashMap<Pair<String, String>, GtfsCache>()
+
 /** Résultat d'une commande : code retour, sortie standard et sortie d'erreur */
 @JsExport
 class ChtiRun(val exit: Int, val out: String, val err: String)
@@ -44,7 +50,8 @@ fun runChti(args: Array<String>, env: dynamic): ChtiRun {
     )
     val fixedNow = variable("CHTI_NOW")?.toLong()
     val clock = Clock { fixedNow ?: (Date.now() / 1000).toLong() }
-    val gtfs = GtfsCache(appDirectory(variable("XDG_CACHE_HOME") ?: "$home/.cache"), profile.gtfsUrl)
+    val cacheDir = appDirectory(variable("XDG_CACHE_HOME") ?: "$home/.cache")
+    val gtfs = gtfsCaches.getOrPut(cacheDir to profile.gtfsUrl) { GtfsCache(cacheDir, profile.gtfsUrl) }
     val favorites = FileFavoritesStore("${appDirectory(variable("XDG_CONFIG_HOME") ?: "$home/.config")}/favoris")
     val bikeShare = GbfsFeed { fetch("${profile.bikeShareUrl}/$it") }
     val services = ChtiServices(

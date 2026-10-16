@@ -26,7 +26,7 @@ Les cas d'usage ne connaissent le monde extérieur que par des interfaces
 
 | Port | Implémenté par |
 |---|---|
-| `TimetableRepository` | `GtfsTimetable` (fichiers de l'index), `CachedTimetable` (gardé en mémoire, pour l'appli) |
+| `TimetableRepository` | `GtfsTimetable` (fichiers de l'index), `CachedTimetable` (gardé en mémoire, pour l'appli et le serveur MCP) |
 | `TimetableUpdater` | `GtfsCache` (téléchargement, index, rafraîchissement toutes les 24 h) |
 | `RealtimeFeed` | `GtfsRealtimeFeed` |
 | `BikeShareFeed` | `GbfsFeed` |
