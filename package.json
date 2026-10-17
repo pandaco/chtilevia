@@ -13,5 +13,14 @@
   },
   "workspaces": [
     "apps/mcp"
-  ]
+  ],
+  "nx": {
+    "includedScripts": [],
+    "targets": {
+      "security": {
+        "command": "trivy fs --config trivy.yaml .",
+        "cache": false
+      }
+    }
+  }
 }

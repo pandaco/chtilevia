@@ -1,0 +1,24 @@
+# Analyse de sécurité du dépôt (npx nx run chtipasse:security, CI et avant chaque release).
+# Échoue sur toute faille HIGH ou CRITICAL : dépendances (package-lock.json, gradle.lockfile),
+# secrets oubliés dans le code, erreurs de configuration (workflows GitHub…).
+exit-code: 1
+severity:
+  - HIGH
+  - CRITICAL
+scan:
+  scanners:
+    - vuln
+    - secret
+    - misconfig
+  skip-dirs:
+    - node_modules
+    - build
+    - tmp
+    - .gradle
+    - .kotlin
+    - .nx
+    - kotlin-js-store
+vulnerability:
+  # Une faille sans version corrigée ne peut pas être réparée en montant de version : signalée par
+  # les outils de veille, elle ne bloque pas le build
+  ignore-unfixed: true
