@@ -19,6 +19,18 @@ android {
         versionName = property("versionName").toString()
     }
 
+    // Signature de release fournie par la CI (secrets GitHub) ; sans elle, l'APK de release n'est pas signé
+    val keystore = providers.environmentVariable("ANDROID_KEYSTORE_FILE")
+    if (keystore.isPresent) {
+        signingConfigs.create("release") {
+            storeFile = file(keystore.get())
+            storePassword = providers.environmentVariable("ANDROID_KEYSTORE_PASSWORD").get()
+            keyAlias = providers.environmentVariable("ANDROID_KEY_ALIAS").get()
+            keyPassword = storePassword
+        }
+        buildTypes.getByName("release").signingConfig = signingConfigs.getByName("release")
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
