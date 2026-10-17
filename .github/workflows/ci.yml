@@ -1,0 +1,50 @@
+# Vérifie chaque push sur main et chaque pull request : lint, tests et build de tous les projets
+# (zéro avertissement), puis l'analyse de sécurité Trivy. Le workflow de release rejoue les mêmes
+# contrôles avant de publier quoi que ce soit.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verifier:
+    name: Lint, tests, build et sécurité
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+
+      # JDK 25 comme en local (le bytecode reste en Java 17) ; Node pour Nx, le serveur MCP et Kotlin/JS
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '25'
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Dépendances npm
+        run: npm ci
+
+      - name: Lint, tests et build
+        run: npx nx run-many -t lint test build --output-style=static
+
+      - name: Installer Trivy
+        uses: aquasecurity/setup-trivy@v0.3.1
+        with:
+          version: v0.76.0
+
+      - name: Analyse de sécurité
+        run: npx nx run chtipasse:security
