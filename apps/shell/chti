@@ -263,7 +263,7 @@ autour() {
 favorites_list() {
 	if [ "${CHTI_JSON:-}" = 1 ]; then
 		# Une entrée par favori (premier nom rencontré), avec toutes ses commandes
-		{ [ -f "$FAVORITES" ] && sed -e 's/#.*//' "$FAVORITES" || :; } | jq -R -n --arg path "$FAVORITES" '
+		{ if [ -f "$FAVORITES" ]; then sed -e 's/#.*//' "$FAVORITES"; fi; } | jq -R -n --arg path "$FAVORITES" '
 			[inputs | select(test(":")) | capture("^\\s*(?<name>[^:]*?)\\s*:\\s*(?<cmd>.*?)\\s*$")
 			 | select(.name != "" and .cmd != "")]
 			| reduce .[] as $f ([]; (map(.name | ascii_downcase) | index($f.name | ascii_downcase)) as $i
