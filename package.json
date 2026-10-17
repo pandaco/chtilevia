@@ -5,7 +5,8 @@
   "description": "Prochains passages Ilévia et disponibilité V'Lille : shell, Android, assistants IA",
   "scripts": {
     "lint": "nx run-many -t lint",
-    "test": "nx run-many -t test"
+    "test": "nx run-many -t test",
+    "release": "nx release --skip-publish"
   },
   "devDependencies": {
     "@nx/gradle": "23.2.1",

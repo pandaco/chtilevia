@@ -36,5 +36,113 @@
         "buildTargetName": "build"
       }
     }
-  ]
+  ],
+  "release": {
+    "projects": [
+      ":android"
+    ],
+    "projectsRelationship": "fixed",
+    "releaseTag": {
+      "pattern": "android@{version}"
+    },
+    "conventionalCommits": {
+      "types": {
+        "feat": {
+          "semverBump": "minor",
+          "changelog": {
+            "title": "🚀 Nouveautés"
+          }
+        },
+        "fix": {
+          "semverBump": "patch",
+          "changelog": {
+            "title": "🩹 Corrections"
+          }
+        },
+        "perf": {
+          "semverBump": "patch",
+          "changelog": {
+            "title": "⚡ Performances"
+          }
+        },
+        "refactor": {
+          "semverBump": "none",
+          "changelog": {
+            "hidden": true
+          }
+        },
+        "docs": {
+          "semverBump": "none",
+          "changelog": {
+            "hidden": true
+          }
+        },
+        "test": {
+          "semverBump": "none",
+          "changelog": {
+            "hidden": true
+          }
+        },
+        "build": {
+          "semverBump": "none",
+          "changelog": {
+            "hidden": true
+          }
+        },
+        "ci": {
+          "semverBump": "none",
+          "changelog": {
+            "hidden": true
+          }
+        },
+        "chore": {
+          "semverBump": "none",
+          "changelog": {
+            "hidden": true
+          }
+        },
+        "style": {
+          "semverBump": "none",
+          "changelog": {
+            "hidden": true
+          }
+        },
+        "revert": {
+          "semverBump": "patch",
+          "changelog": {
+            "title": "⏪ Retours en arrière"
+          }
+        }
+      }
+    },
+    "version": {
+      "specifierSource": "conventional-commits",
+      "adjustSemverBumpsForZeroMajorVersion": false,
+      "currentVersionResolver": "git-tag",
+      "fallbackCurrentVersionResolver": "disk",
+      "versionActions": "./tools/release/android-version-actions.cjs",
+      "preVersionCommand": "npx nx run-many -t lint test build && npx nx run chtipasse:security"
+    },
+    "changelog": {
+      "workspaceChangelog": {
+        "createRelease": false,
+        "file": "apps/android/CHANGELOG.md",
+        "renderOptions": {
+          "authors": false,
+          "commitReferences": true,
+          "versionTitleDate": true
+        }
+      },
+      "projectChangelogs": false,
+      "automaticFromRef": true
+    },
+    "git": {
+      "commit": true,
+      "commitMessage": "chore(release): publication de la version {version}",
+      "tag": true,
+      "tagMessage": "Version {version}",
+      "push": true
+    }
+  },
+  "analytics": false
 }
