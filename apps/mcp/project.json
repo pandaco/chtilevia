@@ -10,7 +10,7 @@
       "options": { "cwd": "{projectRoot}" }
     },
     "test": {
-      "command": "node --test test/",
+      "command": "node --test 'test/**/*.test.ts'",
       "options": { "cwd": "{projectRoot}" },
       "dependsOn": [{ "projects": [":node"], "target": "build" }]
     }
