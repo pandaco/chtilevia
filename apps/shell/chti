@@ -226,9 +226,10 @@ velo_json() {
 # Commandes d'un favori, une par ligne (« nom: commande »), sans les commentaires
 favorite_commands() {
 	[ -f "$FAVORITES" ] || return 0
-	sed -e 's/#.*//' "$FAVORITES" | awk -F: -v name="$1" '
+	# Nom passé par l'environnement : « awk -v » interpréterait ses barres obliques (\z…) selon l'awk
+	sed -e 's/#.*//' "$FAVORITES" | CHTI_FAVORITE="$1" awk -F: '
 		{ key = tolower($1); gsub(/^[ \t]+|[ \t]+$/, "", key) }
-		key == tolower(name) && NF > 1 { sub(/^[^:]*:[ \t]*/, ""); sub(/[ \t]+$/, ""); if ($0 != "") print }'
+		key == tolower(ENVIRON["CHTI_FAVORITE"]) && NF > 1 { sub(/^[^:]*:[ \t]*/, ""); sub(/[ \t]+$/, ""); if ($0 != "") print }'
 }
 
 # Autour d'une position : $@ = [bus|tram|metro|velo] latitude longitude [-n nombre]

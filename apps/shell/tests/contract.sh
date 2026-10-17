@@ -26,9 +26,9 @@ export XDG_CONFIG_HOME="$FIX/config"
 
 # Epoch d'une heure figée de clocks.txt (MIDI, SOIR…)
 clock_epoch() {
-	epoch=$(awk -F'|' -v name="$1" '$1 !~ /^[[:space:]]*#/ {
+	epoch=$(CLOCK="$1" awk -F'|' '$1 !~ /^[[:space:]]*#/ {
 		k = $1; gsub(/[[:space:]]/, "", k)
-		if (k == name) { v = $2; gsub(/[[:space:]]/, "", v); print v }
+		if (k == ENVIRON["CLOCK"]) { v = $2; gsub(/[[:space:]]/, "", v); print v }
 	}' "$CONTRACT/clocks.txt")
 	[ -n "$epoch" ] || {
 		echo "heure inconnue dans clocks.txt : $1" >&2
