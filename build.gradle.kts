@@ -13,3 +13,10 @@ plugins.withType<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsPlugin> {
 allprojects {
     apply(plugin = "dev.nx.gradle.project-graph")
 }
+
+// Zéro avertissement : un avertissement Kotlin fait échouer la compilation, dans tous les modules
+subprojects {
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask<*>>().configureEach {
+        compilerOptions.allWarningsAsErrors.set(true)
+    }
+}

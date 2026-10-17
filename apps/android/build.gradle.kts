@@ -28,6 +28,8 @@ android {
     }
 
     lint {
+        // Zéro avertissement : le moindre avertissement du lint Android fait échouer le build
+        warningsAsErrors = true
         // Timber n'arrive que par MapLibre (ses règles de lint avec) : l'appli journalise avec Log
         disable += "LogNotTimber"
     }
