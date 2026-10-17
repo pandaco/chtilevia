@@ -13,6 +13,14 @@
   nul en cas d'échec.
 - **Versions** : exactes, publiées depuis au moins deux semaines au moment du choix
   (`gradle/libs.versions.toml`, `package.json`).
+- **Dépendances verrouillées** : chaque module Gradle a son `gradle.lockfile`. Après un ajout ou une
+  montée de version, régénère-les avec `./gradlew resolveAndLockAll --write-locks` et commite-les
+  avec le changement.
+- **Zéro avertissement** : un avertissement du compilateur Kotlin, d'un script `*.gradle.kts` ou du
+  lint Android fait échouer le build. On le corrige, on ne le masque pas.
+- **Sécurité** : `npx nx run chtipasse:security` lance [Trivy](https://trivy.dev) (dépendances npm
+  et Gradle, secrets, configuration ; voir `trivy.yaml`) et échoue dès une faille HIGH ou CRITICAL
+  corrigeable. Il faut l'installer une fois (`brew install trivy`).
 - **Fichiers de travail** : dans `./tmp`, ignoré par git. Rien de personnel dans les exemples : les
   trajets d'exemple restent neutres (tram Croisé Laroche, V'Lille Gare Lille Europe → La Madeleine
   Gare).
@@ -37,17 +45,20 @@ Exemple : ajouter une option, une nouvelle question ou une nouvelle information 
    réponse.
 7. **La documentation** : le [guide utilisateur](../guide/questions.md), la référence du
    [terminal](../guide/terminal.md) et, si la fonction est visible, le README.
-8. **Tout vérifier** : `npx nx run-many -t lint test build` doit être vert, sans avertissement.
+8. **Tout vérifier** : `npx nx run-many -t lint test build` puis `npx nx run chtipasse:security`
+   doivent être verts. La CI (`.github/workflows/ci.yml`) rejoue les deux à chaque push sur `main`.
 
 ## Commits
 
-Messages en anglais, au format Conventional Commits compact, un commit par changement logique :
+Messages en français, au format Conventional Commits compact, un commit par changement logique.
+Le type reste le mot-clé standard (`feat`, `fix`, `perf`, `docs`, `test`, `refactor`, `build`,
+`ci`, `chore`) : les versions et le changelog en sont déduits.
 
 ```text
-feat: add direction filter for transit commands
+feat: ajouter le filtre de direction aux commandes de transport
 
-Users at busy stops only care about one direction; filtering on the
-trip headsign keeps the output short.
+Aux arrêts chargés, on ne s'intéresse qu'à une direction ; filtrer sur
+la direction des courses garde une sortie courte.
 ```
 
 Le corps explique **pourquoi** plutôt que quoi. Une fonctionnalité qui touche plusieurs couches peut
