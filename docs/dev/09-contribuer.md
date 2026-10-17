@@ -52,10 +52,11 @@ Exemple : ajouter une option, une nouvelle question ou une nouvelle information 
 
 Messages en français, au format Conventional Commits compact, un commit par changement logique.
 Le type reste le mot-clé standard (`feat`, `fix`, `perf`, `docs`, `test`, `refactor`, `build`,
-`ci`, `chore`) : les versions et le changelog en sont déduits.
+`ci`, `chore`) : les versions et le changelog en sont déduits. Le titre est un groupe nominal
+(« ajout de… », « correction de… », ou simplement l'objet), pas un verbe à l'infinitif.
 
 ```text
-feat: ajouter le filtre de direction aux commandes de transport
+feat: filtre de direction pour les commandes de transport
 
 Aux arrêts chargés, on ne s'intéresse qu'à une direction ; filtrer sur
 la direction des courses garde une sortie courte.
@@ -64,6 +65,33 @@ la direction des courses garde une sortie courte.
 Le corps explique **pourquoi** plutôt que quoi. Une fonctionnalité qui touche plusieurs couches peut
 se découper en commits successifs (cas du contrat et shell, puis cœur, puis façades), chacun laissant
 les tests au vert.
+
+## Publier une version de l'appli Android
+
+Le numéro de version n'est jamais choisi à la main : [Nx Release](https://nx.dev/features/manage-releases)
+le calcule à partir des commits depuis la dernière version. `feat` monte la version mineure (0.1.0 →
+0.2.0), `fix` et `perf` le correctif (0.1.0 → 0.1.1), un changement cassant (`feat!:`) la version
+majeure ; les autres types ne changent pas la version et n'apparaissent pas dans le changelog.
+
+```sh
+npm run release -- --dry-run   # aperçu : prochaine version et changelog, sans rien écrire
+npm run release                # pour de vrai (nx release ; l'APK est publié par la CI, pas par Nx)
+```
+
+`nx release` :
+
+1. rejoue tous les contrôles (`lint`, `test`, `build`, Trivy) et s'arrête au moindre échec ;
+2. écrit `versionName` et `versionCode` dans `apps/android/gradle.properties` (via
+   `tools/release/android-version-actions.cjs`) et complète `apps/android/CHANGELOG.md` ;
+3. crée le commit `chore(release)` et le tag `android@X.Y.Z`, puis les pousse.
+
+Le tag déclenche `.github/workflows/release.yml` : les contrôles de la CI tournent encore une fois,
+puis l'APK est construit, signé avec la clé rangée dans les secrets GitHub (`ANDROID_KEYSTORE`,
+`ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`) et publié dans une release GitHub avec la section du
+changelog de cette version.
+
+`versionName` est le numéro vu par les utilisateurs ; `versionCode` l'entier qu'Android compare pour
+accepter une mise à jour, qui augmente de 1 à chaque release. Ne les modifie pas à la main.
 
 ## Licence
 
